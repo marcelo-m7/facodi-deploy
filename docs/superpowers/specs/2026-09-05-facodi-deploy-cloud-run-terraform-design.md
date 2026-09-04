@@ -61,12 +61,7 @@ addons/
 
 The Docker build resolves the pinned submodule commits and copies the actual Odoo modules into `/mnt/extra-addons`.
 
-The expected technical modules are:
-
-```text
-facodi_learning
-<theme module contained by facodi-theme>
-```
+`facodi_learning` is expected from `facodi-learning`. The theme technical module is discovered from the pinned `facodi-theme` repository by locating its `__manifest__.py`; the deployment repository does not hard-code the repository directory name as the Odoo technical module name.
 
 The image build must discover valid Odoo modules by `__manifest__.py` rather than assuming that the repository directory and technical module directory have the same name.
 
@@ -92,6 +87,7 @@ facodi-deploy/
 ├── infrastructure/
 │   └── terraform/
 │       ├── bootstrap/
+│       ├── shared/
 │       ├── modules/
 │       │   ├── artifact-registry/
 │       │   ├── github-wif/
@@ -124,22 +120,20 @@ Terraform is responsible for infrastructure that should be declarative, reviewab
 
 Terraform remote state creates a bootstrap dependency: the GCS state bucket and initial GitHub federation cannot depend on a backend that does not exist yet.
 
-`infrastructure/terraform/bootstrap/` therefore runs once with an authenticated Google Cloud administrator and local Terraform state. It creates:
+`infrastructure/terraform/bootstrap/` therefore runs once with an authenticated Google Cloud administrator and an initial local Terraform state. It creates:
 
 - the GCS bucket used by Terraform remote state;
 - the Workload Identity Pool and GitHub provider for `marcelo-m7/facodi-deploy`;
 - the GitHub Terraform service account;
 - the minimum IAM grants required for the subsequent Terraform workflows.
 
-The bootstrap state contains only bootstrap resources. It is not used for FACODI application/runtime resources.
-
-After bootstrap, all regular Terraform stacks use the GCS backend.
+After the first successful bootstrap apply, the bootstrap state itself is migrated into the newly created GCS backend. The bucket is protected from accidental deletion and is not destroyed as part of ordinary environment teardown.
 
 This one-time operation requires an operator who already has the project-level permissions needed to create WIF and IAM bindings. Terraform does not bypass Google Cloud IAM policy.
 
 ### Shared infrastructure
 
-Shared resources that are not environment-specific are managed separately from runtime environments. They include:
+`infrastructure/terraform/shared/` manages resources that are common to both environments:
 
 - required Google APIs;
 - Artifact Registry Docker repository;
@@ -166,12 +160,12 @@ Production infrastructure may remain unapplied until explicitly approved.
 
 ## Terraform implementation policy
 
-The Google provider uses `google_cloud_run_v2_service` rather than the legacy Cloud Run v1 Terraform resource. The current provider documentation recommends Cloud Run v2 for broader feature support and a better resource model.
+The Google provider uses `google_cloud_run_v2_service` rather than the legacy Cloud Run v1 Terraform resource. The current HashiCorp Google provider documentation recommends Cloud Run v2 for broader feature support and a better resource model.
 
 Terraform configuration must:
 
 - pin a supported Terraform core version range;
-- pin the HashiCorp Google provider to a compatible major/minor range rather than an unbounded latest version;
+- pin the HashiCorp Google provider to a compatible version range rather than an unbounded latest version;
 - use `terraform fmt -check` and `terraform validate` in CI;
 - expose environment differences through input variables rather than duplicated resource definitions;
 - use deletion protection for production Cloud SQL;
@@ -211,7 +205,7 @@ Images are tagged by immutable Git commit SHA. Mutable tags such as `latest` are
 
 An ordinary application deployment updates only the Cloud Run container image. It must not change database configuration, IAM, storage, secrets, scaling policy or other infrastructure settings.
 
-To prevent Terraform from treating an application image rollout as infrastructure drift, the Cloud Run Terraform resource explicitly ignores changes to the deployed container image while continuing to manage the remaining service configuration. Terraform establishes the service and its runtime contract; GitHub Actions advances the image revision.
+To prevent Terraform from treating an application image rollout as infrastructure drift, the Cloud Run Terraform resource ignores changes to the deployed container image while continuing to manage the remaining service configuration. Terraform establishes the service and its runtime contract; GitHub Actions advances the image revision.
 
 ## GitHub Actions model
 
@@ -230,13 +224,13 @@ To prevent Terraform from treating an application image rollout as infrastructur
 
 ### Terraform plan
 
-`terraform-plan.yml` authenticates through WIF and creates plans for infrastructure changes. Pull requests that touch Terraform files should expose the plan result for review.
+`terraform-plan.yml` authenticates through WIF and creates plans for infrastructure changes. Pull requests that touch Terraform files expose the plan result for review.
 
 No pull request event performs `terraform apply`.
 
 ### Terraform apply
 
-`terraform-apply.yml` is explicitly dispatched or protected by a GitHub Environment. Production apply requires the `production` GitHub Environment and is not enabled by default.
+`terraform-apply.yml` is explicitly dispatched and uses GitHub Environments for deployment protection. Production apply requires the `production` environment and is not enabled merely by pushing code.
 
 ### Staging deployment
 
@@ -252,11 +246,11 @@ No pull request event performs `terraform apply`.
 
 A dedicated service account is impersonated through Workload Identity Federation and is restricted to the repository `marcelo-m7/facodi-deploy`.
 
-It receives only permissions required to manage the declared Terraform resources. The implementation should prefer resource-scoped IAM bindings where Google Cloud supports them.
+It receives only permissions required to manage the declared Terraform resources. The implementation prefers resource-scoped IAM bindings where Google Cloud supports them.
 
 ### GitHub application deployment identity
 
-Application rollout should use a distinct deployment identity from the Terraform administrator identity. It needs only the permissions required to publish the image and update the target Cloud Run service, plus service-account impersonation/use where required.
+Application rollout uses a distinct deployment identity from the Terraform administrator identity. It needs only the permissions required to publish the image and update the target Cloud Run service, plus service-account use where required.
 
 Separating infrastructure administration from application rollout prevents every normal release from carrying broad infrastructure privileges.
 
@@ -286,14 +280,14 @@ Cloud Run
     └── single HTTP listener
 ```
 
-Cloud Run is configured initially with:
+Production starts with:
 
 ```text
 min instances = 1
 max instances = 1
 ```
 
-for production. Staging may use a lower minimum when cost is prioritized, but validation involving cron/background behavior must run with CPU availability compatible with Odoo's background processing requirements.
+Staging may use `min instances = 0` to reduce cost during inactive periods, but staging acceptance tests for cron/background behavior are executed with instance-based CPU allocation or an equivalent configuration that keeps CPU available while the Odoo process is expected to perform background work.
 
 `workers = 0` avoids introducing a separate gevent listener and reverse-proxy routing requirement in v1. Horizontal scaling is intentionally deferred until Odoo cron, session, websocket and filestore behavior have been validated under the chosen Cloud Run model.
 
@@ -309,7 +303,7 @@ Database credentials are supplied from Secret Manager at runtime.
 
 The Terraform design enables automatic storage growth and configurable sizing. Production uses deletion protection. Staging may use a smaller instance class but remains structurally identical.
 
-Database backup/retention settings are part of the environment Terraform configuration and are not delegated to the application deploy workflow.
+Database backup and retention settings are part of the environment Terraform configuration and are not delegated to the application deploy workflow.
 
 ## Filestore persistence
 
@@ -356,7 +350,7 @@ Canonical image format:
 
 The build workflow pushes an image only after repository validation succeeds.
 
-A deployment records/prints the immutable URI being deployed so rollback can target a previous known-good image without rebuilding it.
+A deployment records the immutable URI being deployed so rollback can target a previous known-good image without rebuilding it.
 
 ## Runtime-neutral deployment interface
 
@@ -388,7 +382,7 @@ Production remains disabled until all of these conditions are met:
 - production secrets have been populated explicitly;
 - production infrastructure/deployment gates are enabled explicitly.
 
-The staging and production domains are configuration outputs/operational steps; DNS changes are not automatically performed by the initial Terraform apply unless a later design explicitly adds authoritative DNS management to this repository.
+The staging and production domains are configuration outputs/operational steps. DNS changes are not automatically performed by the initial Terraform apply; authoritative DNS automation requires a separate explicit design decision.
 
 ## Validation contract
 
