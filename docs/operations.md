@@ -1,199 +1,205 @@
 # FACODI deployment operations
 
-This runbook describes the first Google Cloud deployment for `marcelo-m7/facodi-deploy`. Defaults are project `marcelo-497411` and region `europe-southwest1`.
+This runbook is the operator procedure for the canonical FACODI Odoo 19 Community deployment serving `facodi.com` through the existing Coolify resource.
 
-## 1. Administrator prerequisite
+The production invariant is simple: keep the existing Coolify resource, keep the project-scoped `postgres-data` and `odoo-data` volumes attached, let the one-shot migration gate succeed before Odoo starts, and verify the Website/eLearning runtime after every consequential deployment.
 
-The first bootstrap must be executed by a Google Cloud identity that can create Workload Identity Federation resources, service accounts, enable APIs and modify project IAM. Terraform cannot bypass Google Cloud IAM. If the current operator lacks those permissions, a project administrator/Owner must grant them first.
+## 1. Canonical deployment shape
 
-No service-account JSON key is required or supported by this repository.
-
-## 2. Bootstrap Terraform state and GitHub federation
-
-Authenticate locally with an administrative identity, then initialize the bootstrap without its remote backend and apply it:
-
-```bash
-gcloud auth application-default login
-gcloud config set project marcelo-497411
-
-terraform -chdir=infrastructure/terraform/bootstrap init -backend=false
-terraform -chdir=infrastructure/terraform/bootstrap plan
-terraform -chdir=infrastructure/terraform/bootstrap apply
-```
-
-The bootstrap creates `marcelo-497411-facodi-tfstate`, the GitHub WIF pool/provider, and the `facodi-terraform` service account. The state bucket has versioning, public-access prevention and Terraform `prevent_destroy`.
-
-After the successful apply, migrate the bootstrap state into the bucket it created:
-
-```bash
-terraform -chdir=infrastructure/terraform/bootstrap init \
-  -migrate-state \
-  -backend-config="bucket=marcelo-497411-facodi-tfstate" \
-  -backend-config="prefix=bootstrap"
-```
-
-Record these bootstrap outputs:
-
-```bash
-terraform -chdir=infrastructure/terraform/bootstrap output
-```
-
-Configure the following GitHub repository variables:
+The active lifecycle is:
 
 ```text
-GCP_PROJECT_ID=marcelo-497411
-GCP_REGION=europe-southwest1
-TERRAFORM_STATE_BUCKET=marcelo-497411-facodi-tfstate
-GCP_WORKLOAD_IDENTITY_PROVIDER=<bootstrap workload_identity_provider output>
-GCP_TERRAFORM_SERVICE_ACCOUNT=<bootstrap terraform_service_account output>
-GCP_DEPLOY_SERVICE_ACCOUNT=facodi-github-deploy@marcelo-497411.iam.gserviceaccount.com
-TERRAFORM_PLAN_ENABLED=false
-DEPLOY_STAGING_ENABLED=false
-DEPLOY_PRODUCTION_ENABLED=false
+db (PostgreSQL 16)
+  ↓
+migrate (one shot, fail closed)
+  ↓
+odoo (persistent HTTP service)
 ```
 
-Keep the three enable flags false until their prerequisites are complete.
+Canonical file:
 
-## 3. Apply shared infrastructure
+```text
+deploy/coolify/docker-compose.yml
+```
 
-The shared stack creates/enables common APIs, the `facodi` Artifact Registry Docker repository and the application deployment identity.
+Persistent volumes:
+
+```text
+postgres-data:/var/lib/postgresql/data
+odoo-data:/var/lib/odoo
+```
+
+Do not rename these volumes, add explicit Compose `name:` overrides, delete them, or recreate the Coolify resource simply to deploy a revision.
+
+The existing generated secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. A normal deployment of this refactor must not introduce an additional mandatory secret.
+
+## 2. Pre-deployment backup gate
+
+Before the first deployment of this runtime design, and before later revisions that contain schema/data migrations:
+
+1. Temporarily stop automatic redeploys for the FACODI Coolify resource while backups are taken.
+2. Back up the PostgreSQL database from the existing `postgres-data` persistence.
+3. Back up the matching `odoo-data` volume from the same application state.
+4. Record the current Coolify resource identifier, domain configuration for `facodi.com`, environment variables and current source revision.
+5. Confirm Coolify still points to `deploy/coolify/docker-compose.yml` in this repository.
+6. Confirm no operator action will delete or recreate the existing project volumes.
+
+Database and filestore backups are a pair. A rollback across an Odoo migration must restore them together.
+
+## 3. Source and image preflight
+
+The deployment commit must resolve all submodules recursively:
 
 ```bash
-terraform -chdir=infrastructure/terraform/shared init \
-  -backend-config="bucket=marcelo-497411-facodi-tfstate" \
-  -backend-config="prefix=shared"
-terraform -chdir=infrastructure/terraform/shared plan
-terraform -chdir=infrastructure/terraform/shared apply
+git submodule update --init --recursive
 ```
 
-After this succeeds, `TERRAFORM_PLAN_ENABLED` can be changed to `true` so pull requests receive remote-state-backed Terraform plans. Pull requests never apply Terraform.
+The repository contract pins the expected revisions for:
 
-## 4. Create staging persistence with runtime disabled
+- `facodi-learning` / `facodi_learning`;
+- `facodi-theme` / `theme_facodi`;
+- `monynha-odoo` / `theme_monynha` and `monynha_lead_generator`;
+- `odoo/design-themes`, exposing only `theme_common`.
 
-The committed staging values intentionally begin with:
+Monynha modules are baked into the shared image but are not part of `FACODI_MODULES`; they must not be installed into the FACODI database by the canonical migration gate unless a future, separately reviewed change intentionally alters that contract.
 
-```hcl
-runtime_enabled       = false
-public_access_enabled = false
-initial_image_uri      = ""
-min_instances          = 0
-```
-
-Initialize and apply staging:
+Before deployment, require:
 
 ```bash
-terraform -chdir=infrastructure/terraform/environments/staging init \
-  -backend-config="bucket=marcelo-497411-facodi-tfstate" \
-  -backend-config="prefix=environments/staging"
-terraform -chdir=infrastructure/terraform/environments/staging plan
-terraform -chdir=infrastructure/terraform/environments/staging apply
+bash scripts/validate-repository.sh
+docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+bash tests/test_coolify_runtime.sh
 ```
 
-This creates the staging Cloud SQL instance/database, runtime service account, Cloud Storage bucket and Secret Manager containers without creating the Cloud Run service/job yet.
+The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured and the public FACODI routes respond successfully.
 
-## 5. Populate staging secrets outside Terraform
+## 4. First Coolify deployment of the canonical runtime
 
-Secret payloads must never be passed through Terraform. Set them in the shell, send them to Secret Manager through stdin, then remove them from the shell environment:
+Use this sequence for the first production adoption of the new Compose lifecycle:
 
-```bash
-read -rsp 'Staging DB password: ' DB_PASSWORD && echo
-read -rsp 'Staging Odoo admin password: ' ODOO_ADMIN_PASSWD && echo
+1. In Coolify, stop automatic redeploy while the backup gate is completed.
+2. Back up PostgreSQL from `postgres-data`.
+3. Back up the matching `odoo-data` volume.
+4. Record the current Coolify environment variables, `facodi.com` domain settings and resource identifier.
+5. Confirm the Compose path remains `deploy/coolify/docker-compose.yml`.
+6. Merge/deploy the validated revision **without deleting or recreating the Coolify resource**.
+7. Observe the services in order: `db`, then one-shot `migrate`, then `odoo`.
+8. Require the `migrate` service to exit successfully. If it fails, do not bypass the gate and do not manually start the new `odoo` service against the partially migrated database.
+9. Require the `odoo` service health check for `/web/login` to become healthy.
+10. Verify `facodi.com`, existing courses, Website pages, attachments and media before re-enabling unattended redeploy behavior.
 
-printf '%s' "$DB_PASSWORD" | \
-  gcloud secrets versions add facodi-staging-db-password \
-  --data-file=- --project marcelo-497411
+The migration service intentionally blocks the persistent Odoo service on non-zero exit.
 
-printf '%s' "$ODOO_ADMIN_PASSWD" | \
-  gcloud secrets versions add facodi-staging-admin-passwd \
-  --data-file=- --project marcelo-497411
+## 5. What the migration gate does
 
-unset DB_PASSWORD ODOO_ADMIN_PASSWD
+For a fresh target database the migration initializes Odoo and the FACODI modules without demo data.
+
+For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
+
+After module operations the migration uses standard Odoo APIs to:
+
+- update `facodi_learning` and `theme_facodi`;
+- activate `en_US`, `pt_PT`, `es_ES` and `fr_FR`;
+- make English the Website default;
+- expose the four languages on the Website;
+- load theme translations;
+- apply `theme_facodi` through the native theme mechanism.
+
+The migration does not directly rewrite arbitrary `website.page` content, course data, contacts or Website Builder records.
+
+## 6. Post-deployment acceptance
+
+After `odoo` is healthy, verify at minimum:
+
+```text
+/web/login
+/
+/pt/
+/es/
+/fr/
+/slides
 ```
 
-Synchronize the Secret Manager database password with the Cloud SQL `odoo` user:
+Then verify operational persistence using real existing content:
 
-```bash
-GCP_PROJECT_ID=marcelo-497411 \
-  bash scripts/configure-database-user.sh staging
+1. open multiple existing Website pages;
+2. open existing eLearning courses and course content;
+3. retrieve existing attachments and images;
+4. upload or create a disposable attachment/media item if appropriate, then verify it resolves;
+5. restart/redeploy the same validated revision through Coolify without removing volumes;
+6. verify the same attachment/media still resolves;
+7. inspect `db`, `migrate` and `odoo` logs for migration, filestore or permission errors.
+
+Do not treat a healthy login route alone as proof that the migration preserved production content.
+
+## 7. Routine redeploys
+
+For ordinary application revisions:
+
+1. review the addon and migration diff;
+2. take PostgreSQL + `odoo-data` backups when schema/data changes are expected;
+3. require the exact-head GitHub CI to pass;
+4. deploy the revision through the existing Coolify resource;
+5. let `migrate` run to completion;
+6. require `odoo` to become healthy;
+7. verify the public FACODI routes and the areas affected by the revision.
+
+Do not manually skip `migrate` because a previous deployment succeeded. It is designed to be idempotent and is the runtime gate for each deployment.
+
+## 8. Failure handling
+
+### Migration fails before Odoo starts
+
+Keep the application gated. Read the `migrate` logs and determine whether the failure is:
+
+- source/module incompatibility;
+- guarded legacy-state ambiguity;
+- PostgreSQL/database availability;
+- theme or translation API incompatibility;
+- invalid runtime configuration.
+
+Do not mutate production tables manually merely to force a green migration. Correct the code or, if necessary, restore the pre-deployment backup pair.
+
+### Odoo fails after migration succeeds
+
+Inspect the persistent service logs and health check. If the database migration is backward compatible, a known-good source revision may be redeployed. If compatibility is uncertain, use the full rollback procedure below instead of assuming image-only rollback is safe.
+
+## 9. Rollback procedure
+
+Release `v0.1.0` preserves the source tree from before the Coolify-canonical refactor and is the historical source rollback boundary.
+
+It is **not** a database downgrade mechanism. If a newer deployment has run an incompatible module/data migration:
+
+1. stop the affected Coolify application services;
+2. restore the PostgreSQL backup captured before that deployment;
+3. restore the matching `odoo-data` backup from the same point in time;
+4. deploy the known-good source revision (including `v0.1.0` when that is the intended boundary);
+5. start through the resource's valid lifecycle for that revision;
+6. verify `/web/login`, `/`, language routes, `/slides`, courses, attachments and media before reopening normal deployment flow.
+
+Never restore only the database or only `odoo-data` when rolling back across migrations that may have changed attachment/filestore references.
+
+## 10. Commands that must not be used against production persistence
+
+Do not use commands or deployment changes that remove the named volumes, including:
+
+```text
+docker compose down -v
 ```
 
-The script reads the secret only for the duration of the command and creates or updates the Cloud SQL user operationally. Terraform deliberately does not manage the SQL user password, so the password never enters Terraform state.
+Do not publish PostgreSQL or Odoo directly to host ports as part of this runtime. Coolify should continue routing the application service through its managed networking/domain layer.
 
-## 6. Build the first immutable image
+## 11. Verification evidence before merge
 
-Resolve the current `facodi-deploy` commit SHA and publish exactly that image:
+A deployment refactor is ready for merge only when the exact PR head has green CI showing:
 
-```bash
-SHA="$(git rev-parse HEAD)"
-IMAGE="europe-southwest1-docker.pkg.dev/marcelo-497411/facodi/odoo:${SHA}"
+- recursive submodule checkout;
+- repository contract success;
+- canonical Coolify Compose validation;
+- fresh migration success;
+- immediate second migration success;
+- healthy persistent Odoo startup;
+- correct Website language state;
+- successful FACODI Website/eLearning HTTP checks.
 
-gcloud auth configure-docker europe-southwest1-docker.pkg.dev --quiet
-bash scripts/build-image.sh "$IMAGE" --push
-```
-
-## 7. Activate staging runtime
-
-Edit `infrastructure/terraform/environments/staging/terraform.tfvars` and commit the activation:
-
-```hcl
-runtime_enabled       = true
-public_access_enabled = false
-initial_image_uri      = "europe-southwest1-docker.pkg.dev/marcelo-497411/facodi/odoo:<first-sha>"
-min_instances          = 0
-```
-
-Apply staging again. The `initial_image_uri` is only the Terraform creation seed; Terraform ignores later application-driven image changes for the Cloud Run service and migration job.
-
-```bash
-terraform -chdir=infrastructure/terraform/environments/staging plan
-terraform -chdir=infrastructure/terraform/environments/staging apply
-```
-
-After the service and migration job exist, set `DEPLOY_STAGING_ENABLED=true`. Subsequent staging releases use GitHub Actions and `scripts/deploy-runtime.sh`; they do not require Terraform apply just to move the image.
-
-## 8. Staging acceptance gate
-
-Production and public access must remain disabled until all of the following have been exercised in staging:
-
-1. create an Odoo attachment and retrieve it;
-2. upload an image through Website/eLearning and render it normally;
-3. deploy a different immutable Cloud Run revision;
-4. retrieve the same attachment and image after the revision replacement;
-5. execute the migration job updating `facodi_learning,theme_facodi` and verify generated assets/pages;
-6. perform simultaneous ordinary reads/writes in two browser sessions and inspect Cloud Run logs for GCS FUSE/filestore errors;
-7. redeploy a previous known-good image using `scripts/deploy-runtime.sh staging <previous-image>` and verify service health;
-8. record whether any Odoo migration changed the database incompatibly with the rolled-back image.
-
-For cron/background-process acceptance, temporarily change staging to `min_instances = 1`, apply Terraform, exercise scheduled/background behavior while the service is idle, and inspect Cloud Run/Odoo logs. Restore `min_instances = 0` afterward if cost-saving scale-to-zero behavior is desired.
-
-The Cloud Storage filestore mount is a proposal until these checks pass. If attachment, Website/eLearning asset or concurrency behavior is unreliable, do not enable production; change the persistence implementation behind the same deployment interface instead.
-
-A v1 limitation is that only the Odoo filestore is made persistent. HTTP sessions remain local to the Cloud Run instance, so a revision replacement may log users out. Session clustering/Redis is deliberately outside the v1 scope and should be revisited before introducing horizontal scaling.
-
-## 9. Public staging access
-
-Only after private authenticated verification succeeds should `public_access_enabled` be changed to `true` in the staging Terraform values and applied. DNS is not managed by this initial Terraform design.
-
-## 10. Production
-
-Production repeats the same persistence/secret/runtime sequence with the production stack. Production differs intentionally:
-
-- Cloud SQL deletion protection is enabled both in Terraform and in the Cloud SQL API settings;
-- Cloud Run service/job deletion protection is enabled;
-- minimum Cloud Run instances is 1;
-- committed production values start disabled;
-- `DEPLOY_PRODUCTION_ENABLED` remains false until staging acceptance is documented;
-- production deployment is manual (`workflow_dispatch`) and protected by the GitHub `production` Environment.
-
-A push to `main` alone does not deploy production.
-
-## Rollback boundary
-
-Application rollback is image-only and does not run Terraform:
-
-```bash
-bash scripts/deploy-runtime.sh staging \
-  europe-southwest1-docker.pkg.dev/marcelo-497411/facodi/odoo:<known-good-sha>
-```
-
-The migration job runs before the service switches image. Therefore a rollback does not reverse database migrations. Any backward-incompatible Odoo schema/data migration must be reviewed explicitly before production deployment.
+Any failure in that matrix keeps the PR in draft/review state until corrected.

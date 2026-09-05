@@ -14,14 +14,37 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: odoo
+      DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
+      ODOO_DB: facodi
+      ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
+      FACODI_MODULES: facodi_learning,theme_facodi
+      PORT: "8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+
   odoo:
     build:
-      context: .
+      context: ../..
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DB_HOST: db
       DB_PORT: "5432"
