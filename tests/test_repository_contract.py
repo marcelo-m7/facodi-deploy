@@ -49,7 +49,7 @@ class RepositoryContractTest(unittest.TestCase):
     def test_dockerfile_installs_facodi_ai_python_runtime(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
         self.assertIn("python3-venv", dockerfile)
-        self.assertIn("addons/facodi-ai/requirements.txt", dockerfile)
+        self.assertIn("/opt/facodi-addon-sources/facodi-ai/requirements.txt", dockerfile)
         self.assertIn("pydantic_ai", dockerfile)
         self.assertIn("/opt/facodi-venv", dockerfile)
 
