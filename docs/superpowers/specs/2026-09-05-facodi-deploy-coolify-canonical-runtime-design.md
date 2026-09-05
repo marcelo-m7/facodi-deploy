@@ -1,7 +1,7 @@
 # FACODI Deploy — Canonical Coolify Runtime Design
 
 Date: 2026-09-05
-Status: proposed for implementation
+Status: implemented and validated on branch before merge
 Repository: `marcelo-m7/facodi-deploy`
 Target: existing Coolify application serving `facodi.com`
 
