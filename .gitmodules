@@ -4,6 +4,9 @@
 [submodule "addons/facodi-theme"]
 	path = addons/facodi-theme
 	url = https://github.com/marcelo-m7/facodi-theme.git
+[submodule "addons/monynha-odoo"]
+	path = addons/monynha-odoo
+	url = https://github.com/marcelo-m7/monynha-odoo.git
 [submodule "vendor/odoo-design-themes"]
 	path = vendor/odoo-design-themes
 	url = https://github.com/odoo/design-themes.git
