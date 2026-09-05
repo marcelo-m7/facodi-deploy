@@ -13,3 +13,6 @@
 [submodule "vendor/odoo-design-themes"]
 	path = vendor/odoo-design-themes
 	url = https://github.com/odoo/design-themes.git
+[submodule "vendor/monodoo"]
+	path = addons/monodoo
+	url = https://github.com/marcelo-m7/monodoo.git
