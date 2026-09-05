@@ -1,0 +1,66 @@
+name: Build FACODI image
+
+on:
+  workflow_call:
+    inputs:
+      project_id:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      workload_identity_provider:
+        required: true
+        type: string
+      service_account:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+    outputs:
+      image_uri:
+        description: Immutable Artifact Registry image URI
+        value: ${{ jobs.build.outputs.image_uri }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image_uri: ${{ steps.image.outputs.uri }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Validate repository contract
+        run: bash scripts/validate-repository.sh
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ inputs.workload_identity_provider }}
+          service_account: ${{ inputs.service_account }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Artifact Registry Docker authentication
+        run: gcloud auth configure-docker "${{ inputs.region }}-docker.pkg.dev" --quiet
+
+      - id: image
+        name: Resolve immutable image URI
+        shell: bash
+        run: |
+          uri="${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/facodi/odoo:${{ inputs.image_tag }}"
+          echo "uri=$uri" >> "$GITHUB_OUTPUT"
+          echo "Building $uri"
+
+      - name: Build and push immutable image
+        run: bash scripts/build-image.sh "${{ steps.image.outputs.uri }}" --push

@@ -1,0 +1,6 @@
+[submodule "addons/facodi-learning"]
+	path = addons/facodi-learning
+	url = https://github.com/marcelo-m7/facodi-learning.git
+[submodule "addons/facodi-theme"]
+	path = addons/facodi-theme
+	url = https://github.com/marcelo-m7/facodi-theme.git
