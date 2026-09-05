@@ -115,6 +115,18 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("terraform", workflow.lower())
         self.assertNotIn("google-github-actions", workflow)
 
+    def test_docs_describe_coolify_as_the_only_runtime(self):
+        readme = (ROOT / "README.md").read_text()
+        operations = (ROOT / "docs/operations.md").read_text()
+        for text in (readme, operations):
+            self.assertIn("Coolify", text)
+            self.assertIn("facodi.com", text)
+            self.assertIn("postgres-data", text)
+            self.assertIn("odoo-data", text)
+            self.assertIn("v0.1.0", text)
+        self.assertNotIn("Cloud Run", readme)
+        self.assertNotIn("terraform apply", operations.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
