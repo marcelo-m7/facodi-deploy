@@ -63,6 +63,10 @@ infrastructure/terraform/environments/production
 
 See [`docs/operations.md`](docs/operations.md) for the one-time bootstrap, state migration, secret provisioning, staging acceptance and production gate.
 
+## Verification status
+
+Static Python tests, shell tests and workflow YAML parsing can be executed without cloud credentials. Docker image build, Terraform provider validation and live Cloud Run/Cloud SQL verification remain separate gates and must succeed before this proposal is considered production-ready.
+
 ## Security rules
 
 - no Google service-account JSON keys;
