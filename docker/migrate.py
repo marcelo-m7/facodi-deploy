@@ -12,9 +12,13 @@ def run(command: list[str], *, input_text: str | None = None) -> None:
     subprocess.run(command, input=input_text, text=True, check=True)
 
 
-def psql_scalar(sql: str) -> str:
+def psql_scalar(sql: str, *, database: str | None = None) -> str:
+    command = ["psql", "-v", "ON_ERROR_STOP=1"]
+    if database:
+        command.extend(["--dbname", database])
+    command.extend(["-Atqc", sql])
     result = subprocess.run(
-        ["psql", "-v", "ON_ERROR_STOP=1", "-Atqc", sql],
+        command,
         text=True,
         check=True,
         capture_output=True,
@@ -26,8 +30,21 @@ def psql_script(sql: str) -> None:
     run(["psql", "-v", "ON_ERROR_STOP=1"], input_text=sql)
 
 
-def registry_exists() -> bool:
-    return psql_scalar("SELECT to_regclass('public.ir_module_module') IS NOT NULL") == "t"
+def database_exists(database: str) -> bool:
+    databases = psql_scalar("SELECT datname FROM pg_database", database="postgres")
+    return database in databases.splitlines()
+
+
+def registry_exists(database: str) -> bool:
+    if not database_exists(database):
+        return False
+    return (
+        psql_scalar(
+            "SELECT to_regclass('public.ir_module_module') IS NOT NULL",
+            database=database,
+        )
+        == "t"
+    )
 
 
 def inspect_legacy_state() -> str:
@@ -251,7 +268,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    initialize = not registry_exists()
+    initialize = not registry_exists(args.database)
     if not initialize:
         state = inspect_legacy_state()
         if state == "legacy":
