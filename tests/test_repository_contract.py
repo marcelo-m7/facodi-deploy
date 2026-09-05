@@ -90,6 +90,13 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
         self.assertIn("start_period: 60s", compose)
 
+    def test_coolify_build_context_matches_project_directory(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        runtime_test = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        self.assertGreaterEqual(compose.count("context: ."), 2)
+        self.assertNotIn("context: ../..", compose)
+        self.assertIn('--project-directory "$root"', runtime_test)
+
     def test_obsolete_google_runtime_is_not_active(self):
         forbidden = [
             ROOT / "infrastructure/terraform",
