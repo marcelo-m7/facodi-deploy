@@ -9,7 +9,7 @@ EXPECTED_SUBMODULES = {
     "addons/facodi-ai": "a9e79332d9876d44c032c65e0525cf4df43306cc",
     "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
     "addons/facodi-theme": "9b7903d32a423cb71f9b324d26817bfbc0f9272e",
-    "addons/monynha-odoo": "e2f26bf6e9d4d232b5cb56f4ff1e2a05626bf425",
+    "addons/monynha-odoo": "21d1cddf951267059e22455e036af33cab6cae55",
     "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
 }
 
