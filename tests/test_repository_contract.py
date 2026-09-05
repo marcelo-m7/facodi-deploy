@@ -21,8 +21,8 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_coolify_compose_maps_generated_secrets(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 2)
-        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_ODOO_ADMIN"), 1)
+        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 3)
+        self.assertNotIn("$SERVICE_PASSWORD_64_ODOO_ADMIN", compose)
         self.assertNotIn("${POSTGRES_PASSWORD}", compose)
         self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
 
