@@ -26,6 +26,7 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/theme_monynha/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monynha-odoo/monynha_content/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_lead_generator/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
@@ -64,10 +65,9 @@ class RepositoryContractTest(unittest.TestCase):
     def test_monynha_is_available_but_not_auto_installed_in_facodi(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
-        self.assertNotIn("theme_monynha", compose)
-        self.assertNotIn("monynha_lead_generator", compose)
-        self.assertNotIn("theme_monynha", entrypoint)
-        self.assertNotIn("monynha_lead_generator", entrypoint)
+        for module in ("theme_monynha", "monynha_content", "monynha_lead_generator"):
+            self.assertNotIn(module, compose)
+            self.assertNotIn(module, entrypoint)
 
     def test_generated_local_state_is_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
