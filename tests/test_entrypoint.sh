@@ -14,9 +14,19 @@ printf 't\n'
 SH
 cat >"$tmp/odoo" <<'SH'
 #!/usr/bin/env bash
+test "${1:-}" = server
+config_path=""
+for argument in "$@"; do
+	case "$argument" in
+		--config=*) config_path="${argument#--config=}" ;;
+	esac
+done
+test -n "$config_path"
+grep -Fxq 'admin_passwd = test-admin' "$config_path"
 printf 'PORT=%s PGPORT=%s args=%s\n' "$PORT" "$PGPORT" "$*"
 SH
 chmod +x "$tmp/wait-for-psql.py" "$tmp/psql" "$tmp/odoo"
+printf '[options]\naddons_path = /mnt/extra-addons\n' >"$tmp/odoo.conf"
 
 PATH="$tmp:$PATH" \
 PORT=8080 \
@@ -26,10 +36,12 @@ DB_USER=odoo \
 DB_PASSWORD=test-password \
 ODOO_DB=facodi_staging \
 ODOO_ADMIN_PASSWD=test-admin \
+ODOO_CONFIG_TEMPLATE="$tmp/odoo.conf" \
 FACODI_MODULES=facodi_learning,website_facodi \
 bash "$root/docker/entrypoint.sh" serve >"$tmp/output"
 
 grep -q 'PORT=8080 PGPORT=5432' "$tmp/output"
+grep -q -- '^PORT=.*args=server ' "$tmp/output"
 grep -q -- '--http-port=8080' "$tmp/output"
 ! grep -q -- '--db_port=8080' "$tmp/output"
 grep -Fq -- '--db-filter=^facodi_staging$' "$tmp/output"

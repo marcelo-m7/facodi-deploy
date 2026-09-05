@@ -9,6 +9,19 @@ set -euo pipefail
 : "${ODOO_DB:?ODOO_DB is required}"
 : "${ODOO_ADMIN_PASSWD:?ODOO_ADMIN_PASSWD is required}"
 : "${FACODI_MODULES:=facodi_learning,website_facodi}"
+: "${ODOO_CONFIG_TEMPLATE:=/etc/odoo/odoo.conf}"
+
+case "$ODOO_ADMIN_PASSWD" in
+  *$'\n'*|*$'\r'*)
+    echo "ODOO_ADMIN_PASSWD must be a single-line value" >&2
+    exit 64
+    ;;
+esac
+
+umask 077
+odoo_config="$(mktemp)"
+cp "$ODOO_CONFIG_TEMPLATE" "$odoo_config"
+printf '\nadmin_passwd = %s\n' "$ODOO_ADMIN_PASSWD" >>"$odoo_config"
 
 export PGHOST="$DB_HOST"
 export PGPORT="$DB_PORT"
@@ -18,7 +31,7 @@ export PGDATABASE="$ODOO_DB"
 
 wait-for-psql.py --timeout=60
 
-common=("--database=${ODOO_DB}" "--admin-passwd=${ODOO_ADMIN_PASSWD}")
+common=("server" "--config=${odoo_config}" "--database=${ODOO_DB}")
 
 case "${1:-serve}" in
   serve)

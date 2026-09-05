@@ -35,6 +35,12 @@ services:
       - odoo-data:/var/lib/odoo
     expose:
       - "8069"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:$${PORT}/web/login', timeout=5).close()\""]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 60s
 
 volumes:
   postgres-data:
