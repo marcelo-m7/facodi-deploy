@@ -45,9 +45,11 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `be35673a5649f5e6f7b01777905d0899e3daaf7b` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `9b7903d32a423cb71f9b324d26817bfbc0f9272e` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_lead_generator` | `e2f26bf6e9d4d232b5cb56f4ff1e2a05626bf425` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
+
+The FACODI theme pin is the `19.0.5.0.1` production-compatibility release, which keeps the reusable Odoo-native Website/Portal header components while avoiding a brittle dependency on an existing inner `<nav>` in upgraded Website databases.
 
 The Monynha modules are available in the shared image but are intentionally not included in `FACODI_MODULES`; the FACODI migration gate does not install them into the FACODI database automatically. The pinned Monynha revision is the merged M3 Theme Completion release state, so the image contains the completed Odoo-native branded theme while preserving this installation boundary.
 
