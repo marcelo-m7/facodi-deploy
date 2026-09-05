@@ -159,7 +159,7 @@ Production and public access must remain disabled until all of the following hav
 2. upload an image through Website/eLearning and render it normally;
 3. deploy a different immutable Cloud Run revision;
 4. retrieve the same attachment and image after the revision replacement;
-5. execute the migration job updating `facodi_learning,website_facodi` and verify generated assets/pages;
+5. execute the migration job updating `facodi_learning,theme_facodi` and verify generated assets/pages;
 6. perform simultaneous ordinary reads/writes in two browser sessions and inspect Cloud Run logs for GCS FUSE/filestore errors;
 7. redeploy a previous known-good image using `scripts/deploy-runtime.sh staging <previous-image>` and verify service health;
 8. record whether any Odoo migration changed the database incompatibly with the rolled-back image.
