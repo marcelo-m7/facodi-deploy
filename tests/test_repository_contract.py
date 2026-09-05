@@ -31,6 +31,14 @@ class RepositoryContractTest(unittest.TestCase):
             for token in forbidden:
                 self.assertNotIn(token, text, f"{token} must not appear in {path}")
 
+    def test_staging_can_pin_one_instance_for_background_acceptance(self):
+        variables = (ROOT / "infrastructure/terraform/environments/staging/variables.tf").read_text()
+        main = (ROOT / "infrastructure/terraform/environments/staging/main.tf").read_text()
+        tfvars = (ROOT / "infrastructure/terraform/environments/staging/terraform.tfvars").read_text()
+        self.assertIn('variable "min_instances"', variables)
+        self.assertIn("min_instances                = var.min_instances", main)
+        self.assertIn("min_instances          = 0", tfvars)
+
     def test_production_starts_disabled_and_manual(self):
         tfvars = (ROOT / "infrastructure/terraform/environments/production/terraform.tfvars").read_text()
         self.assertIn("runtime_enabled       = false", tfvars)
