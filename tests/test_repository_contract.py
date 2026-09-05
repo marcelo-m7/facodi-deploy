@@ -46,10 +46,24 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_coolify_compose_maps_generated_secrets(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 3)
+        self.assertGreaterEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 3)
         self.assertNotIn("$SERVICE_PASSWORD_64_ODOO_ADMIN", compose)
         self.assertNotIn("${POSTGRES_PASSWORD}", compose)
         self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
+
+    def test_coolify_compose_preserves_persistent_names_and_gates_odoo(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertIn("  db:\n", compose)
+        self.assertIn("  migrate:\n", compose)
+        self.assertIn("  odoo:\n", compose)
+        self.assertIn("postgres-data:/var/lib/postgresql/data", compose)
+        self.assertGreaterEqual(compose.count("odoo-data:/var/lib/odoo"), 2)
+        self.assertIn("condition: service_completed_successfully", compose)
+        self.assertIn('restart: "no"', compose)
+        self.assertNotIn("name: facodi-postgres", compose)
+        self.assertNotIn("name: facodi-odoo", compose)
+        self.assertNotIn("5432:5432", compose)
+        self.assertNotIn("8069:8069", compose)
 
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
