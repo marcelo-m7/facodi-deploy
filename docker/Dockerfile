@@ -7,8 +7,10 @@ USER root
 COPY addons/ /opt/facodi-addon-sources/
 COPY vendor/odoo-design-themes/theme_common/ /opt/theme-common/theme_common/
 COPY docker/entrypoint.sh /usr/local/bin/facodi-entrypoint
+COPY docker/migrate.py /usr/local/lib/facodi/migrate.py
 RUN set -eux; \
     chmod 0755 /usr/local/bin/facodi-entrypoint; \
+    chmod 0644 /usr/local/lib/facodi/migrate.py; \
     mkdir -p /mnt/extra-addons; \
     found=0; \
     for manifest in /opt/facodi-addon-sources/*/*/__manifest__.py; do \
