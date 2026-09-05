@@ -46,10 +46,10 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | --- | --- | --- |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `be35673a5649f5e6f7b01777905d0899e3daaf7b` |
-| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_lead_generator` | `96c03e92a54ca9ca4e4f32a1307fd9bba36949ce` |
+| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_lead_generator` | `e2f26bf6e9d4d232b5cb56f4ff1e2a05626bf425` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The Monynha modules are available in the shared image but are intentionally not included in `FACODI_MODULES`; the FACODI migration gate does not install them into the FACODI database automatically.
+The Monynha modules are available in the shared image but are intentionally not included in `FACODI_MODULES`; the FACODI migration gate does not install them into the FACODI database automatically. The pinned Monynha revision is the merged M3 Theme Completion release state, so the image contains the completed Odoo-native branded theme while preserving this installation boundary.
 
 ## Migration lifecycle
 
