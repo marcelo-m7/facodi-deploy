@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_SUBMODULES = {
     "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
     "addons/facodi-theme": "be35673a5649f5e6f7b01777905d0899e3daaf7b",
+    "addons/monynha-odoo": "96c03e92a54ca9ca4e4f32a1307fd9bba36949ce",
     "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
 }
 
@@ -20,6 +21,8 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertEqual(paths, set(EXPECTED_SUBMODULES))
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monynha-odoo/theme_monynha/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monynha-odoo/monynha_lead_generator/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
     def test_exact_integration_pins(self):
@@ -38,6 +41,14 @@ class RepositoryContractTest(unittest.TestCase):
             dockerfile,
         )
         self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
+
+    def test_monynha_is_available_but_not_auto_installed_in_facodi(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
+        self.assertNotIn("theme_monynha", compose)
+        self.assertNotIn("monynha_lead_generator", compose)
+        self.assertNotIn("theme_monynha", entrypoint)
+        self.assertNotIn("monynha_lead_generator", entrypoint)
 
     def test_generated_credentials_and_state_are_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
