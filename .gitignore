@@ -1,8 +1,4 @@
 gha-creds-*.json
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfplan
 .env
 .env.*
 !.env.example
