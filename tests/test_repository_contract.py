@@ -37,12 +37,12 @@ class RepositoryContractTest(unittest.TestCase):
         tfvars = (ROOT / "infrastructure/terraform/environments/staging/terraform.tfvars").read_text()
         self.assertIn('variable "min_instances"', variables)
         self.assertIn("min_instances                = var.min_instances", main)
-        self.assertIn("min_instances          = 0", tfvars)
+        self.assertRegex(tfvars, r"(?m)^min_instances\s*=\s*0$")
 
     def test_production_starts_disabled_and_manual(self):
         tfvars = (ROOT / "infrastructure/terraform/environments/production/terraform.tfvars").read_text()
-        self.assertIn("runtime_enabled       = false", tfvars)
-        self.assertIn("public_access_enabled = false", tfvars)
+        self.assertRegex(tfvars, r"(?m)^runtime_enabled\s*=\s*false$")
+        self.assertRegex(tfvars, r"(?m)^public_access_enabled\s*=\s*false$")
 
         workflow = (ROOT / ".github/workflows/deploy-production.yml").read_text()
         self.assertIn("workflow_dispatch:", workflow)
