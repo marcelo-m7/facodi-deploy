@@ -19,6 +19,13 @@ class RepositoryContractTest(unittest.TestCase):
         for pattern in ("gha-creds-*.json", "*.tfstate", "*.tfstate.*", ".terraform/"):
             self.assertIn(pattern, ignored)
 
+    def test_coolify_compose_maps_generated_secrets(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 2)
+        self.assertEqual(compose.count("$SERVICE_PASSWORD_64_ODOO_ADMIN"), 1)
+        self.assertNotIn("${POSTGRES_PASSWORD}", compose)
+        self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
+
     def test_bootstrap_declares_migratable_gcs_backend(self):
         versions = (ROOT / "infrastructure/terraform/bootstrap/versions.tf").read_text()
         self.assertIn('backend "gcs" {}', versions)
