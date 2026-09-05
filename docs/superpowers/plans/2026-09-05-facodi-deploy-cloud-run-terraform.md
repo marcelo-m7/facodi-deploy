@@ -2,93 +2,59 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `marcelo-m7/facodi-deploy` as a reproducible FACODI composition/deployment repository that pins the two FACODI addons, builds immutable Odoo 19 images, provisions Google Cloud with Terraform, and deploys safely to Cloud Run with Cloud SQL.
+**Goal:** Build `marcelo-m7/facodi-deploy` as the reproducible composition and deployment repository for FACODI: pin both addons, build immutable Odoo 19 images, provision Google Cloud with Terraform, and release safely through Cloud Run + Cloud SQL.
 
-**Architecture:** Terraform owns durable Google Cloud infrastructure and IAM; GitHub Actions owns application image build and rollout. `staging` and `production` are isolated environment stacks. A Cloud Run migration job applies Odoo initialization/module updates before the corresponding Cloud Run service is advanced to the same immutable image.
+**Architecture:** Terraform owns durable infrastructure and IAM. GitHub Actions owns image build and application rollout. Each environment has a Cloud Run service plus a Cloud Run migration job; the job initializes/upgrades Odoo before the service advances to the same immutable image.
 
-**Tech Stack:** Terraform 1.16.1; HashiCorp Google provider `>= 7.45.0, < 8.0.0`; Google Cloud Run v2, Cloud Run Jobs v2, Cloud SQL PostgreSQL 16, Cloud Storage, Secret Manager, Artifact Registry, IAM/WIF; Docker/Odoo 19 Community; GitHub Actions; Bash; Python 3 stdlib tests.
+**Tech Stack:** Terraform 1.16.1; `hashicorp/google >= 7.45.0, < 8.0.0`; Cloud Run v2, Cloud Run Jobs v2, Cloud SQL PostgreSQL 16, Cloud Storage, Secret Manager, Artifact Registry, IAM/WIF; Docker/Odoo 19 Community; GitHub Actions; Bash; Python 3 stdlib tests.
 
 **Spec:** `docs/superpowers/specs/2026-09-05-facodi-deploy-cloud-run-terraform-design.md`
 
 ## Global Constraints
 
-- Default Google Cloud project: `marcelo-497411`.
-- Default Google Cloud region: `europe-southwest1`.
-- Runtime v1 is Google Cloud only, but application deployment is called through `scripts/deploy-runtime.sh` rather than embedding runtime logic in workflows.
-- `facodi-learning` and `facodi-theme` remain independent Git repositories and are consumed only as pinned Git submodules.
-- Current technical modules are `facodi_learning` and `website_facodi`; module discovery still uses `__manifest__.py` rather than assuming repository names equal technical module names.
-- Base image is `odoo:19.0`.
-- Cloud SQL database version is PostgreSQL 16.
-- Cloud Run Odoo service starts with `workers=0`, `max_cron_threads=1`, `max_instance_count=1`, `proxy_mode=true`.
-- The official Odoo Docker entrypoint cannot be used unchanged because it interprets environment variable `PORT` as the PostgreSQL port, while Cloud Run reserves `PORT` for the HTTP listener. The FACODI image therefore has its own entrypoint and uses `DB_PORT=5432` for PostgreSQL.
-- A Cloud Run v2 Job performs database initialization/module upgrades before service image rollout. The service itself does not run migrations during startup.
-- No service-account JSON keys.
-- No secret payloads in Git, Terraform variables, Terraform resources, Terraform outputs, or Terraform state.
-- Secret Manager secret containers and IAM are Terraform-managed; secret versions and the Cloud SQL `odoo` user's password are configured operationally outside Terraform.
-- Images are deployed by immutable `facodi-deploy` Git SHA; `latest` is never the deployment source of truth.
-- Terraform ignores application-driven image changes on both Cloud Run service and migration job.
-- Production infrastructure and public access remain disabled until staging acceptance checks pass.
-- Cloud Storage filestore is a staging-gated compatibility decision. Production cannot be enabled until attachments, Website/eLearning images, asset generation, redeploy persistence, and ordinary concurrent reads/writes are verified.
+- Default project: `marcelo-497411`; region: `europe-southwest1`.
+- `facodi-learning` and `facodi-theme` remain independent repositories consumed as pinned Git submodules.
+- Current Odoo technical modules are `facodi_learning` and `website_facodi`.
+- Base image: `odoo:19.0`; database: PostgreSQL 16.
+- Cloud Run v1 policy: `workers=0`, `max_cron_threads=1`, `max_instance_count=1`, `proxy_mode=true`.
+- Do not use the upstream Odoo Docker entrypoint unchanged: it treats `PORT` as PostgreSQL port, while Cloud Run reserves `PORT` for HTTP. FACODI uses `PORT` only for HTTP and `DB_PORT=5432`/`PGPORT=5432` for PostgreSQL.
+- Odoo database initialization and addon updates execute in a Cloud Run v2 Job before service rollout; the web service never migrates during startup.
+- No service-account JSON keys and no secret payloads in Git or Terraform state.
+- Terraform creates Secret Manager containers/IAM only. Secret versions and the Cloud SQL `odoo` password are configured outside Terraform.
+- Images are addressed by immutable `facodi-deploy` Git SHA; no deployment uses `latest` as source of truth.
+- Terraform ignores application-driven image changes on the Cloud Run service and migration job.
+- Production remains disabled until staging acceptance passes, including Cloud Storage filestore persistence tests.
 
 ---
 
-## File Structure
+## Target files
 
 ```text
-facodi-deploy/
-├── .github/workflows/
-│   ├── ci.yml
-│   ├── build-image.yml
-│   ├── terraform-plan.yml
-│   ├── terraform-apply.yml
-│   ├── deploy-staging.yml
-│   └── deploy-production.yml
-├── addons/
-│   ├── facodi-learning/          # gitlink
-│   └── facodi-theme/             # gitlink
-├── docker/
-│   ├── Dockerfile
-│   └── entrypoint.sh
-├── infrastructure/terraform/
-│   ├── bootstrap/
-│   ├── shared/
-│   ├── modules/facodi-runtime-gcp/
-│   └── environments/
-│       ├── staging/
-│       └── production/
-├── scripts/
-│   ├── build-image.sh
-│   ├── configure-database-user.sh
-│   ├── deploy-runtime.sh
-│   ├── verify-runtime.sh
-│   └── validate-repository.sh
-├── tests/
-│   ├── test_entrypoint.sh
-│   └── test_repository_contract.py
-├── docs/operations.md
-├── .gitmodules
-├── .gitignore
-└── README.md
+.github/workflows/{ci,build-image,terraform-plan,terraform-apply,deploy-staging,deploy-production}.yml
+addons/{facodi-learning,facodi-theme}/
+docker/{Dockerfile,entrypoint.sh}
+infrastructure/terraform/
+  bootstrap/
+  shared/
+  modules/facodi-runtime-gcp/
+  environments/{staging,production}/
+scripts/{build-image,configure-database-user,deploy-runtime,verify-runtime,validate-repository}.sh
+tests/{test_entrypoint.sh,test_repository_contract.py}
+docs/operations.md
+.gitmodules
+.gitignore
+README.md
 ```
 
-### Task 1: Pin addon sources and establish the repository contract
+## Task 1: Pin the addon repositories and create the static contract
 
-**Files:**
-- Create: `.gitmodules`
-- Create: `.gitignore`
-- Create: `addons/facodi-learning` as Git submodule
-- Create: `addons/facodi-theme` as Git submodule
-- Create: `scripts/validate-repository.sh`
-- Create: `tests/test_repository_contract.py`
+**Files:** `.gitmodules`, `.gitignore`, both `addons/` gitlinks, `scripts/validate-repository.sh`, `tests/test_repository_contract.py`.
 
-**Interfaces:**
-- Consumes: `https://github.com/marcelo-m7/facodi-learning.git`, `https://github.com/marcelo-m7/facodi-theme.git`.
-- Produces: pinned addon gitlinks and `bash scripts/validate-repository.sh` as the static contract used by local development and CI.
+**Interfaces:** Produces pinned source inputs and `bash scripts/validate-repository.sh`, used by all later tasks and CI.
 
-- [ ] **Step 1: Add a failing repository-contract test**
+- [ ] **Step 1: Write the failing repository contract test.**
 
 ```python
-# tests/test_repository_contract.py
 from pathlib import Path
 import configparser
 import unittest
@@ -96,7 +62,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 class RepositoryContractTest(unittest.TestCase):
-    def test_expected_submodules_and_manifests_exist(self):
+    def test_submodules_and_modules(self):
         parser = configparser.ConfigParser()
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
@@ -104,25 +70,15 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/website_facodi/__manifest__.py").is_file())
 
-    def test_no_credential_files_are_tracked_by_contract(self):
+    def test_generated_credentials_and_state_are_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
-        self.assertIn("gha-creds-*.json", ignored)
-        self.assertIn("*.tfstate", ignored)
-        self.assertIn("*.tfstate.*", ignored)
-
-if __name__ == "__main__":
-    unittest.main()
+        for pattern in ("gha-creds-*.json", "*.tfstate", "*.tfstate.*", ".terraform/"):
+            self.assertIn(pattern, ignored)
 ```
 
-- [ ] **Step 2: Run the test and verify that it fails before submodules/config exist**
+- [ ] **Step 2: Verify RED.** Run `python3 -m unittest tests/test_repository_contract.py -v`; expect failure because submodules/config are absent.
 
-Run: `python3 -m unittest tests/test_repository_contract.py -v`
-
-Expected: FAIL because `.gitmodules`/submodule manifests do not exist yet.
-
-- [ ] **Step 3: Add the two submodules and ignore generated credentials/state**
-
-Run:
+- [ ] **Step 3: Add pinned submodules.**
 
 ```bash
 git submodule add https://github.com/marcelo-m7/facodi-learning.git addons/facodi-learning
@@ -130,7 +86,7 @@ git submodule add https://github.com/marcelo-m7/facodi-theme.git addons/facodi-t
 git submodule update --init --recursive
 ```
 
-Create `.gitignore` with:
+Create `.gitignore`:
 
 ```gitignore
 gha-creds-*.json
@@ -144,98 +100,48 @@ gha-creds-*.json
 __pycache__/
 ```
 
-- [ ] **Step 4: Implement static validation**
+- [ ] **Step 4: Implement validation.**
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
-
 test -f .gitmodules
-for manifest in \
-  addons/facodi-learning/facodi_learning/__manifest__.py \
-  addons/facodi-theme/website_facodi/__manifest__.py; do
+for manifest in addons/facodi-learning/facodi_learning/__manifest__.py addons/facodi-theme/website_facodi/__manifest__.py; do
   test -f "$manifest" || { echo "missing Odoo manifest: $manifest" >&2; exit 1; }
 done
-
 python3 -m unittest tests/test_repository_contract.py -v
-bash -n scripts/*.sh 2>/dev/null || true
 ```
 
-- [ ] **Step 5: Re-run the contract test**
+- [ ] **Step 5: Verify GREEN.** Run `bash scripts/validate-repository.sh`; expect exit 0.
+- [ ] **Step 6: Commit.** `git commit -am "build: pin FACODI addon submodules"` after staging the new files/gitlinks.
 
-Run: `bash scripts/validate-repository.sh`
+## Task 2: Build a Cloud Run-safe Odoo 19 image
 
-Expected: PASS.
+**Files:** `docker/Dockerfile`, `docker/entrypoint.sh`, `scripts/build-image.sh`, `tests/test_entrypoint.sh`; update `scripts/validate-repository.sh`.
 
-- [ ] **Step 6: Commit**
+**Interfaces:** `docker/entrypoint.sh serve` starts Odoo; `docker/entrypoint.sh migrate` initializes or upgrades `facodi_learning,website_facodi`.
 
-```bash
-git add .gitmodules .gitignore addons scripts/validate-repository.sh tests/test_repository_contract.py
-git commit -m "build: pin FACODI addon submodules"
-```
-
-### Task 2: Build a Cloud Run-safe Odoo 19 image
-
-**Files:**
-- Create: `docker/Dockerfile`
-- Create: `docker/entrypoint.sh`
-- Create: `scripts/build-image.sh`
-- Create: `tests/test_entrypoint.sh`
-- Modify: `scripts/validate-repository.sh`
-
-**Interfaces:**
-- Consumes: pinned addon directories from Task 1 and runtime env vars `PORT`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `ODOO_DB`, `ODOO_ADMIN_PASSWD`, `FACODI_MODULES`.
-- Produces: one Odoo image with `/mnt/extra-addons/facodi_learning` and `/mnt/extra-addons/website_facodi`; entrypoint modes `serve` and `migrate`.
-
-- [ ] **Step 1: Write an entrypoint test that proves Cloud Run `PORT` is not reused as the DB port**
+- [ ] **Step 1: Write a failing test for the `PORT` collision and runtime arguments.** Use fake `wait-for-psql.py`, `psql`, and `odoo` binaries in a temporary `PATH`; set `PORT=8080`, `DB_PORT=5432`; assert the fake Odoo process sees `PORT=8080`, `PGPORT=5432`, and `--http-port=8080`.
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-
-cat >"$tmp/wait-for-psql.py" <<'SH'
-#!/usr/bin/env bash
-printf 'wait %s\n' "$*"
-SH
 cat >"$tmp/odoo" <<'SH'
 #!/usr/bin/env bash
-printf 'odoo %s\n' "$*"
+printf 'PORT=%s PGPORT=%s args=%s\n' "$PORT" "$PGPORT" "$*"
 SH
-chmod +x "$tmp/wait-for-psql.py" "$tmp/odoo"
-
-PATH="$tmp:$PATH" \
-PORT=8080 \
-DB_HOST=/cloudsql/marcelo-497411:europe-southwest1:facodi-staging-pg \
-DB_PORT=5432 \
-DB_USER=odoo \
-DB_PASSWORD=test-password \
-ODOO_DB=facodi_staging \
-ODOO_ADMIN_PASSWD=test-admin \
-FACODI_MODULES=facodi_learning,website_facodi \
-bash "$root/docker/entrypoint.sh" serve >"$tmp/output"
-
+# ...make fake helpers executable, invoke entrypoint, then:
+grep -q 'PORT=8080 PGPORT=5432' "$tmp/output"
 grep -q -- '--http-port=8080' "$tmp/output"
-grep -q -- '--db_port=5432' "$tmp/output"
-! grep -q -- '--db_port=8080' "$tmp/output"
 ```
 
-- [ ] **Step 2: Verify the test fails because the custom entrypoint does not exist**
+- [ ] **Step 2: Verify RED.** Run `bash tests/test_entrypoint.sh`; expect missing entrypoint failure.
 
-Run: `bash tests/test_entrypoint.sh`
-
-Expected: FAIL with missing `docker/entrypoint.sh`.
-
-- [ ] **Step 3: Implement the custom entrypoint**
+- [ ] **Step 3: Implement the entrypoint without passing DB passwords on argv.**
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-
 : "${PORT:=8080}"
 : "${DB_PORT:=5432}"
 : "${DB_HOST:?DB_HOST is required}"
@@ -245,155 +151,74 @@ set -euo pipefail
 : "${ODOO_ADMIN_PASSWD:?ODOO_ADMIN_PASSWD is required}"
 : "${FACODI_MODULES:=facodi_learning,website_facodi}"
 
-DB_ARGS=(
-  "--db_host=${DB_HOST}"
-  "--db_port=${DB_PORT}"
-  "--db_user=${DB_USER}"
-  "--db_password=${DB_PASSWORD}"
-  "--database=${ODOO_DB}"
-)
+export PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGUSER="$DB_USER" PGPASSWORD="$DB_PASSWORD" PGDATABASE="$ODOO_DB"
+wait-for-psql.py --timeout=60
 
-wait-for-psql.py "${DB_ARGS[@]}" --timeout=60
-
+common=("--database=${ODOO_DB}" "--admin-passwd=${ODOO_ADMIN_PASSWD}")
 case "${1:-serve}" in
   serve)
-    exec odoo \
-      "${DB_ARGS[@]}" \
-      "--http-port=${PORT}" \
-      --proxy-mode \
-      --workers=0 \
-      --max-cron-threads=1 \
-      "--admin-passwd=${ODOO_ADMIN_PASSWD}"
+    exec odoo "${common[@]}" "--http-port=${PORT}" --proxy-mode --workers=0 --max-cron-threads=1
     ;;
   migrate)
-    if psql "host=${DB_HOST} port=${DB_PORT} user=${DB_USER} dbname=${ODOO_DB} password=${DB_PASSWORD}" \
-      -Atqc "select 1 from information_schema.tables where table_name='ir_module_module'" | grep -q '^1$'; then
-      exec odoo "${DB_ARGS[@]}" --stop-after-init "--update=${FACODI_MODULES}" "--admin-passwd=${ODOO_ADMIN_PASSWD}"
+    if psql -Atqc "select to_regclass('public.ir_module_module') is not null" | grep -qx t; then
+      exec odoo "${common[@]}" --stop-after-init "--update=${FACODI_MODULES}"
     else
-      exec odoo "${DB_ARGS[@]}" --stop-after-init "--init=base,${FACODI_MODULES}" "--admin-passwd=${ODOO_ADMIN_PASSWD}"
+      exec odoo "${common[@]}" --stop-after-init "--init=base,${FACODI_MODULES}"
     fi
     ;;
-  *)
-    echo "usage: $0 {serve|migrate}" >&2
-    exit 64
-    ;;
+  *) echo "usage: $0 {serve|migrate}" >&2; exit 64 ;;
 esac
 ```
 
-- [ ] **Step 4: Implement the image composition**
+- [ ] **Step 4: Compose the image.**
 
 ```dockerfile
 FROM odoo:19.0
-
 LABEL org.opencontainers.image.source="https://github.com/marcelo-m7/facodi-deploy"
-LABEL org.opencontainers.image.title="FACODI Odoo"
-
 USER root
 COPY addons/ /opt/facodi-addon-sources/
 COPY docker/entrypoint.sh /usr/local/bin/facodi-entrypoint
-RUN set -eux; \
-    chmod 0755 /usr/local/bin/facodi-entrypoint; \
-    mkdir -p /mnt/extra-addons; \
+RUN set -eux; chmod 0755 /usr/local/bin/facodi-entrypoint; mkdir -p /mnt/extra-addons; \
     for manifest in /opt/facodi-addon-sources/*/*/__manifest__.py; do \
-      module_dir="$(dirname "$manifest")"; \
-      module_name="$(basename "$module_dir")"; \
-      test ! -e "/mnt/extra-addons/$module_name"; \
-      cp -a "$module_dir" "/mnt/extra-addons/$module_name"; \
-    done; \
-    chown -R odoo:odoo /mnt/extra-addons
+      d="$(dirname "$manifest")"; n="$(basename "$d")"; test ! -e "/mnt/extra-addons/$n"; cp -a "$d" "/mnt/extra-addons/$n"; \
+    done; chown -R odoo:odoo /mnt/extra-addons
 USER odoo
 ENTRYPOINT ["/usr/local/bin/facodi-entrypoint"]
 CMD ["serve"]
 ```
 
-- [ ] **Step 5: Implement the build wrapper**
+- [ ] **Step 5: Add `scripts/build-image.sh`.** It must run `docker build -f docker/Dockerfile -t "$IMAGE" .` and push only when its second argument is `--push`.
+- [ ] **Step 6: Verify GREEN.** Run `bash -n docker/entrypoint.sh scripts/build-image.sh`, `bash tests/test_entrypoint.sh`, and `docker build -f docker/Dockerfile -t facodi-odoo:test .`; all must exit 0.
+- [ ] **Step 7: Commit.** `git commit -m "build: add Cloud Run safe Odoo image"`.
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-image="${1:?usage: scripts/build-image.sh IMAGE_URI [--push]}"
-push="${2:-}"
-docker build -f docker/Dockerfile -t "$image" .
-if [[ "$push" == "--push" ]]; then
-  docker push "$image"
-fi
-```
+## Task 3: Terraform bootstrap and shared infrastructure
 
-- [ ] **Step 6: Run syntax, entrypoint, and Docker build checks**
+**Files:** `infrastructure/terraform/bootstrap/{versions,variables,main,outputs}.tf`; `infrastructure/terraform/shared/{versions,backend,variables,main,outputs}.tf`.
 
-Run:
+**Interfaces:** Bootstrap consumes a locally authenticated GCP administrator once. It produces state bucket, WIF provider, and Terraform identity. Shared stack produces Artifact Registry and application deployment identity.
 
-```bash
-bash -n docker/entrypoint.sh scripts/build-image.sh
-bash tests/test_entrypoint.sh
-docker build -f docker/Dockerfile -t facodi-odoo:test .
-```
-
-Expected: all commands exit 0.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add docker scripts/build-image.sh scripts/validate-repository.sh tests/test_entrypoint.sh
-git commit -m "build: add Cloud Run safe Odoo image"
-```
-
-### Task 3: Create Terraform bootstrap and shared infrastructure
-
-**Files:**
-- Create: `infrastructure/terraform/bootstrap/{versions.tf,variables.tf,main.tf,outputs.tf}`
-- Create: `infrastructure/terraform/shared/{versions.tf,backend.tf,variables.tf,main.tf,outputs.tf}`
-
-**Interfaces:**
-- Consumes: admin ADC credentials for the one-time bootstrap; defaults `project_id=marcelo-497411`, `region=europe-southwest1`, GitHub repo `marcelo-m7/facodi-deploy`.
-- Produces: GCS Terraform state bucket, WIF pool/provider, `facodi-terraform` identity, Artifact Registry `facodi`, and `facodi-github-deploy` identity.
-
-- [ ] **Step 1: Add Terraform version/provider constraints to both roots**
+- [ ] **Step 1: Pin Terraform/provider.** Every root uses:
 
 ```hcl
 terraform {
   required_version = ">= 1.16.0, < 1.17.0"
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 7.45.0, < 8.0.0"
-    }
+    google = { source = "hashicorp/google", version = ">= 7.45.0, < 8.0.0" }
   }
 }
 ```
 
-- [ ] **Step 2: Implement bootstrap resources**
+- [ ] **Step 2: Implement bootstrap.** Create `marcelo-497411-facodi-tfstate` with uniform access, public-access prevention, versioning, and `prevent_destroy`; WIF pool `github`; provider `facodi-deploy`; SA `facodi-terraform`. Provider condition is exactly `assertion.repository == 'marcelo-m7/facodi-deploy'` with subject/repository/ref mappings. Grant the repo principal `roles/iam.workloadIdentityUser` on the Terraform SA. Grant that SA: `roles/serviceusage.serviceUsageAdmin`, `roles/artifactregistry.admin`, `roles/run.admin`, `roles/cloudsql.admin`, `roles/storage.admin`, `roles/secretmanager.admin`, `roles/iam.serviceAccountAdmin`, `roles/resourcemanager.projectIamAdmin`.
 
-The bootstrap root must create:
-
-```text
-GCS bucket: marcelo-497411-facodi-tfstate
-WIF pool: github
-WIF provider: facodi-deploy
-Terraform SA: facodi-terraform@marcelo-497411.iam.gserviceaccount.com
-```
-
-The provider condition must restrict tokens to `assertion.repository == 'marcelo-m7/facodi-deploy'`. Map `google.subject=assertion.sub`, `attribute.repository=assertion.repository`, `attribute.ref=assertion.ref`.
-
-Grant the repository principal `roles/iam.workloadIdentityUser` on the Terraform service account. Grant the Terraform service account only the project roles needed by the declared stacks: `roles/serviceusage.serviceUsageAdmin`, `roles/artifactregistry.admin`, `roles/run.admin`, `roles/cloudsql.admin`, `roles/storage.admin`, `roles/secretmanager.admin`, `roles/iam.serviceAccountAdmin`, and `roles/resourcemanager.projectIamAdmin`.
-
-Protect the state bucket with uniform bucket-level access, public-access prevention, versioning, and `lifecycle { prevent_destroy = true }`.
-
-- [ ] **Step 3: Implement shared resources**
-
-The shared root uses a partial GCS backend:
+- [ ] **Step 3: Implement shared stack with partial GCS backend.**
 
 ```hcl
-terraform {
-  backend "gcs" {}
-}
+terraform { backend "gcs" {} }
 ```
 
-Create/enable the APIs for Cloud Run, Cloud SQL Admin, Artifact Registry, Secret Manager, IAM Credentials, STS, and Service Usage. Create Artifact Registry repository `facodi` in `europe-southwest1`. Create `facodi-github-deploy` and grant its WIF principal `roles/iam.workloadIdentityUser`. Grant Artifact Registry Writer on repository `facodi` to the deployment SA and project `roles/run.developer` to that SA.
+Enable `run.googleapis.com`, `sqladmin.googleapis.com`, `artifactregistry.googleapis.com`, `secretmanager.googleapis.com`, `iam.googleapis.com`, `iamcredentials.googleapis.com`, `sts.googleapis.com`, `serviceusage.googleapis.com`. Create Docker Artifact Registry `facodi` in Madrid and SA `facodi-github-deploy`. Bind the same repo principal to that SA, grant Artifact Registry Writer on repository `facodi`, and project `roles/run.developer`.
 
-- [ ] **Step 4: Format and validate without touching the cloud**
-
-Run:
+- [ ] **Step 4: Validate without cloud mutations.**
 
 ```bash
 terraform -chdir=infrastructure/terraform/bootstrap fmt -check
@@ -404,25 +229,15 @@ terraform -chdir=infrastructure/terraform/shared init -backend=false
 terraform -chdir=infrastructure/terraform/shared validate
 ```
 
-Expected: all commands exit 0.
+- [ ] **Step 5: Commit.** `git commit -m "infra: add Terraform bootstrap and shared resources"`.
 
-- [ ] **Step 5: Commit**
+## Task 4: Reusable GCP runtime module
 
-```bash
-git add infrastructure/terraform/bootstrap infrastructure/terraform/shared
-git commit -m "infra: add Terraform bootstrap and shared GCP resources"
-```
+**Files:** `infrastructure/terraform/modules/facodi-runtime-gcp/{variables,main,outputs}.tf`.
 
-### Task 4: Implement the reusable GCP runtime module
+**Interfaces:** Inputs include project, region, `staging|production`, `initial_image_uri`, enable flags, sizing, and deployment SA email. Outputs include service/job names, DB connection name, secret IDs, bucket, runtime SA, service URI.
 
-**Files:**
-- Create: `infrastructure/terraform/modules/facodi-runtime-gcp/{variables.tf,main.tf,outputs.tf}`
-
-**Interfaces:**
-- Consumes: project, region, environment name, initial image URI, runtime/public-enable flags.
-- Produces: isolated Cloud SQL PostgreSQL 16, database, runtime SA, GCS filestore bucket, Secret Manager containers, Cloud Run migration job, Cloud Run service, and runtime outputs.
-
-- [ ] **Step 1: Define exact module inputs**
+- [ ] **Step 1: Define inputs with valid HCL.**
 
 ```hcl
 variable "project_id" { type = string }
@@ -435,34 +250,30 @@ variable "environment" {
   }
 }
 variable "initial_image_uri" { type = string }
-variable "runtime_enabled" { type = bool, default = false }
-variable "public_access_enabled" { type = bool, default = false }
-variable "min_instances" { type = number, default = 0 }
-variable "max_instances" { type = number, default = 1 }
-variable "database_tier" { type = string, default = "db-custom-1-3840" }
+variable "runtime_enabled" { type = bool; default = false }
+variable "public_access_enabled" { type = bool; default = false }
+variable "min_instances" { type = number; default = 0 }
+variable "max_instances" { type = number; default = 1 }
+variable "database_tier" { type = string; default = "db-custom-1-3840" }
+variable "deploy_service_account_email" { type = string }
 ```
 
-- [ ] **Step 2: Create isolated persistent resources**
-
-Use names derived from the environment:
+- [ ] **Step 2: Create environment-isolated persistence and IAM.** Names:
 
 ```text
-Cloud SQL: facodi-<environment>-pg
-Database: facodi_<environment>
-Runtime SA: facodi-<environment>-runtime
-Bucket: marcelo-497411-facodi-<environment>-filestore
-Secrets: facodi-<environment>-db-password, facodi-<environment>-admin-passwd
-Cloud Run service: facodi-<environment>
-Migration job: facodi-<environment>-migrate
+facodi-<env>-pg
+facodi_<env>
+facodi-<env>-runtime
+marcelo-497411-facodi-<env>-filestore
+facodi-<env>-db-password
+facodi-<env>-admin-passwd
 ```
 
-Cloud SQL must use `database_version = "POSTGRES_16"`, automatic storage growth, backups enabled, and production deletion protection. Do not create `google_sql_user` because its password would enter Terraform state.
+Cloud SQL uses `database_version = "POSTGRES_16"` and `settings.edition = "ENTERPRISE"` so `db-custom-1-3840` is valid. Enable backups and storage auto-growth. For production set both Terraform `deletion_protection = true` and API-level `settings.deletion_protection_enabled = true`; staging sets them false. Create `google_sql_database` but **not** `google_sql_user`.
 
-Grant the runtime SA `roles/cloudsql.client`, Secret Manager accessor only on the two environment secrets, and `roles/storage.objectUser` only on the environment filestore bucket.
+Grant runtime SA project `roles/cloudsql.client`, secret accessor only on its two secrets, and bucket `roles/storage.objectUser`. Grant `roles/iam.serviceAccountUser` on the runtime SA to `serviceAccount:${var.deploy_service_account_email}`.
 
-- [ ] **Step 3: Implement Cloud Run service and migration job behind `runtime_enabled`**
-
-Use `google_cloud_run_v2_service` and `google_cloud_run_v2_job`. Both mount the same Cloud SQL volume at `/cloudsql` and the same GCS filestore volume at `/var/lib/odoo/filestore`. Configure GCS mount options so the non-root `odoo` process can write without assuming an image-specific UID:
+- [ ] **Step 3: Create Cloud Run service and migration job when `runtime_enabled=true`.** Both use Gen2, the same runtime SA, Cloud SQL volume mounted at `/cloudsql`, and GCS volume at `/var/lib/odoo/filestore`:
 
 ```hcl
 gcs {
@@ -472,98 +283,43 @@ gcs {
 }
 ```
 
-Service env must include:
+Environment variables are `DB_HOST=/cloudsql/${google_sql_database_instance.main.connection_name}`, `DB_PORT=5432`, `DB_USER=odoo`, `ODOO_DB=facodi_<env>`, `FACODI_MODULES=facodi_learning,website_facodi`. `DB_PASSWORD` and `ODOO_ADMIN_PASSWD` use Secret Manager `value_source.secret_key_ref` version `latest`. Container resources set `cpu_idle = false`; service scaling never exceeds 1. Job args are `migrate`; service uses image default `serve`.
 
-```text
-DB_HOST=/cloudsql/<instance-connection-name>
-DB_PORT=5432
-DB_USER=odoo
-ODOO_DB=facodi_<environment>
-FACODI_MODULES=facodi_learning,website_facodi
-```
-
-`DB_PASSWORD` and `ODOO_ADMIN_PASSWD` must use Secret Manager `value_source.secret_key_ref` with version `latest`.
-
-Set execution environment Gen2, `max_instance_count = 1`, `cpu_idle = false`, and service container command/args to use the image default `serve`. Configure the migration job to pass `migrate`.
-
-Add:
+- [ ] **Step 4: Ignore only application image drift.** Service:
 
 ```hcl
-lifecycle {
-  ignore_changes = [template[0].containers[0].image]
-}
+lifecycle { ignore_changes = [template[0].containers[0].image] }
 ```
 
-to both the service and migration job so application releases do not become Terraform drift.
-
-- [ ] **Step 4: Add public invocation only when explicitly enabled**
-
-Use `google_cloud_run_v2_service_iam_member` with `member = "allUsers"`, `role = "roles/run.invoker"`, and `count = var.public_access_enabled ? 1 : 0`.
-
-- [ ] **Step 5: Validate module through an environment root in Task 5 rather than applying it directly**
-
-Run after Task 5 root creation: `terraform validate` from both environment roots.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add infrastructure/terraform/modules/facodi-runtime-gcp
-git commit -m "infra: add FACODI Cloud Run runtime module"
-```
-
-### Task 5: Add staging and production Terraform roots and operational secret bootstrap
-
-**Files:**
-- Create: `infrastructure/terraform/environments/staging/{versions.tf,backend.tf,main.tf,variables.tf,terraform.tfvars.example,outputs.tf}`
-- Create: `infrastructure/terraform/environments/production/{versions.tf,backend.tf,main.tf,variables.tf,terraform.tfvars.example,outputs.tf}`
-- Create: `scripts/configure-database-user.sh`
-
-**Interfaces:**
-- Consumes: shared remote infrastructure and externally populated Secret Manager versions.
-- Produces: isolated state prefixes `environments/staging` and `environments/production`; one-time operational creation/update of the Cloud SQL `odoo` DB user without putting its password into Terraform state.
-
-- [ ] **Step 1: Wire both roots to the runtime module**
-
-Staging defaults:
+Job:
 
 ```hcl
-project_id            = "marcelo-497411"
-region                = "europe-southwest1"
-runtime_enabled       = false
-public_access_enabled = false
-min_instances         = 0
-max_instances         = 1
-database_tier         = "db-custom-1-3840"
+lifecycle { ignore_changes = [template[0].template[0].containers[0].image] }
 ```
 
-Production defaults:
+- [ ] **Step 5: Configure invocation IAM.** `allUsers` gets `roles/run.invoker` only when `public_access_enabled=true`. Independently, grant the deployment SA `roles/run.invoker` on the service so authenticated post-deploy verification works while public access is disabled.
 
-```hcl
-project_id            = "marcelo-497411"
-region                = "europe-southwest1"
-runtime_enabled       = false
-public_access_enabled = false
-min_instances         = 1
-max_instances         = 1
-database_tier         = "db-custom-1-3840"
-```
+- [ ] **Step 6: Commit.** `git commit -m "infra: add FACODI Cloud Run runtime module"`.
 
-`initial_image_uri` is required only when `runtime_enabled=true`; use a validation rule requiring a non-empty URI in that case.
+## Task 5: Environment roots and DB credential bootstrap
 
-- [ ] **Step 2: Implement DB-user configuration outside Terraform**
+**Files:** `infrastructure/terraform/environments/staging/*`, `production/*`, `scripts/configure-database-user.sh`.
+
+**Interfaces:** Roots consume the module. The DB script copies the Secret Manager DB password into the Cloud SQL `odoo` account without exposing the password to Terraform.
+
+- [ ] **Step 1: Create partial-backend roots.** Both use `terraform { backend "gcs" {} }` and call `../../modules/facodi-runtime-gcp`. Defaults: project `marcelo-497411`, region `europe-southwest1`, `runtime_enabled=false`, `public_access_enabled=false`, `max_instances=1`. Staging `min_instances=0`; production `min_instances=1`. `initial_image_uri` is validated as non-empty whenever runtime is enabled.
+
+- [ ] **Step 2: Implement DB-user bootstrap.**
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-
 env_name="${1:?usage: scripts/configure-database-user.sh staging|production}"
 case "$env_name" in staging|production) ;; *) exit 64 ;; esac
-
 project="${GCP_PROJECT_ID:-marcelo-497411}"
 instance="facodi-${env_name}-pg"
 secret="facodi-${env_name}-db-password"
 password="$(gcloud secrets versions access latest --project "$project" --secret "$secret")"
-
 if gcloud sql users list --project "$project" --instance "$instance" --format='value(name)' | grep -qx odoo; then
   gcloud sql users set-password odoo --project "$project" --instance "$instance" --password "$password"
 else
@@ -572,9 +328,7 @@ fi
 unset password
 ```
 
-- [ ] **Step 3: Validate both roots without backend/cloud access**
-
-Run:
+- [ ] **Step 3: Validate roots.**
 
 ```bash
 for env in staging production; do
@@ -585,268 +339,122 @@ done
 bash -n scripts/configure-database-user.sh
 ```
 
-Expected: all commands exit 0.
+- [ ] **Step 4: Commit.** `git commit -m "infra: add staging and production roots"`.
 
-- [ ] **Step 4: Commit**
+## Task 6: Runtime deployment and verification adapter
 
-```bash
-git add infrastructure/terraform/environments scripts/configure-database-user.sh
-git commit -m "infra: add isolated staging and production stacks"
-```
+**Files:** `scripts/deploy-runtime.sh`, `scripts/verify-runtime.sh`.
 
-### Task 6: Implement runtime deployment, migration, verification, and rollback-safe image rollout
+**Interfaces:** `scripts/deploy-runtime.sh <staging|production> <immutable-image-uri>` updates/executes migration job, then updates service, then verifies it.
 
-**Files:**
-- Create: `scripts/deploy-runtime.sh`
-- Create: `scripts/verify-runtime.sh`
-
-**Interfaces:**
-- Consumes: `<environment> <image-uri>` and authenticated `gcloud` session.
-- Produces: successful migration job execution followed by service image rollout and verification.
-
-- [ ] **Step 1: Implement the runtime-neutral entry contract**
+- [ ] **Step 1: Implement deployment adapter.**
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-
 env_name="${1:?usage: scripts/deploy-runtime.sh staging|production IMAGE_URI}"
 image_uri="${2:?usage: scripts/deploy-runtime.sh staging|production IMAGE_URI}"
 case "$env_name" in staging|production) ;; *) exit 64 ;; esac
-
 project="${GCP_PROJECT_ID:-marcelo-497411}"
 region="${GCP_REGION:-europe-southwest1}"
-service="facodi-${env_name}"
 job="facodi-${env_name}-migrate"
-
+service="facodi-${env_name}"
 gcloud run jobs update "$job" --project "$project" --region "$region" --image "$image_uri" --quiet
 gcloud run jobs execute "$job" --project "$project" --region "$region" --wait --quiet
 gcloud run services update "$service" --project "$project" --region "$region" --image "$image_uri" --quiet
 exec "$(dirname "$0")/verify-runtime.sh" "$env_name" "$image_uri"
 ```
 
-- [ ] **Step 2: Implement live verification**
+- [ ] **Step 2: Implement `verify-runtime.sh`.** Fail unless `gcloud run services describe` shows Ready=True, expected image URI, runtime SA `facodi-<env>-runtime@marcelo-497411.iam.gserviceaccount.com`, max instances 1, Cloud SQL volume, and GCS volume. Resolve the service URL and verify `/web/login` with an identity token:
 
-`verify-runtime.sh` must use `gcloud run services describe` and fail unless:
+```bash
+uri="$(gcloud run services describe "$service" --project "$project" --region "$region" --format='value(uri)')"
+token="$(gcloud auth print-identity-token)"
+curl -fsS -H "Authorization: Bearer $token" "$uri/web/login" >/dev/null
+```
+
+- [ ] **Step 3: Syntax-check.** `bash -n scripts/deploy-runtime.sh scripts/verify-runtime.sh` must exit 0.
+- [ ] **Step 4: Commit.** `git commit -m "deploy: add Cloud Run migration and rollout adapter"`.
+
+## Task 7: GitHub Actions
+
+**Files:** all six `.github/workflows/*.yml` files.
+
+**Interfaces:** Repository variables: `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_TERRAFORM_SERVICE_ACCOUNT`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `TERRAFORM_STATE_BUCKET`, `TERRAFORM_PLAN_ENABLED`, `DEPLOY_STAGING_ENABLED`, `DEPLOY_PRODUCTION_ENABLED`.
+
+- [ ] **Step 1: CI.** Use `actions/checkout@v7` with recursive submodules and `hashicorp/setup-terraform@v3` with Terraform `1.16.1`. Run repository tests, Docker build, `terraform fmt -check -recursive`, and `init -backend=false && validate` for bootstrap/shared/staging/production. CI needs no Google credentials.
+
+- [ ] **Step 2: Reusable build/push.** Authenticate with `google-github-actions/auth@v3`, install gcloud with `google-github-actions/setup-gcloud@v3`, configure Docker, and push exactly:
 
 ```text
-service exists
-Ready=True
-deployed container image == expected immutable URI
-service account == facodi-<environment>-runtime@marcelo-497411.iam.gserviceaccount.com
-max instance count == 1
-Cloud SQL volume exists
-GCS volume exists
+europe-southwest1-docker.pkg.dev/marcelo-497411/facodi/odoo:${GITHUB_SHA}
 ```
 
-Then obtain the service URI with:
+Expose `image_uri` as reusable-workflow output.
 
-```bash
-gcloud run services describe "$service" --project "$project" --region "$region" --format='value(uri)'
-```
+- [ ] **Step 3: Terraform plan.** PR plan is gated by `${{ vars.TERRAFORM_PLAN_ENABLED == 'true' }}` because initial bootstrap must exist first. Authenticate as Terraform SA; matrix-plan `shared`, `staging`, `production` using state prefixes `shared`, `environments/staging`, `environments/production`. Never apply on PR.
 
-and perform an HTTP request to `/web/login`. When the service is not yet public, use an identity token:
+- [ ] **Step 4: Terraform apply.** `workflow_dispatch` only, input `stack` limited to `shared|staging|production`; production uses GitHub Environment `production`. Plan then apply the saved plan; never auto-apply on push.
 
-```bash
-curl -fsS -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$uri/web/login" >/dev/null
-```
+- [ ] **Step 5: Staging deploy.** Gate on `${{ vars.DEPLOY_STAGING_ENABLED == 'true' }}`, build/push SHA image, authenticate as deployment SA, run `bash scripts/deploy-runtime.sh staging "$IMAGE_URI"`.
 
-- [ ] **Step 3: Add syntax checks and a dry static contract check**
+- [ ] **Step 6: Production deploy.** `workflow_dispatch` + GitHub Environment `production` + `${{ vars.DEPLOY_PRODUCTION_ENABLED == 'true' }}`. A push to `main` alone does not deploy production.
 
-Run:
+- [ ] **Step 7: Commit.** `git commit -m "ci: add Terraform and Cloud Run workflows"`.
 
-```bash
-bash -n scripts/deploy-runtime.sh scripts/verify-runtime.sh
-```
+## Task 8: Operations documentation and final static verification
 
-Expected: exit 0.
+**Files:** `README.md`, `docs/operations.md`; update validation script as needed.
 
-- [ ] **Step 4: Commit**
+**Interfaces:** Produces the exact operator runbook and staging acceptance gate.
 
-```bash
-git add scripts/deploy-runtime.sh scripts/verify-runtime.sh
-git commit -m "deploy: add Cloud Run migration and rollout adapter"
-```
-
-### Task 7: Add GitHub Actions CI, Terraform, and application delivery workflows
-
-**Files:**
-- Create: `.github/workflows/ci.yml`
-- Create: `.github/workflows/build-image.yml`
-- Create: `.github/workflows/terraform-plan.yml`
-- Create: `.github/workflows/terraform-apply.yml`
-- Create: `.github/workflows/deploy-staging.yml`
-- Create: `.github/workflows/deploy-production.yml`
-
-**Interfaces:**
-- Consumes repository variables `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_ARTIFACT_REPOSITORY`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_TERRAFORM_SERVICE_ACCOUNT`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `TERRAFORM_STATE_BUCKET`, `DEPLOY_STAGING_ENABLED`, `DEPLOY_PRODUCTION_ENABLED`.
-- Produces: credentialless CI/CD through GitHub OIDC/WIF.
-
-- [ ] **Step 1: Implement CI with no Google credentials**
-
-Use `actions/checkout@v7` with `submodules: recursive`, install Terraform with `hashicorp/setup-terraform@v3` and `terraform_version: 1.16.1`, then run:
-
-```bash
-bash scripts/validate-repository.sh
-bash tests/test_entrypoint.sh
-docker build -f docker/Dockerfile -t facodi-odoo:ci .
-terraform fmt -check -recursive infrastructure/terraform
-for root in bootstrap shared environments/staging environments/production; do
-  terraform -chdir="infrastructure/terraform/$root" init -backend=false
-  terraform -chdir="infrastructure/terraform/$root" validate
-done
-```
-
-- [ ] **Step 2: Implement reusable image build/push**
-
-Authenticate with `google-github-actions/auth@v3`, configure gcloud with `google-github-actions/setup-gcloud@v3`, configure Docker for `${GCP_REGION}-docker.pkg.dev`, and publish:
+- [ ] **Step 1: Document first bootstrap sequence exactly.**
 
 ```text
-${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/facodi/odoo:${GITHUB_SHA}
-```
-
-The workflow output must be `image_uri`.
-
-- [ ] **Step 3: Implement Terraform plan**
-
-For pull requests touching `infrastructure/terraform/**`, authenticate using `GCP_TERRAFORM_SERVICE_ACCOUNT`. Initialize the selected `shared`, `staging`, or `production` root with:
-
-```bash
-terraform init \
-  -backend-config="bucket=${TERRAFORM_STATE_BUCKET}" \
-  -backend-config="prefix=<root-specific-prefix>"
-terraform plan -no-color -out=tfplan
-```
-
-Never run apply on a pull-request event.
-
-- [ ] **Step 4: Implement explicit Terraform apply**
-
-Use only `workflow_dispatch`, input `stack` with allowed values `shared`, `staging`, `production`, and GitHub Environment matching staging/production when applicable. Run plan and `terraform apply -auto-approve tfplan`. Do not implement automatic apply on push.
-
-- [ ] **Step 5: Implement staging application deploy**
-
-Trigger on `workflow_dispatch` and optionally `push` to a future `staging` branch, but gate the whole job with:
-
-```yaml
-if: ${{ vars.DEPLOY_STAGING_ENABLED == 'true' }}
-```
-
-Build/push the SHA image, authenticate as `GCP_DEPLOY_SERVICE_ACCOUNT`, and call:
-
-```bash
-bash scripts/deploy-runtime.sh staging "$IMAGE_URI"
-```
-
-- [ ] **Step 6: Implement production application deploy**
-
-Production uses GitHub Environment `production`, `workflow_dispatch`, and:
-
-```yaml
-if: ${{ vars.DEPLOY_PRODUCTION_ENABLED == 'true' }}
-```
-
-Do not deploy production merely because `main` receives a push.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add .github/workflows
-git commit -m "ci: add Terraform and Cloud Run delivery workflows"
-```
-
-### Task 8: Document bootstrap, first staging rollout, acceptance gate, and repository usage
-
-**Files:**
-- Modify: `README.md`
-- Create: `docs/operations.md`
-- Modify: `scripts/validate-repository.sh`
-
-**Interfaces:**
-- Consumes: all previous tasks.
-- Produces: exact operator sequence from empty project permissions to first staging deploy and production gate.
-
-- [ ] **Step 1: Document the one-time bootstrap sequence**
-
-Document these exact phases:
-
-```text
-1. Admin authenticates locally with gcloud Application Default Credentials.
-2. terraform/bootstrap init -backend=false + apply.
-3. terraform/bootstrap init -migrate-state with bucket marcelo-497411-facodi-tfstate and prefix bootstrap.
-4. Configure GitHub repository variables with bootstrap outputs.
-5. Apply shared stack from GitHub or locally.
+1. Authenticate a GCP administrator locally.
+2. bootstrap: init -backend=false, plan, apply.
+3. Migrate bootstrap state to marcelo-497411-facodi-tfstate prefix bootstrap.
+4. Configure GitHub variables from bootstrap outputs.
+5. Apply shared stack.
 6. Apply staging with runtime_enabled=false.
-7. Add secret versions for facodi-staging-db-password and facodi-staging-admin-passwd.
+7. Add latest secret versions for DB password and Odoo admin password.
 8. Run scripts/configure-database-user.sh staging.
-9. Build/push the first immutable image.
-10. Apply staging with runtime_enabled=true and initial_image_uri set to that SHA image.
-11. Run deploy-staging workflow.
-12. Perform filestore acceptance tests.
+9. Build/push first immutable image.
+10. Apply staging with runtime_enabled=true and initial_image_uri=<that SHA image>.
+11. Enable/run staging application deployment.
+12. Run filestore and rollback acceptance checks.
 13. Only after acceptance, enable public access and consider production.
 ```
 
-- [ ] **Step 2: Document secret creation without printing values**
-
-Use commands that read from stdin:
+- [ ] **Step 2: Document secret input through stdin and immediate shell cleanup.**
 
 ```bash
 printf '%s' "$DB_PASSWORD" | gcloud secrets versions add facodi-staging-db-password --data-file=- --project marcelo-497411
 printf '%s' "$ODOO_ADMIN_PASSWD" | gcloud secrets versions add facodi-staging-admin-passwd --data-file=- --project marcelo-497411
+unset DB_PASSWORD ODOO_ADMIN_PASSWD
 ```
 
-The docs must tell the operator to `unset DB_PASSWORD ODOO_ADMIN_PASSWD` afterward and never place them in `.tfvars`.
+- [ ] **Step 3: Document mandatory staging filestore acceptance.** Create/retrieve attachment; upload/render Website/eLearning image; deploy a new revision; re-read both; execute migration job updating `facodi_learning,website_facodi`; confirm web assets; perform simultaneous normal reads/writes in two browser sessions and inspect Cloud Run logs for GCS FUSE/filestore errors; exercise image rollback without Terraform and record DB-schema compatibility.
 
-- [ ] **Step 3: Document the staging filestore acceptance test**
-
-The checklist must require:
-
-```text
-- create and retrieve a normal attachment;
-- upload and display a Website/eLearning image;
-- deploy another revision of the same application;
-- verify both objects remain readable after revision replacement;
-- update/install facodi_learning and website_facodi through the migration job;
-- verify generated web assets remain healthy;
-- perform ordinary simultaneous reads/writes from at least two browser sessions and inspect Cloud Run logs for GCS FUSE/filestore errors;
-- exercise an application image rollback without Terraform and record whether the database schema remains compatible.
-```
-
-- [ ] **Step 4: Run all local verification**
-
-Run:
+- [ ] **Step 4: Run final local checks.**
 
 ```bash
-bash scripts/validate-repository.sh
-bash tests/test_entrypoint.sh
-docker build -f docker/Dockerfile -t facodi-odoo:final-check .
-terraform fmt -check -recursive infrastructure/terraform
-for root in bootstrap shared environments/staging environments/production; do
-  terraform -chdir="infrastructure/terraform/$root" init -backend=false
-  terraform -chdir="infrastructure/terraform/$root" validate
-done
-```
-
-Expected: every command exits 0.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add README.md docs/operations.md scripts/validate-repository.sh
-git commit -m "docs: document FACODI deployment operations"
-```
-
-## Final verification and review gate
-
-Before claiming implementation complete:
-
-```bash
-git status --short
 python3 -m unittest tests/test_repository_contract.py -v
 bash tests/test_entrypoint.sh
 bash scripts/validate-repository.sh
 docker build -f docker/Dockerfile -t facodi-odoo:verification .
 terraform fmt -check -recursive infrastructure/terraform
+for root in bootstrap shared environments/staging environments/production; do
+  terraform -chdir="infrastructure/terraform/$root" init -backend=false
+  terraform -chdir="infrastructure/terraform/$root" validate
+done
+git status --short
 ```
 
-Then validate every Terraform root with `init -backend=false && validate`, inspect the branch diff for credentials, and confirm that production deploy/apply workflows remain explicitly gated. Do not claim Google Cloud resources exist until a real authenticated Terraform apply and `scripts/verify-runtime.sh staging <immutable-image-uri>` succeed against `marcelo-497411`.
+Expected: all test/build/validate commands exit 0 and only intentional uncommitted files appear.
+
+- [ ] **Step 5: Commit.** `git commit -m "docs: document FACODI deployment operations"`.
+
+## Completion gate
+
+Before claiming implementation complete, inspect the branch diff for credentials and verify the production workflows remain gated. Do not claim cloud deployment succeeded until an authenticated Terraform apply has created staging and `scripts/verify-runtime.sh staging <immutable-image-uri>` succeeds against `marcelo-497411`. Application rollback is image-only; it does not reverse Odoo/DB migrations, so any migration requiring backward-incompatible schema changes must be reviewed before production release.
