@@ -1,8 +1,15 @@
 from pathlib import Path
 import configparser
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+
+EXPECTED_SUBMODULES = {
+    "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
+    "addons/facodi-theme": "be35673a5649f5e6f7b01777905d0899e3daaf7b",
+    "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
+}
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -10,9 +17,17 @@ class RepositoryContractTest(unittest.TestCase):
         parser = configparser.ConfigParser()
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
-        self.assertEqual(paths, {"addons/facodi-learning", "addons/facodi-theme"})
+        self.assertEqual(paths, set(EXPECTED_SUBMODULES))
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
+
+    def test_exact_integration_pins(self):
+        for path, expected in EXPECTED_SUBMODULES.items():
+            actual = subprocess.check_output(
+                ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"], text=True
+            ).strip()
+            self.assertEqual(actual, expected, path)
 
     def test_generated_credentials_and_state_are_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
