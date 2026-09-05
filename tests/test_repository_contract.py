@@ -5,13 +5,19 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-EXPECTED_SUBMODULES = {
-    "addons/facodi-ai": "a9e79332d9876d44c032c65e0525cf4df43306cc",
-    "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
-    "addons/facodi-theme": "9b7903d32a423cb71f9b324d26817bfbc0f9272e",
-    "addons/monynha-odoo": "21d1cddf951267059e22455e036af33cab6cae55",
-    "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
+EXPECTED_SUBMODULE_PATHS = {
+    "addons/facodi-ai",
+    "addons/facodi-learning",
+    "addons/facodi-theme",
+    "addons/monodoo",
+    "addons/monynha-odoo",
+    "vendor/odoo-design-themes",
 }
+
+FACODI_MODULES = (
+    "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,"
+    "monodoo_core,monodoo_home"
+)
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -19,19 +25,30 @@ class RepositoryContractTest(unittest.TestCase):
         parser = configparser.ConfigParser()
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
-        self.assertEqual(paths, set(EXPECTED_SUBMODULES))
+        self.assertEqual(paths, EXPECTED_SUBMODULE_PATHS)
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_core/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_home/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/theme_monynha/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_content/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_lead_generator/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
-    def test_exact_integration_pins(self):
-        for path, expected in EXPECTED_SUBMODULES.items():
+    def test_exact_integration_pins_match_superproject_gitlinks(self):
+        """The superproject gitlink is the single source of truth for every pin."""
+        for path in sorted(EXPECTED_SUBMODULE_PATHS):
+            tree_line = subprocess.check_output(
+                ["git", "-C", str(ROOT), "ls-tree", "HEAD", path], text=True
+            ).strip()
+            self.assertTrue(tree_line, path)
+            mode_type_sha, _ = tree_line.split("\t", 1)
+            mode, object_type, expected = mode_type_sha.split()
+            self.assertEqual(mode, "160000", path)
+            self.assertEqual(object_type, "commit", path)
             actual = subprocess.check_output(
                 ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"], text=True
             ).strip()
@@ -54,12 +71,11 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("pydantic_ai", dockerfile)
         self.assertIn("/opt/facodi-venv", dockerfile)
 
-    def test_facodi_ai_is_auto_installed_and_runtime_secret_is_forwarded(self):
+    def test_facodi_and_monodoo_are_auto_installed_and_runtime_secret_is_forwarded(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertGreaterEqual(
-            compose.count("FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"),
-            2,
-        )
+        entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
+        self.assertGreaterEqual(compose.count(f"FACODI_MODULES: {FACODI_MODULES}"), 2)
+        self.assertIn(f'FACODI_MODULES:={FACODI_MODULES}', entrypoint)
         self.assertGreaterEqual(compose.count("GEMINI_API_KEY: ${GEMINI_API_KEY:-}"), 2)
 
     def test_monynha_is_available_but_not_auto_installed_in_facodi(self):
