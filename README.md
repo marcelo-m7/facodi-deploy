@@ -41,6 +41,8 @@ Terraform owns durable infrastructure and IAM. Ordinary application releases do 
 
 Production is disabled by default. The committed production Terraform values start with `runtime_enabled = false` and `public_access_enabled = false`, and the production deployment workflow also requires `DEPLOY_PRODUCTION_ENABLED=true` plus the protected `production` GitHub Environment.
 
+Staging defaults to `min_instances = 0` to control cost. During cron/background acceptance testing, set staging `min_instances = 1` and apply that Terraform change so the Odoo process remains resident while background behavior is evaluated.
+
 ## Local static validation
 
 ```bash
