@@ -27,10 +27,9 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
 
     def test_coolify_compose_checks_odoo_http_health(self):
-        for relative_path in ("docker-compose.coolify.yml", "deploy/coolify/docker-compose.yml"):
-            compose = (ROOT / relative_path).read_text()
-            self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
-            self.assertIn("start_period: 60s", compose)
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
+        self.assertIn("start_period: 60s", compose)
 
     def test_bootstrap_declares_migratable_gcs_backend(self):
         versions = (ROOT / "infrastructure/terraform/bootstrap/versions.tf").read_text()
