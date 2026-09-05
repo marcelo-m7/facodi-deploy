@@ -25,15 +25,17 @@ case "${1:-serve}" in
     exec odoo \
       "${common[@]}" \
       "--http-port=${PORT}" \
+      "--db-filter=^${ODOO_DB}$" \
+      --no-database-list \
       --proxy-mode \
       --workers=0 \
       --max-cron-threads=1
     ;;
   migrate)
     if psql -Atqc "select to_regclass('public.ir_module_module') is not null" | grep -qx t; then
-      exec odoo "${common[@]}" --stop-after-init "--update=${FACODI_MODULES}"
+      exec odoo "${common[@]}" --stop-after-init --without-demo=all "--update=${FACODI_MODULES}"
     else
-      exec odoo "${common[@]}" --stop-after-init "--init=base,${FACODI_MODULES}"
+      exec odoo "${common[@]}" --stop-after-init --without-demo=all "--init=base,${FACODI_MODULES}"
     fi
     ;;
   *)
