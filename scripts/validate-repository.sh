@@ -9,5 +9,5 @@ for manifest in addons/facodi-learning/facodi_learning/__manifest__.py addons/fa
 done
 
 python3 -m unittest tests/test_repository_contract.py -v
-bash -n docker/entrypoint.sh scripts/build-image.sh scripts/validate-repository.sh
+bash -n docker/entrypoint.sh scripts/*.sh
 bash tests/test_entrypoint.sh
