@@ -76,6 +76,7 @@ The committed staging values intentionally begin with:
 runtime_enabled       = false
 public_access_enabled = false
 initial_image_uri      = ""
+min_instances          = 0
 ```
 
 Initialize and apply staging:
@@ -138,6 +139,7 @@ Edit `infrastructure/terraform/environments/staging/terraform.tfvars` and commit
 runtime_enabled       = true
 public_access_enabled = false
 initial_image_uri      = "europe-southwest1-docker.pkg.dev/marcelo-497411/facodi/odoo:<first-sha>"
+min_instances          = 0
 ```
 
 Apply staging again. The `initial_image_uri` is only the Terraform creation seed; Terraform ignores later application-driven image changes for the Cloud Run service and migration job.
@@ -162,7 +164,11 @@ Production and public access must remain disabled until all of the following hav
 7. redeploy a previous known-good image using `scripts/deploy-runtime.sh staging <previous-image>` and verify service health;
 8. record whether any Odoo migration changed the database incompatibly with the rolled-back image.
 
+For cron/background-process acceptance, temporarily change staging to `min_instances = 1`, apply Terraform, exercise scheduled/background behavior while the service is idle, and inspect Cloud Run/Odoo logs. Restore `min_instances = 0` afterward if cost-saving scale-to-zero behavior is desired.
+
 The Cloud Storage filestore mount is a proposal until these checks pass. If attachment, Website/eLearning asset or concurrency behavior is unreliable, do not enable production; change the persistence implementation behind the same deployment interface instead.
+
+A v1 limitation is that only the Odoo filestore is made persistent. HTTP sessions remain local to the Cloud Run instance, so a revision replacement may log users out. Session clustering/Redis is deliberately outside the v1 scope and should be revisited before introducing horizontal scaling.
 
 ## 9. Public staging access
 
