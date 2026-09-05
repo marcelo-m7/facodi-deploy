@@ -14,7 +14,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
         with:
@@ -27,8 +27,11 @@ jobs:
       - name: Validate repository contract
         run: bash scripts/validate-repository.sh
 
-      - name: Build Odoo image
-        run: docker build -f docker/Dockerfile -t facodi-odoo:ci .
+      - name: Validate Coolify Compose
+        run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+
+      - name: Exercise disposable Coolify runtime
+        run: bash tests/test_coolify_runtime.sh
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive infrastructure/terraform
