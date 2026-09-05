@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - staging
+      - proposal/**
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.1
+
+      - name: Validate repository contract
+        run: bash scripts/validate-repository.sh
+
+      - name: Build Odoo image
+        run: docker build -f docker/Dockerfile -t facodi-odoo:ci .
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive infrastructure/terraform
+
+      - name: Validate Terraform roots
+        shell: bash
+        run: |
+          set -euo pipefail
+          for root in \
+            bootstrap \
+            shared \
+            environments/staging \
+            environments/production; do
+            terraform -chdir="infrastructure/terraform/$root" init -backend=false -input=false
+            terraform -chdir="infrastructure/terraform/$root" validate
+          done
