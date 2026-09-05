@@ -107,6 +107,14 @@ class RepositoryContractTest(unittest.TestCase):
         for path in forbidden:
             self.assertFalse(path.exists(), str(path))
 
+    def test_ci_validates_the_canonical_coolify_runtime(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("submodules: recursive", workflow)
+        self.assertIn("deploy/coolify/docker-compose.yml", workflow)
+        self.assertIn("tests/test_coolify_runtime.sh", workflow)
+        self.assertNotIn("terraform", workflow.lower())
+        self.assertNotIn("google-github-actions", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
