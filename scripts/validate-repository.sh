@@ -15,6 +15,6 @@ test "$(git -C addons/facodi-learning rev-parse HEAD)" = "c0d66e3d5ee412dddf89e4
 test "$(git -C addons/facodi-theme rev-parse HEAD)" = "be35673a5649f5e6f7b01777905d0899e3daaf7b"
 test "$(git -C vendor/odoo-design-themes rev-parse HEAD)" = "a1818df4ade65406c0cacae8b1ea676e6f70095f"
 
-python3 -m unittest tests/test_repository_contract.py -v
+python3 -m unittest tests/test_repository_contract.py tests/test_migration_contract.py -v
 bash -n docker/entrypoint.sh scripts/*.sh
 bash tests/test_entrypoint.sh
