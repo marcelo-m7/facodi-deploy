@@ -5,7 +5,13 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
 project="facodi-ci-${GITHUB_RUN_ID:-local}-$$"
-compose=(docker compose --project-name "$project" --env-file .env.ci -f deploy/coolify/docker-compose.yml)
+compose=(
+  docker compose
+  --project-name "$project"
+  --project-directory "$root"
+  --env-file .env.ci
+  -f deploy/coolify/docker-compose.yml
+)
 
 cleanup() {
   "${compose[@]}" logs --no-color >"/tmp/${project}-compose.log" 2>&1 || true
