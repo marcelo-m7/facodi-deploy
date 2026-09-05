@@ -16,7 +16,7 @@ services:
 
   odoo:
     build:
-      context: ../..
+      context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
