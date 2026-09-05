@@ -30,7 +30,7 @@ services:
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_core,monodoo_home
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       PORT: "8069"
     volumes:
@@ -53,7 +53,7 @@ services:
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_core,monodoo_home
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       PORT: "8069"
     volumes:
