@@ -6,6 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_SUBMODULES = {
+    "addons/facodi-ai": "f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b",
     "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
     "addons/facodi-theme": "be35673a5649f5e6f7b01777905d0899e3daaf7b",
     "addons/monynha-odoo": "96c03e92a54ca9ca4e4f32a1307fd9bba36949ce",
@@ -19,6 +20,9 @@ class RepositoryContractTest(unittest.TestCase):
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
         self.assertEqual(paths, set(EXPECTED_SUBMODULES))
+        self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/theme_monynha/__manifest__.py").is_file())
@@ -41,6 +45,21 @@ class RepositoryContractTest(unittest.TestCase):
             dockerfile,
         )
         self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
+
+    def test_dockerfile_installs_facodi_ai_python_runtime(self):
+        dockerfile = (ROOT / "docker/Dockerfile").read_text()
+        self.assertIn("python3-venv", dockerfile)
+        self.assertIn("addons/facodi-ai/requirements.txt", dockerfile)
+        self.assertIn("pydantic_ai", dockerfile)
+        self.assertIn("/opt/facodi-venv", dockerfile)
+
+    def test_facodi_ai_is_auto_installed_and_runtime_secret_is_forwarded(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertGreaterEqual(
+            compose.count("FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"),
+            2,
+        )
+        self.assertGreaterEqual(compose.count("GEMINI_API_KEY: ${GEMINI_API_KEY:-}"), 2)
 
     def test_monynha_is_available_but_not_auto_installed_in_facodi(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
