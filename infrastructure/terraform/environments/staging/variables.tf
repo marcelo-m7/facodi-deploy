@@ -28,6 +28,17 @@ variable "initial_image_uri" {
   }
 }
 
+variable "min_instances" {
+  description = "Minimum staging Cloud Run instances. Use 1 during cron/background acceptance tests."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = contains([0, 1], var.min_instances)
+    error_message = "staging min_instances must be 0 or 1"
+  }
+}
+
 variable "database_tier" {
   type    = string
   default = "db-custom-1-3840"
