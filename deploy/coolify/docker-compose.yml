@@ -16,7 +16,7 @@ services:
 
   migrate:
     build:
-      context: ../..
+      context: .
       dockerfile: docker/Dockerfile
     command: ["migrate"]
     restart: "no"
@@ -37,7 +37,7 @@ services:
 
   odoo:
     build:
-      context: ../..
+      context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     depends_on:
