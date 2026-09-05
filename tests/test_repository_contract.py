@@ -6,10 +6,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_SUBMODULES = {
-    "addons/facodi-ai": "a9e79332d9876d44c032c65e0525cf4df43306cc",
-    "addons/facodi-learning": "c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18",
+    "addons/facodi-ai": "f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b",
+    "addons/facodi-learning": "5fd5d26e96c0c0e8f42f35e170cfd579d46db87c",
     "addons/facodi-theme": "9b7903d32a423cb71f9b324d26817bfbc0f9272e",
-    "addons/monynha-odoo": "21d1cddf951267059e22455e036af33cab6cae55",
+    "addons/monynha-odoo": "bc956459e61a82966c0027c14a5833b9df1738a8",
     "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
 }
 
