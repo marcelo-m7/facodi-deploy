@@ -29,6 +29,16 @@ class RepositoryContractTest(unittest.TestCase):
             ).strip()
             self.assertEqual(actual, expected, path)
 
+    def test_dockerfile_bakes_only_required_odoo_modules(self):
+        dockerfile = (ROOT / "docker/Dockerfile").read_text()
+        self.assertIn("FROM odoo:19.0", dockerfile)
+        self.assertIn("COPY addons/ /opt/facodi-addon-sources/", dockerfile)
+        self.assertIn(
+            "COPY vendor/odoo-design-themes/theme_common/ /opt/theme-common/theme_common/",
+            dockerfile,
+        )
+        self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
+
     def test_generated_credentials_and_state_are_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
         for pattern in ("gha-creds-*.json", "*.tfstate", "*.tfstate.*", ".terraform/"):
