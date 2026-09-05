@@ -12,7 +12,7 @@ class RepositoryContractTest(unittest.TestCase):
         paths = {parser[s]["path"] for s in parser.sections()}
         self.assertEqual(paths, {"addons/facodi-learning", "addons/facodi-theme"})
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
-        self.assertTrue((ROOT / "addons/facodi-theme/website_facodi/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
 
     def test_generated_credentials_and_state_are_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()

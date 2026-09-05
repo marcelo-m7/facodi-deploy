@@ -8,7 +8,7 @@ set -euo pipefail
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
 : "${ODOO_DB:?ODOO_DB is required}"
 : "${ODOO_ADMIN_PASSWD:?ODOO_ADMIN_PASSWD is required}"
-: "${FACODI_MODULES:=facodi_learning,website_facodi}"
+: "${FACODI_MODULES:=facodi_learning,theme_facodi}"
 : "${ODOO_CONFIG_TEMPLATE:=/etc/odoo/odoo.conf}"
 
 case "$ODOO_ADMIN_PASSWD" in

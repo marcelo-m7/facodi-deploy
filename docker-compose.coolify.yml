@@ -30,7 +30,7 @@ services:
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
-      FACODI_MODULES: facodi_learning,website_facodi
+      FACODI_MODULES: facodi_learning,theme_facodi
       PORT: "8069"
     volumes:
       - odoo-data:/var/lib/odoo

@@ -37,7 +37,7 @@ DB_PASSWORD=test-password \
 ODOO_DB=facodi_staging \
 ODOO_ADMIN_PASSWD=test-admin \
 ODOO_CONFIG_TEMPLATE="$tmp/odoo.conf" \
-FACODI_MODULES=facodi_learning,website_facodi \
+FACODI_MODULES=facodi_learning,theme_facodi \
 bash "$root/docker/entrypoint.sh" serve >"$tmp/output"
 
 grep -q 'PORT=8080 PGPORT=5432' "$tmp/output"

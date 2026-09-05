@@ -30,7 +30,7 @@ Cloud Run is the first runtime implementation, but workflows call the repository
 ```text
 addons/
 ├── facodi-learning/  -> pinned Git submodule (`facodi_learning`)
-└── facodi-theme/     -> pinned Git submodule (`website_facodi`)
+└── facodi-theme/     -> pinned Git submodule (`theme_facodi`)
 ```
 
 A `facodi-deploy` commit therefore identifies the exact addon revisions, container composition and deployment configuration used for a release.
