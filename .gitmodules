@@ -7,6 +7,9 @@
 [submodule "addons/monynha-odoo"]
 	path = addons/monynha-odoo
 	url = https://github.com/marcelo-m7/monynha-odoo.git
+[submodule "addons/facodi-ai"]
+	path = addons/facodi-ai
+	url = https://github.com/marcelo-m7/facodi-ai.git
 [submodule "vendor/odoo-design-themes"]
 	path = vendor/odoo-design-themes
 	url = https://github.com/odoo/design-themes.git
