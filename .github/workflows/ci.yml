@@ -5,14 +5,12 @@ on:
   push:
     branches:
       - main
-      - staging
-      - proposal/**
 
 permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-coolify-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -20,31 +18,11 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.16.1
-
       - name: Validate repository contract
         run: bash scripts/validate-repository.sh
 
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 
-      - name: Exercise disposable Coolify runtime
+      - name: Exercise fresh migration, idempotent migration and Odoo HTTP
         run: bash tests/test_coolify_runtime.sh
-
-      - name: Check Terraform formatting
-        run: terraform fmt -check -recursive infrastructure/terraform
-
-      - name: Validate Terraform roots
-        shell: bash
-        run: |
-          set -euo pipefail
-          for root in \
-            bootstrap \
-            shared \
-            environments/staging \
-            environments/production; do
-            terraform -chdir="infrastructure/terraform/$root" init -backend=false -input=false
-            terraform -chdir="infrastructure/terraform/$root" validate
-          done
