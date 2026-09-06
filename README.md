@@ -44,14 +44,20 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `c0d66e3d5ee412dddf89e4a9ad64ec2ab6fd9e18` |
+| `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `1ff81c0585728037dfb24b3310d5905ce38c6fc7` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `9b7903d32a423cb71f9b324d26817bfbc0f9272e` |
-| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `21d1cddf951267059e22455e036af33cab6cae55` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home` | `f96b63696a9ebabb7fcc8c2ef4a17767de0af821` |
+| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `bc956459e61a82966c0027c14a5833b9df1738a8` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI theme pin is the `19.0.5.0.1` production-compatibility release, which keeps the reusable Odoo-native Website/Portal header components while avoiding a brittle dependency on an existing inner `<nav>` in upgraded Website databases.
 
-The Monynha modules are available in the shared image but are intentionally not included in `FACODI_MODULES`; the FACODI migration gate does not install `theme_monynha`, `monynha_content` or `monynha_lead_generator` into the FACODI database automatically. The pinned Monynha revision is the reviewed M4 Composable Content head, adding the reusable Website Builder library and structured Work/Blog aggregation while preserving this installation boundary.
+The Monynha source is the M4 content/theme stack plus the `19.0.4.0.1` theme-isolation hotfix. Monynha chrome rules are scoped under the active `monynha-site` shell so merely having the addon source available does not style another Website theme such as FACODI.
+
+`monodoo_core`, `monodoo_home`, `theme_monynha`, `monynha_content` and `monynha_lead_generator` are available in the shared image but intentionally excluded from `FACODI_MODULES`. The FACODI migration gate therefore does not auto-install these optional capabilities into the FACODI database.
+
+The repository contract also rejects duplicate Odoo addon technical directory names across the repositories mounted under `addons/`, preventing two independently pinned source repositories from silently providing the same module name on the runtime addons path.
 
 ## Migration lifecycle
 
