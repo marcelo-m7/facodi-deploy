@@ -40,24 +40,24 @@ The existing Coolify resource and its project-scoped named volumes must be prese
 
 ## Source composition
 
-A `facodi-deploy` commit pins the exact source revisions baked into its Odoo image:
+A `facodi-deploy` commit pins the exact source revisions baked into its Odoo image. The authoritative pins are the superproject gitlinks; this table documents the revisions selected by this integration:
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `1ff81c0585728037dfb24b3310d5905ce38c6fc7` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `9b7903d32a423cb71f9b324d26817bfbc0f9272e` |
-| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home` | `f96b63696a9ebabb7fcc8c2ef4a17767de0af821` |
-| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `bc956459e61a82966c0027c14a5833b9df1738a8` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home` | `5f300668cccc77775d7dd5f645f77dd6c291ef8f` |
+| `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI theme pin is the `19.0.5.0.1` production-compatibility release, which keeps the reusable Odoo-native Website/Portal header components while avoiding a brittle dependency on an existing inner `<nav>` in upgraded Website databases.
 
-The Monynha source is the M4 content/theme stack plus the `19.0.4.0.1` theme-isolation hotfix. Monynha chrome rules are scoped under the active `monynha-site` shell so merely having the addon source available does not style another Website theme such as FACODI.
+The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
 
-`monodoo_core`, `monodoo_home`, `theme_monynha`, `monynha_content` and `monynha_lead_generator` are available in the shared image but intentionally excluded from `FACODI_MODULES`. The FACODI migration gate therefore does not auto-install these optional capabilities into the FACODI database.
+`monodoo_core` and `monodoo_home` are part of the canonical FACODI module set. The migration gate installs them on fresh databases and also detects and initializes them when upgrading an existing FACODI database that predates Monodoo, before updating the complete requested module set.
 
-The repository contract also rejects duplicate Odoo addon technical directory names across the repositories mounted under `addons/`, preventing two independently pinned source repositories from silently providing the same module name on the runtime addons path.
+The repository contract validates the expected source paths, required addon manifests and the exact checked-out submodule revision against each superproject gitlink, so the deployment source composition cannot silently drift from the commit being deployed.
 
 ## Migration lifecycle
 
@@ -68,7 +68,7 @@ serve    -> long-running Odoo HTTP process
 migrate  -> one-shot database/module/theme/language migration
 ```
 
-For a fresh database, the migration initializes Odoo and the FACODI modules without demo data. For an existing database it performs a guarded preflight before updating `facodi_learning` and `theme_facodi`. The known historical `website_facodi` presentation-only transition is accepted only when its ownership shape is unambiguous; otherwise migration fails closed.
+For a fresh database, the migration initializes Odoo and the canonical FACODI modules without demo data. For an existing database it performs a guarded preflight, initializes any newly required module that is not yet installed, and then updates the complete requested module set. The known historical `website_facodi` presentation-only transition is accepted only when its ownership shape is unambiguous; otherwise migration fails closed.
 
 After module operations, standard Odoo mechanisms are used to:
 
