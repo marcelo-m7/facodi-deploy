@@ -216,7 +216,7 @@ def run_module_operation(
             f"--config={config}",
             f"--database={database}",
             "--stop-after-init",
-            "--without-demo=all",
+            "--without-demo=True",
             operation,
         ]
     )
