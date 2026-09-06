@@ -67,6 +67,36 @@ class MigrationContractTest(unittest.TestCase):
         self.assertEqual(operation.call_args_list[0].args[2], "monodoo_core,monodoo_home")
         self.assertEqual(operation.call_args_list[1].args[2], "monodoo_core,monodoo_home")
 
+    def test_existing_database_updates_without_reinitializing_installed_modules(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules="monodoo_core,monodoo_home",
+        )
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(
+                migration,
+                "psql_scalar",
+                return_value="monodoo_core\nmonodoo_home",
+            ),
+            mock.patch.object(migration, "run_module_operation") as operation,
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme"),
+        ):
+            migration.main()
+
+        self.assertEqual(len(operation.call_args_list), 1)
+        self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
+
+    def test_odoo_19_without_demo_option_uses_boolean_value(self):
+        text = MIGRATION.read_text()
+        self.assertIn('"--without-demo=True"', text)
+        self.assertNotIn('"--without-demo=all"', text)
+
 
 if __name__ == "__main__":
     unittest.main()
