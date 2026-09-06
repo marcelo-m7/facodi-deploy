@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import textwrap
 
@@ -45,6 +46,28 @@ def registry_exists(database: str) -> bool:
         )
         == "t"
     )
+
+
+def parse_modules(modules: str) -> list[str]:
+    names = [name.strip() for name in modules.split(",") if name.strip()]
+    if not names or any(not re.fullmatch(r"[A-Za-z0-9_]+", name) for name in names):
+        raise RuntimeError("FACODI_MODULES contains an invalid Odoo module name")
+    return names
+
+
+def missing_modules(database: str, modules: str) -> str:
+    """Return requested modules which are not installed in an existing registry."""
+    names = parse_modules(modules)
+    quoted = ", ".join(f"'{name}'" for name in names)
+    installed = set(
+        psql_scalar(
+            "SELECT name FROM ir_module_module "
+            "WHERE state='installed' "
+            f"AND name IN ({quoted}) ORDER BY name",
+            database=database,
+        ).splitlines()
+    )
+    return ",".join(name for name in names if name not in installed)
 
 
 def inspect_legacy_state() -> str:
@@ -193,7 +216,7 @@ def run_module_operation(
             f"--config={config}",
             f"--database={database}",
             "--stop-after-init",
-            "--without-demo=all",
+            "--without-demo=True",
             operation,
         ]
     )
@@ -269,17 +292,33 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     initialize = not registry_exists(args.database)
-    if not initialize:
+    if initialize:
+        run_module_operation(
+            args.config,
+            args.database,
+            args.modules,
+            initialize=True,
+        )
+    else:
         state = inspect_legacy_state()
         if state == "legacy":
             transition_legacy_theme()
 
-    run_module_operation(
-        args.config,
-        args.database,
-        args.modules,
-        initialize=initialize,
-    )
+        to_install = missing_modules(args.database, args.modules)
+        if to_install:
+            run_module_operation(
+                args.config,
+                args.database,
+                to_install,
+                initialize=True,
+            )
+        run_module_operation(
+            args.config,
+            args.database,
+            args.modules,
+            initialize=False,
+        )
+
     configure_languages(args.config, args.database)
     apply_theme(args.config, args.database)
 

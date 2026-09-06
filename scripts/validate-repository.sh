@@ -18,13 +18,9 @@ for manifest in \
   test -f "$manifest" || { echo "missing Odoo manifest: $manifest" >&2; exit 1; }
 done
 
-test "$(git -C addons/facodi-ai rev-parse HEAD)" = "f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b"
-test "$(git -C addons/facodi-learning rev-parse HEAD)" = "1ff81c0585728037dfb24b3310d5905ce38c6fc7"
-test "$(git -C addons/facodi-theme rev-parse HEAD)" = "9b7903d32a423cb71f9b324d26817bfbc0f9272e"
-test "$(git -C addons/monodoo rev-parse HEAD)" = "f96b63696a9ebabb7fcc8c2ef4a17767de0af821"
-test "$(git -C addons/monynha-odoo rev-parse HEAD)" = "bc956459e61a82966c0027c14a5833b9df1738a8"
-test "$(git -C vendor/odoo-design-themes rev-parse HEAD)" = "a1818df4ade65406c0cacae8b1ea676e6f70095f"
-
+# The gitlinks recorded by the superproject are the authoritative integration
+# pins. Avoid duplicating mutable SHAs in this shell gate; the repository
+# contract below verifies every checked-out submodule against its exact gitlink.
 python3 -m unittest tests/test_repository_contract.py tests/test_migration_contract.py -v
 bash -n docker/entrypoint.sh scripts/*.sh
 bash tests/test_entrypoint.sh

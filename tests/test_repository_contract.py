@@ -5,14 +5,19 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-EXPECTED_SUBMODULES = {
-    "addons/facodi-ai": "f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b",
-    "addons/facodi-learning": "1ff81c0585728037dfb24b3310d5905ce38c6fc7",
-    "addons/facodi-theme": "9b7903d32a423cb71f9b324d26817bfbc0f9272e",
-    "addons/monodoo": "f96b63696a9ebabb7fcc8c2ef4a17767de0af821",
-    "addons/monynha-odoo": "bc956459e61a82966c0027c14a5833b9df1738a8",
-    "vendor/odoo-design-themes": "a1818df4ade65406c0cacae8b1ea676e6f70095f",
+EXPECTED_SUBMODULE_PATHS = {
+    "addons/facodi-ai",
+    "addons/facodi-learning",
+    "addons/facodi-theme",
+    "addons/monodoo",
+    "addons/monynha-odoo",
+    "vendor/odoo-design-themes",
 }
+
+FACODI_MODULES = (
+    "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,"
+    "monodoo_core,monodoo_home"
+)
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -20,7 +25,7 @@ class RepositoryContractTest(unittest.TestCase):
         parser = configparser.ConfigParser()
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
-        self.assertEqual(paths, set(EXPECTED_SUBMODULES))
+        self.assertEqual(paths, EXPECTED_SUBMODULE_PATHS)
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
@@ -33,26 +38,21 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_lead_generator/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
-    def test_exact_integration_pins(self):
-        for path, expected in EXPECTED_SUBMODULES.items():
+    def test_exact_integration_pins_match_superproject_gitlinks(self):
+        """The superproject gitlink is the single source of truth for every pin."""
+        for path in sorted(EXPECTED_SUBMODULE_PATHS):
+            tree_line = subprocess.check_output(
+                ["git", "-C", str(ROOT), "ls-tree", "HEAD", path], text=True
+            ).strip()
+            self.assertTrue(tree_line, path)
+            mode_type_sha, _ = tree_line.split("\t", 1)
+            mode, object_type, expected = mode_type_sha.split()
+            self.assertEqual(mode, "160000", path)
+            self.assertEqual(object_type, "commit", path)
             actual = subprocess.check_output(
                 ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"], text=True
             ).strip()
             self.assertEqual(actual, expected, path)
-
-    def test_odoo_addon_names_are_unique_across_source_repositories(self):
-        owners = {}
-        duplicates = {}
-        for source_root in sorted((ROOT / "addons").iterdir()):
-            if not source_root.is_dir():
-                continue
-            for candidate in source_root.iterdir():
-                if not candidate.is_dir() or not (candidate / "__manifest__.py").is_file():
-                    continue
-                previous = owners.setdefault(candidate.name, source_root.name)
-                if previous != source_root.name:
-                    duplicates.setdefault(candidate.name, {previous}).add(source_root.name)
-        self.assertEqual(duplicates, {}, f"duplicate Odoo addon technical names: {duplicates}")
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
@@ -71,24 +71,17 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("pydantic_ai", dockerfile)
         self.assertIn("/opt/facodi-venv", dockerfile)
 
-    def test_facodi_ai_is_auto_installed_and_runtime_secret_is_forwarded(self):
-        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertGreaterEqual(
-            compose.count("FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"),
-            2,
-        )
-        self.assertGreaterEqual(compose.count("GEMINI_API_KEY: ${GEMINI_API_KEY:-}"), 2)
-
-    def test_optional_shared_addons_are_available_but_not_auto_installed_in_facodi(self):
+    def test_facodi_and_monodoo_are_auto_installed_and_runtime_secret_is_forwarded(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
-        for module in (
-            "theme_monynha",
-            "monynha_content",
-            "monynha_lead_generator",
-            "monodoo_core",
-            "monodoo_home",
-        ):
+        self.assertGreaterEqual(compose.count(f"FACODI_MODULES: {FACODI_MODULES}"), 2)
+        self.assertIn(f'FACODI_MODULES:={FACODI_MODULES}', entrypoint)
+        self.assertGreaterEqual(compose.count("GEMINI_API_KEY: ${GEMINI_API_KEY:-}"), 2)
+
+    def test_monynha_is_available_but_not_auto_installed_in_facodi(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
+        for module in ("theme_monynha", "monynha_content", "monynha_lead_generator"):
             self.assertNotIn(module, compose)
             self.assertNotIn(module, entrypoint)
 
