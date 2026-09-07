@@ -2,7 +2,7 @@
 
 This runbook is the operator procedure for the canonical FACODI Odoo 19 Community deployment serving `facodi.com` through the existing Coolify resource.
 
-The production invariant is simple: keep the existing Coolify resource, keep the project-scoped `postgres-data` and `odoo-data` volumes attached, let the one-shot migration gate succeed before Odoo starts, and verify the Website/eLearning runtime after every consequential deployment.
+The production invariant is simple: keep the existing Coolify resource, keep the project-scoped `postgres-data` and `odoo-data` volumes attached, let the one-shot migration gate succeed before Odoo starts, and verify the Website/eLearning and authenticated Monodoo backend runtime after every consequential deployment.
 
 ## 1. Canonical deployment shape
 
@@ -58,20 +58,27 @@ The repository contract pins the expected revisions for:
 
 - `facodi-learning` / `facodi_learning`;
 - `facodi-theme` / `theme_facodi`;
+- `monodoo` / `monodoo_core`, `monodoo_home`, `monodoo_theme`, and `monodoo_appsbar`;
 - `monynha-odoo` / `theme_monynha` and `monynha_lead_generator`;
 - `odoo/design-themes`, exposing only `theme_common`.
 
+All four Monodoo addons are part of the canonical FACODI module set. Existing databases that already contain `monodoo_core` and `monodoo_home` must install the missing `monodoo_theme` and `monodoo_appsbar` capabilities through the normal migration gate before the complete module set is updated.
+
 Monynha modules are baked into the shared image but are not part of `FACODI_MODULES`; they must not be installed into the FACODI database by the canonical migration gate unless a future, separately reviewed change intentionally alters that contract.
 
-Before deployment, require:
+Before deployment, install the disposable browser test dependencies and require:
 
 ```bash
+python3 -m pip install -r tests/requirements.txt
+python3 -m playwright install --with-deps chromium
 bash scripts/validate-repository.sh
 docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 bash tests/test_coolify_runtime.sh
 ```
 
-The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured and the public FACODI routes respond successfully.
+The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the four Monodoo addons are installed, the Home client action is valid, the authenticated `/odoo` webclient renders Monodoo Home + Theme + AppsBar in Chromium, and the public FACODI routes respond successfully.
+
+The browser test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
 
 ## 4. First Coolify deployment of the canonical runtime
 
@@ -86,7 +93,7 @@ Use this sequence for the first production adoption of the new Compose lifecycle
 7. Observe the services in order: `db`, then one-shot `migrate`, then `odoo`.
 8. Require the `migrate` service to exit successfully. If it fails, do not bypass the gate and do not manually start the new `odoo` service against the partially migrated database.
 9. Require the `odoo` service health check for `/web/login` to become healthy.
-10. Verify `facodi.com`, existing courses, Website pages, attachments and media before re-enabling unattended redeploy behavior.
+10. Verify `facodi.com`, existing courses, Website pages, attachments and media, then authenticate to the backend and verify `/odoo` renders Monodoo Home with the sidebar before re-enabling unattended redeploy behavior.
 
 The migration service intentionally blocks the persistent Odoo service on non-zero exit.
 
@@ -96,9 +103,11 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
+The generic missing-module phase installs any newly required canonical addon before updating the full `FACODI_MODULES` set. This is the mechanism used to introduce `monodoo_theme` and `monodoo_appsbar` on databases where the earlier Monodoo Home release is already installed.
+
 After module operations the migration uses standard Odoo APIs to:
 
-- update `facodi_learning` and `theme_facodi`;
+- update the complete canonical module set;
 - activate `en_US`, `pt_PT`, `es_ES` and `fr_FR`;
 - make English the Website default;
 - expose the four languages on the Website;
@@ -113,12 +122,15 @@ After `odoo` is healthy, verify at minimum:
 
 ```text
 /web/login
+/odoo
 /
 /pt/
 /es/
 /fr/
 /slides
 ```
+
+For the backend, authenticate as an internal user and verify that `/odoo` renders Monodoo Home, the application sidebar is present according to that user's sidebar preference, and the theme runtime is active. The standard Odoo navigation must remain usable.
 
 Then verify operational persistence using real existing content:
 
@@ -128,9 +140,9 @@ Then verify operational persistence using real existing content:
 4. upload or create a disposable attachment/media item if appropriate, then verify it resolves;
 5. restart/redeploy the same validated revision through Coolify without removing volumes;
 6. verify the same attachment/media still resolves;
-7. inspect `db`, `migrate` and `odoo` logs for migration, filestore or permission errors.
+7. inspect `db`, `migrate` and `odoo` logs for migration, filestore, asset or permission errors.
 
-Do not treat a healthy login route alone as proof that the migration preserved production content.
+Do not treat a healthy login route alone as proof that the migration preserved production content or that the backend assets loaded successfully.
 
 ## 7. Routine redeploys
 
@@ -142,7 +154,7 @@ For ordinary application revisions:
 4. deploy the revision through the existing Coolify resource;
 5. let `migrate` run to completion;
 6. require `odoo` to become healthy;
-7. verify the public FACODI routes and the areas affected by the revision.
+7. verify the public FACODI routes, `/odoo`, and the areas affected by the revision.
 
 Do not manually skip `migrate` because a previous deployment succeeded. It is designed to be idempotent and is the runtime gate for each deployment.
 
@@ -162,7 +174,7 @@ Do not mutate production tables manually merely to force a green migration. Corr
 
 ### Odoo fails after migration succeeds
 
-Inspect the persistent service logs and health check. If the database migration is backward compatible, a known-good source revision may be redeployed. If compatibility is uncertain, use the full rollback procedure below instead of assuming image-only rollback is safe.
+Inspect the persistent service logs, asset loading and health check. If the database migration is backward compatible, a known-good source revision may be redeployed. If compatibility is uncertain, use the full rollback procedure below instead of assuming image-only rollback is safe.
 
 ## 9. Rollback procedure
 
@@ -175,7 +187,7 @@ It is **not** a database downgrade mechanism. If a newer deployment has run an i
 3. restore the matching `odoo-data` backup from the same point in time;
 4. deploy the known-good source revision (including `v0.1.0` when that is the intended boundary);
 5. start through the resource's valid lifecycle for that revision;
-6. verify `/web/login`, `/`, language routes, `/slides`, courses, attachments and media before reopening normal deployment flow.
+6. verify `/web/login`, `/odoo`, `/`, language routes, `/slides`, courses, attachments and media before reopening normal deployment flow.
 
 Never restore only the database or only `odoo-data` when rolling back across migrations that may have changed attachment/filestore references.
 
@@ -200,6 +212,9 @@ A deployment refactor is ready for merge only when the exact PR head has green C
 - immediate second migration success;
 - healthy persistent Odoo startup;
 - correct Website language state;
+- all four Monodoo addons installed;
+- valid Monodoo Home client action;
+- authenticated browser rendering of Monodoo Home, Theme and AppsBar without page errors;
 - successful FACODI Website/eLearning HTTP checks.
 
 Any failure in that matrix keeps the PR in draft/review state until corrected.
