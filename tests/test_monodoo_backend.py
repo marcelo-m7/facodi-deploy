@@ -10,7 +10,7 @@ def login(page: Page) -> None:
     page.locator("input[name='login']").fill("admin")
     page.locator("input[name='password']").fill("facodi-ci-admin")
     page.locator("button[type='submit']").click()
-    page.wait_for_url(lambda url: "/odoo" in url, timeout=30_000)
+    page.locator(".o_web_client").wait_for(state="attached", timeout=30_000)
 
 
 def test_facodi_runtime_loads_monodoo_home_theme_and_appsbar(page: Page) -> None:
