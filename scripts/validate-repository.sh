@@ -11,6 +11,8 @@ for manifest in \
   addons/facodi-theme/theme_facodi/__manifest__.py \
   addons/monodoo/monodoo_core/__manifest__.py \
   addons/monodoo/monodoo_home/__manifest__.py \
+  addons/monodoo/monodoo_theme/__manifest__.py \
+  addons/monodoo/monodoo_appsbar/__manifest__.py \
   addons/monynha-odoo/theme_monynha/__manifest__.py \
   addons/monynha-odoo/monynha_content/__manifest__.py \
   addons/monynha-odoo/monynha_lead_generator/__manifest__.py \
@@ -22,5 +24,5 @@ done
 # pins. Avoid duplicating mutable SHAs in this shell gate; the repository
 # contract below verifies every checked-out submodule against its exact gitlink.
 python3 -m unittest tests/test_repository_contract.py tests/test_migration_contract.py -v
-bash -n docker/entrypoint.sh scripts/*.sh
+bash -n docker/entrypoint.sh scripts/*.sh tests/test_coolify_runtime.sh
 bash tests/test_entrypoint.sh
