@@ -18,12 +18,7 @@ def psql_scalar(sql: str, *, database: str | None = None) -> str:
     if database:
         command.extend(["--dbname", database])
     command.extend(["-Atqc", sql])
-    result = subprocess.run(
-        command,
-        text=True,
-        check=True,
-        capture_output=True,
-    )
+    result = subprocess.run(command, text=True, check=True, capture_output=True)
     return result.stdout.strip()
 
 
@@ -39,13 +34,10 @@ def database_exists(database: str) -> bool:
 def registry_exists(database: str) -> bool:
     if not database_exists(database):
         return False
-    return (
-        psql_scalar(
-            "SELECT to_regclass('public.ir_module_module') IS NOT NULL",
-            database=database,
-        )
-        == "t"
-    )
+    return psql_scalar(
+        "SELECT to_regclass('public.ir_module_module') IS NOT NULL",
+        database=database,
+    ) == "t"
 
 
 def parse_modules(modules: str) -> list[str]:
@@ -186,8 +178,7 @@ def transition_legacy_theme() -> None:
                 AND name = 'website_layout'
          );
 
-        DELETE FROM ir_model_data
-         WHERE module = 'website_facodi';
+        DELETE FROM ir_model_data WHERE module = 'website_facodi';
 
         DELETE FROM ir_model_data
          WHERE module = 'base'
@@ -197,17 +188,14 @@ def transition_legacy_theme() -> None:
                SELECT id FROM ir_module_module WHERE name = 'website_facodi'
            );
 
-        DELETE FROM ir_module_module
-         WHERE name = 'website_facodi';
+        DELETE FROM ir_module_module WHERE name = 'website_facodi';
 
         COMMIT;
         """
     )
 
 
-def run_module_operation(
-    config: str, database: str, modules: str, *, initialize: bool
-) -> None:
+def run_module_operation(config: str, database: str, modules: str, *, initialize: bool) -> None:
     operation = f"--init=base,{modules}" if initialize else f"--update={modules}"
     run(
         [
@@ -229,56 +217,79 @@ def run_shell(config: str, database: str, payload: str) -> None:
     )
 
 
-def configure_languages(config: str, database: str) -> None:
-    run_shell(
-        config,
-        database,
-        """
-        Lang = env["res.lang"]
-        lang_en = env.ref("base.lang_en")
-        lang_pt = Lang._activate_lang("pt_PT")
-        lang_es = Lang._activate_lang("es_ES")
-        lang_fr = Lang._activate_lang("fr_FR")
-        required = (lang_en, lang_pt, lang_es, lang_fr)
-        if not all(required):
-            raise RuntimeError("FACODI Website languages are not available")
+def _website_selector_payload() -> str:
+    return """
+    import os
+    from urllib.parse import urlsplit
 
-        theme = env["ir.module.module"].search(
-            [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
+    def normalize_domain(value):
+        raw = (value or "").strip()
+        if not raw:
+            return ""
+        parsed = urlsplit(raw if "://" in raw else "https://" + raw)
+        return (parsed.hostname or "").lower().rstrip(".")
+
+    target_domain = normalize_domain(os.environ.get("FACODI_WEBSITE_DOMAIN", ""))
+    allow_single = os.environ.get(
+        "FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP", "0"
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    websites = env["website"].search([])
+    if not websites:
+        raise RuntimeError("No Website record exists after FACODI module installation")
+
+    matches = websites.filtered(
+        lambda website: normalize_domain(website.domain) == target_domain
+    ) if target_domain else env["website"].browse()
+
+    if len(matches) == 1:
+        facodi_website = matches
+    elif not matches and allow_single and len(websites) == 1:
+        facodi_website = websites
+    else:
+        raise RuntimeError(
+            "Unable to resolve exactly one FACODI Website. "
+            "Set FACODI_WEBSITE_DOMAIN to the website domain. "
+            "Single-website bootstrap is disabled by default."
         )
-        if not theme:
-            raise RuntimeError("theme_facodi must be installed before translations are loaded")
-        theme._update_translations(["pt_PT", "es_ES", "fr_FR"])
+    """
 
-        websites = env["website"].search([])
-        if not websites:
-            raise RuntimeError("No Website record exists after FACODI module installation")
-        for website in websites:
-            website.language_ids = lang_en + lang_pt + lang_es + lang_fr
-            website.default_lang_id = lang_en
-        env.cr.commit()
-        """,
+
+def configure_languages(config: str, database: str) -> None:
+    payload = _website_selector_payload() + """
+    Lang = env["res.lang"]
+    lang_en = env.ref("base.lang_en")
+    lang_pt = Lang._activate_lang("pt_PT")
+    lang_es = Lang._activate_lang("es_ES")
+    lang_fr = Lang._activate_lang("fr_FR")
+    required = (lang_en, lang_pt, lang_es, lang_fr)
+    if not all(required):
+        raise RuntimeError("FACODI Website languages are not available")
+
+    theme = env["ir.module.module"].search(
+        [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
     )
+    if not theme:
+        raise RuntimeError("theme_facodi must be installed before translations are loaded")
+    theme._update_translations(["pt_PT", "es_ES", "fr_FR"])
+
+    facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr
+    env.cr.commit()
+    """
+    run_shell(config, database, payload)
 
 
 def apply_theme(config: str, database: str) -> None:
-    run_shell(
-        config,
-        database,
-        """
-        theme = env["ir.module.module"].search(
-            [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
-        )
-        if not theme:
-            raise RuntimeError("theme_facodi must be installed before applying it")
-        websites = env["website"].search([])
-        if not websites:
-            raise RuntimeError("No Website record exists after FACODI module installation")
-        for website in websites:
-            theme.with_context(website_id=website.id).button_choose_theme()
-        env.cr.commit()
-        """,
+    payload = _website_selector_payload() + """
+    theme = env["ir.module.module"].search(
+        [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
     )
+    if not theme:
+        raise RuntimeError("theme_facodi must be installed before applying it")
+    theme.with_context(website_id=facodi_website.id).button_choose_theme()
+    env.cr.commit()
+    """
+    run_shell(config, database, payload)
 
 
 def parse_args() -> argparse.Namespace:
@@ -293,12 +304,7 @@ def main() -> None:
     args = parse_args()
     initialize = not registry_exists(args.database)
     if initialize:
-        run_module_operation(
-            args.config,
-            args.database,
-            args.modules,
-            initialize=True,
-        )
+        run_module_operation(args.config, args.database, args.modules, initialize=True)
     else:
         state = inspect_legacy_state()
         if state == "legacy":
@@ -306,18 +312,8 @@ def main() -> None:
 
         to_install = missing_modules(args.database, args.modules)
         if to_install:
-            run_module_operation(
-                args.config,
-                args.database,
-                to_install,
-                initialize=True,
-            )
-        run_module_operation(
-            args.config,
-            args.database,
-            args.modules,
-            initialize=False,
-        )
+            run_module_operation(args.config, args.database, to_install, initialize=True)
+        run_module_operation(args.config, args.database, args.modules, initialize=False)
 
     configure_languages(args.config, args.database)
     apply_theme(args.config, args.database)

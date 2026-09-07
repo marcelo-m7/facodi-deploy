@@ -8,8 +8,11 @@ set -euo pipefail
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
 : "${ODOO_DB:?ODOO_DB is required}"
 : "${ODOO_ADMIN_PASSWD:?ODOO_ADMIN_PASSWD is required}"
-: "${FACODI_MODULES:=facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar}"
+: "${FACODI_MODULES:=facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend}"
 : "${ODOO_CONFIG_TEMPLATE:=/etc/odoo/odoo.conf}"
+: "${ODOO_WORKERS:=2}"
+: "${ODOO_MAX_CRON_THREADS:=1}"
+: "${ODOO_GEVENT_PORT:=8072}"
 
 case "$ODOO_ADMIN_PASSWD" in
   *$'\n'*|*$'\r'*)
@@ -17,6 +20,19 @@ case "$ODOO_ADMIN_PASSWD" in
     exit 64
     ;;
 esac
+
+if ! [[ "$ODOO_WORKERS" =~ ^[0-9]+$ ]]; then
+  echo "ODOO_WORKERS must be a non-negative integer" >&2
+  exit 64
+fi
+if ! [[ "$ODOO_MAX_CRON_THREADS" =~ ^[0-9]+$ ]]; then
+  echo "ODOO_MAX_CRON_THREADS must be a non-negative integer" >&2
+  exit 64
+fi
+if ! [[ "$ODOO_GEVENT_PORT" =~ ^[0-9]+$ ]]; then
+  echo "ODOO_GEVENT_PORT must be a non-negative integer" >&2
+  exit 64
+fi
 
 umask 077
 odoo_config="$(mktemp)"
@@ -38,11 +54,12 @@ case "${1:-serve}" in
     exec odoo \
       "${common[@]}" \
       "--http-port=${PORT}" \
+      "--gevent-port=${ODOO_GEVENT_PORT}" \
       "--db-filter=^${ODOO_DB}$" \
       --no-database-list \
       --proxy-mode \
-      --workers=0 \
-      --max-cron-threads=1
+      "--workers=${ODOO_WORKERS}" \
+      "--max-cron-threads=${ODOO_MAX_CRON_THREADS}"
     ;;
   migrate)
     exec python3 /usr/local/lib/facodi/migrate.py \

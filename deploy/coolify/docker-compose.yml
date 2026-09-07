@@ -29,8 +29,10 @@ services:
       DB_USER: odoo
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
-      ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar
+      ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend
+      FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
+      FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP: ${FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP:-0}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       PORT: "8069"
@@ -53,8 +55,13 @@ services:
       DB_USER: odoo
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
-      ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_POSTGRES
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar
+      ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend
+      FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
+      FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP: ${FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP:-0}
+      ODOO_WORKERS: ${ODOO_WORKERS:-2}
+      ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-1}
+      ODOO_GEVENT_PORT: ${ODOO_GEVENT_PORT:-8072}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       PORT: "8069"
@@ -62,6 +69,7 @@ services:
       - odoo-data:/var/lib/odoo
     expose:
       - "8069"
+      - "8072"
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:$${PORT}/web/login', timeout=5).close()\""]
       interval: 10s
