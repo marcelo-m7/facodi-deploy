@@ -16,10 +16,7 @@ EXPECTED_SUBMODULE_PATHS = {
 
 EXPECTED_MONODOO_PIN = "bbc6f6affc730de7cf75c98c0d6d30da10740095"
 
-FACODI_MODULES = (
-    "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,"
-    "monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar"
-)
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -108,7 +105,7 @@ class RepositoryContractTest(unittest.TestCase):
     def test_coolify_compose_maps_generated_secrets(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertGreaterEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 3)
-        self.assertNotIn("$SERVICE_PASSWORD_64_ODOO_ADMIN", compose)
+        self.assertGreaterEqual(compose.count("$SERVICE_PASSWORD_64_ODOO_ADMIN"), 2)
         self.assertNotIn("${POSTGRES_PASSWORD}", compose)
         self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
 
