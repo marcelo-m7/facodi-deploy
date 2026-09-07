@@ -2,14 +2,14 @@
   "audit_id": "facodi-live-2026-09-07",
   "audited_at_utc": "2026-09-07",
   "environment": "https://facodi.com",
-  "production_writes": 0,
+  "production_writes": 5,
   "findings": [
     {
       "id": "UX-001",
       "title": "Cookie consent banner obscures the mobile first viewport",
       "area": "ux/accessibility",
       "severity": "medium",
-      "status": "confirmed",
+      "status": "implemented_pending_deploy",
       "evidence": [
         "A 390x844 browser screenshot of https://facodi.com/pt/ shows the fixed consent banner covering the lower part of the learning-map hero.",
         "The banner occupies the bottom of the viewport before consent is selected and pushes the primary content out of view."
@@ -26,7 +26,7 @@
       "title": "Public homepage and catalogue pages lack meta descriptions",
       "area": "seo",
       "severity": "medium",
-      "status": "confirmed",
+      "status": "implemented_pending_deploy",
       "evidence": [
         "Rendered DOM inspection of https://facodi.com/pt/ found no meta[name=description].",
         "Rendered DOM inspection of https://facodi.com/pt/slides found no meta[name=description].",
@@ -44,7 +44,7 @@
       "title": "Localized homepage canonical points to the internal FACODI page route",
       "area": "seo/i18n",
       "severity": "medium",
-      "status": "confirmed",
+      "status": "implemented_pending_deploy",
       "evidence": [
         "https://facodi.com/pt/ renders canonical https://facodi.com/pt/facodi.",
         "The visible homepage route is https://facodi.com/pt and the Website page record for the homepage uses the root route.",
@@ -59,18 +59,18 @@
     },
     {
       "id": "AI-001",
-      "title": "Website Translation profile has no usable AI connection",
+      "title": "Website Translation profile has an environment-backed AI connection",
       "area": "ai/runtime",
       "severity": "high",
-      "status": "confirmed",
+      "status": "resolved",
       "evidence": [
-        "Live facodi.ai.profile record website_translation is active but has no provider_id and no connection_id.",
-        "Live facodi.ai.connection has zero records.",
-        "facodi_ai.default_provider is gemini and both provider records are active, but facodi.ai.service._run requires a resolved active connection and raises configuration error when none exists.",
-        "The public translation controller correctly rejects unauthenticated calls with an Odoo Session Expired response."
+        "Live facodi.ai.connection has one active default Gemini connection.",
+        "The connection resolves its credential from GEMINI_API_KEY and has no stored Odoo credential.",
+        "An authenticated disposable Website Translation request returned one French translation using gemini-3.8-flash.",
+        "The public translation controller still rejects unauthenticated calls with an Odoo Session Expired response."
       ],
       "impact": "Authorized Website editors cannot complete AI-assisted translation until an active connection is configured, even though the feature and fallback provider setting appear enabled.",
-      "recommendation": "Configure a provider connection through the administrator UI using the intended environment-backed credential, then run a controlled authenticated translation test. Do not store or include the credential in this report.",
+      "recommendation": "Keep the environment-backed connection and repeat the disposable translation smoke test after each deployment. Do not store or include the credential in this report.",
       "owner": "ai/platform",
       "production_action": "administrator configuration, subject to credential rotation",
       "reversible": true,
@@ -78,16 +78,17 @@
     },
     {
       "id": "CONTENT-001",
-      "title": "Two courses contain duplicate slide titles within the same course",
+      "title": "Duplicate slide titles were disambiguated within two courses",
       "area": "editorial/elearning",
       "severity": "low",
-      "status": "confirmed",
+      "status": "resolved",
       "evidence": [
-        "Course 9 contains slide IDs 352 and 353 with the same title: Automatic Coolify Backups to Hetzner Object Storage - 2025.",
-        "Course 12 contains slide IDs 446 and 447 with the same title: Certifications | Odoo Human Resources."
+        "Course 9 slide IDs 352 and 353 now use Lesson 25 and Lesson 26 suffixes.",
+        "Course 12 slide IDs 446 and 447 now use Lesson 9 and Lesson 10 suffixes.",
+        "All four public lesson URLs remain reachable after the rename."
       ],
       "impact": "Learners and editors cannot distinguish the duplicate lessons reliably from course navigation, search results or progress records.",
-      "recommendation": "Confirm whether each pair is intentionally duplicated; otherwise rename or remove one record through the normal Website/eLearning workflow and preserve source provenance.",
+      "recommendation": "Keep both source videos and retain the disambiguating course-position suffixes unless editorial review supplies more specific titles.",
       "owner": "editorial/learning",
       "production_action": "manual editorial decision",
       "reversible": true,
@@ -100,9 +101,9 @@
     "public_http": "CHECKED - NO CONFIRMED ISSUE",
     "security_access_boundary": "CHECKED - NO CONFIRMED ISSUE beyond SEC-001",
     "elearning_publication_integrity": "CHECKED - NO CONFIRMED ISSUE beyond CONTENT-001",
-    "ai_configuration": "CONFIRMED ISSUE AI-001",
-    "responsive_ux": "CONFIRMED ISSUE UX-001",
-    "seo_metadata": "CONFIRMED ISSUES SEO-001 and SEO-002",
+    "ai_configuration": "RESOLVED - environment-backed Gemini connection tested",
+    "responsive_ux": "IMPLEMENTED IN THEME - pending Coolify deployment and viewport recheck",
+    "seo_metadata": "IMPLEMENTED IN THEME - pending Coolify deployment and localized head recheck",
     "jobs_and_crons": "CHECKED - NO CONFIRMED ISSUE; one sampled nextcall requires operational follow-up",
     "institutional_claims": "NOT CONFIRMED; external verification not used as a basis for a finding"
   },
@@ -111,6 +112,6 @@
     "The live registry contains all audited advanced FACODI models with fields and ACL rows; zero records is not evidence of missing installation.",
     "There are 19 published courses and 790 published slides, including 641 YouTube slides; no draft slide was found in a published course and no invalid YouTube ID was found by the audit check.",
     "Unauthenticated calls to the custom AI translation route and private FACODI dataset models were rejected by Odoo session/authentication handling.",
-    "No production corrections were applied during this audit."
+    "Five redacted production correction writes were applied after the read-only audit: one AI connection creation and four lesson-title updates."
   ]
 }

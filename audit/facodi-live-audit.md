@@ -18,7 +18,17 @@ The confirmed issues are:
 - `AI-001`: the Website Translation profile has providers available but no active connection, so the service cannot execute an authenticated translation.
 - `CONTENT-001`: two courses contain duplicate lesson titles within the same course.
 
-No production correction was applied because the only clearly urgent operational action is secret rotation, and the remaining changes require code, editorial or administrator decisions.
+The read-only audit itself applied no production writes. A subsequent correction run resolved AI-001 and CONTENT-001 in production; UX-001, SEO-001 and SEO-002 are implemented in the local theme and remain pending the canonical Coolify deployment.
+
+## Post-Audit Correction Run
+
+- AI-001: created one active default Gemini connection resolved from `GEMINI_API_KEY`; no Odoo-stored credential exists. An authenticated disposable translation returned one French unit with `gemini-3.8-flash`.
+- CONTENT-001: renamed slides 352, 353, 446 and 447 with course-position suffixes; all four public routes remain reachable and the affected courses have no duplicate titles.
+- UX-001: added a bounded bottom consent layout with safe-area spacing and mobile button wrapping in the theme source.
+- SEO-001: added localized homepage and catalogue descriptions plus matching Open Graph descriptions in the theme source.
+- SEO-002: normalized canonical and Open Graph URLs to the public request route, including localized homepage routes.
+
+The theme changes are currently uncommitted in the nested `facodi-theme` repository, so production head and cookie rendering remain unchanged until Coolify builds the updated theme revision.
 
 ## Scope And Evidence
 
