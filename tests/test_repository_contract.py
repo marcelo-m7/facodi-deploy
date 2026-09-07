@@ -108,47 +108,73 @@ class RepositoryContractTest(unittest.TestCase):
     def test_coolify_compose_maps_generated_secrets(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertGreaterEqual(compose.count("$SERVICE_PASSWORD_64_POSTGRES"), 3)
-        self.assertIn("PGPASSWORD: $SERVICE_PASSWORD_64_POSTGRES", compose)
-        self.assertIn("DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES", compose)
-        self.assertIn("DB_HOST: db", compose)
+        self.assertNotIn("$SERVICE_PASSWORD_64_ODOO_ADMIN", compose)
+        self.assertNotIn("${POSTGRES_PASSWORD}", compose)
+        self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
 
     def test_coolify_compose_preserves_persistent_names_and_gates_odoo(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertIn("  db:\n", compose)
+        self.assertIn("  migrate:\n", compose)
+        self.assertIn("  odoo:\n", compose)
         self.assertIn("postgres-data:/var/lib/postgresql/data", compose)
-        self.assertIn("odoo-data:/var/lib/odoo", compose)
+        self.assertGreaterEqual(compose.count("odoo-data:/var/lib/odoo"), 2)
         self.assertIn("condition: service_completed_successfully", compose)
-        self.assertNotIn("name: facodi-postgres-data", compose)
-        self.assertNotIn("name: facodi-odoo-data", compose)
+        self.assertIn('restart: "no"', compose)
+        self.assertNotIn("name: facodi-postgres", compose)
+        self.assertNotIn("name: facodi-odoo", compose)
+        self.assertNotIn("5432:5432", compose)
+        self.assertNotIn("8069:8069", compose)
 
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertIn("http://127.0.0.1:8069/web/health", compose)
+        self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
+        self.assertIn("start_period: 60s", compose)
 
     def test_coolify_build_context_matches_project_directory(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
-        self.assertIn("context: ../..", compose)
-        self.assertIn("dockerfile: docker/Dockerfile", compose)
+        runtime_test = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        self.assertGreaterEqual(compose.count("context: ."), 2)
+        self.assertNotIn("context: ../..", compose)
+        self.assertIn('--project-directory "$root"', runtime_test)
+
+    def test_obsolete_google_runtime_is_not_active(self):
+        forbidden = [
+            ROOT / "infrastructure/terraform",
+            ROOT / ".github/workflows/build-image.yml",
+            ROOT / ".github/workflows/terraform-plan.yml",
+            ROOT / ".github/workflows/terraform-apply.yml",
+            ROOT / ".github/workflows/deploy-staging.yml",
+            ROOT / ".github/workflows/deploy-production.yml",
+            ROOT / "scripts/deploy-runtime.sh",
+            ROOT / "scripts/configure-database-user.sh",
+            ROOT / "scripts/verify-runtime.sh",
+            ROOT / "docs/superpowers/plans/2026-09-05-facodi-deploy-cloud-run-terraform.md",
+            ROOT / "docs/superpowers/specs/2026-09-05-facodi-deploy-cloud-run-terraform-design.md",
+        ]
+        for path in forbidden:
+            self.assertFalse(path.exists(), str(path))
 
     def test_ci_validates_the_canonical_coolify_runtime(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
-        self.assertIn("scripts/validate-repository.sh", workflow)
-        self.assertIn("docker compose", workflow)
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+        self.assertIn("submodules: recursive", workflow)
+        self.assertIn("deploy/coolify/docker-compose.yml", workflow)
         self.assertIn("tests/test_coolify_runtime.sh", workflow)
+        self.assertNotIn("terraform", workflow.lower())
+        self.assertNotIn("google-github-actions", workflow)
 
     def test_docs_describe_coolify_as_the_only_runtime(self):
         readme = (ROOT / "README.md").read_text()
         operations = (ROOT / "docs/operations.md").read_text()
-        self.assertIn("canonical deployment-composition repository", readme)
-        self.assertIn("existing Coolify resource", readme)
-        self.assertIn("only active runtime architecture", readme)
-        self.assertIn("Coolify", operations)
-        self.assertNotIn("Google Cloud Run", readme)
-        self.assertNotIn("Google Cloud Run", operations)
+        for text in (readme, operations):
+            self.assertIn("Coolify", text)
+            self.assertIn("facodi.com", text)
+            self.assertIn("postgres-data", text)
+            self.assertIn("odoo-data", text)
+            self.assertIn("v0.1.0", text)
+        self.assertNotIn("Cloud Run", readme)
+        self.assertNotIn("terraform apply", operations.lower())
 
-    def test_obsolete_google_runtime_is_not_active(self):
-        for path in (
-            ROOT / "cloudbuild.yaml",
-            ROOT / "terraform",
-            ROOT / "scripts/deploy-gcp.sh",
-        ):
-            self.assertFalse(path.exists(), path)
+
+if __name__ == "__main__":
+    unittest.main()
