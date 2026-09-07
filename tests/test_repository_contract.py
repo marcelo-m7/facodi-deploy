@@ -14,7 +14,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "vendor/odoo-design-themes",
 }
 
-EXPECTED_MONODOO_PIN = "ada105778f895087035730009e2ca42fdde3754c"
+EXPECTED_MONODOO_PIN = "5630c49cc61f4e1a9451f74c9a21d90a888a3e48"
 
 FACODI_MODULES = (
     "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,"
