@@ -14,9 +14,11 @@ EXPECTED_SUBMODULE_PATHS = {
     "vendor/odoo-design-themes",
 }
 
+EXPECTED_MONODOO_PIN = "7712c48d35a1625486e01d7cd41638287a3c3257"
+
 FACODI_MODULES = (
     "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,"
-    "monodoo_core,monodoo_home"
+    "monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar"
 )
 
 
@@ -33,6 +35,8 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_core/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_home/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_theme/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_appsbar/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/theme_monynha/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_content/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monynha-odoo/monynha_lead_generator/__manifest__.py").is_file())
@@ -49,6 +53,8 @@ class RepositoryContractTest(unittest.TestCase):
             mode, object_type, expected = mode_type_sha.split()
             self.assertEqual(mode, "160000", path)
             self.assertEqual(object_type, "commit", path)
+            if path == "addons/monodoo":
+                self.assertEqual(expected, EXPECTED_MONODOO_PIN)
             actual = subprocess.check_output(
                 ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"], text=True
             ).strip()
@@ -150,7 +156,7 @@ class RepositoryContractTest(unittest.TestCase):
             self.assertFalse(path.exists(), str(path))
 
     def test_ci_validates_the_canonical_coolify_runtime(self):
-        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
         self.assertIn("submodules: recursive", workflow)
         self.assertIn("deploy/coolify/docker-compose.yml", workflow)
         self.assertIn("tests/test_coolify_runtime.sh", workflow)
