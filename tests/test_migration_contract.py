@@ -6,6 +6,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "docker/migrate.py"
+MONODOO_MODULES = "monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar"
 
 
 def load_migration_module():
@@ -42,18 +43,18 @@ class MigrationContractTest(unittest.TestCase):
         self.assertNotIn("website_page", text)
 
     def test_existing_database_initializes_required_modules_before_update(self):
-        """A newly introduced addon must be installed on an already-existing DB."""
+        """New Monodoo capabilities must install on an already-existing FACODI DB."""
         migration = load_migration_module()
         args = argparse.Namespace(
             config="/tmp/odoo.conf",
             database="facodi",
-            modules="monodoo_core,monodoo_home",
+            modules=MONODOO_MODULES,
         )
         with (
             mock.patch.object(migration, "parse_args", return_value=args),
             mock.patch.object(migration, "registry_exists", return_value=True),
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
-            mock.patch.object(migration, "psql_scalar", return_value=""),
+            mock.patch.object(migration, "psql_scalar", return_value="monodoo_core\nmonodoo_home"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -64,15 +65,18 @@ class MigrationContractTest(unittest.TestCase):
             [call.kwargs["initialize"] for call in operation.call_args_list],
             [True, False],
         )
-        self.assertEqual(operation.call_args_list[0].args[2], "monodoo_core,monodoo_home")
-        self.assertEqual(operation.call_args_list[1].args[2], "monodoo_core,monodoo_home")
+        self.assertEqual(
+            operation.call_args_list[0].args[2],
+            "monodoo_theme,monodoo_appsbar",
+        )
+        self.assertEqual(operation.call_args_list[1].args[2], MONODOO_MODULES)
 
     def test_existing_database_updates_without_reinitializing_installed_modules(self):
         migration = load_migration_module()
         args = argparse.Namespace(
             config="/tmp/odoo.conf",
             database="facodi",
-            modules="monodoo_core,monodoo_home",
+            modules=MONODOO_MODULES,
         )
         with (
             mock.patch.object(migration, "parse_args", return_value=args),
@@ -81,7 +85,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="monodoo_core\nmonodoo_home",
+                return_value="monodoo_core\nmonodoo_home\nmonodoo_theme\nmonodoo_appsbar",
             ),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
@@ -91,6 +95,7 @@ class MigrationContractTest(unittest.TestCase):
 
         self.assertEqual(len(operation.call_args_list), 1)
         self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
+        self.assertEqual(operation.call_args_list[0].args[2], MONODOO_MODULES)
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
         text = MIGRATION.read_text()
