@@ -45,13 +45,13 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `cc0e35881a92a7bda00e468ba0786377313b6d09` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `4d384edf2709ff7cad1a432e3391de0673f3b24d` |
-| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `5630c49cc61f4e1a9451f74c9a21d90a888a3e48` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `0edf3bbcc935c8e9a2da7331bf451d1eeaabc090` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `41f43d402d0ad51b1e16aaed67114f3021c7fb12` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `ada105778f895087035730009e2ca42fdde3754c` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The FACODI theme pin keeps the `19.0.5.0.1` production-compatible Website/Portal header baseline and adds the reusable homepage learning dashboard with dynamic published-course cards backed by Odoo Website snippet filters.
+The FACODI theme pin keeps the `19.0.5.0.1` production-compatible Website/Portal header baseline, adds the reusable homepage learning dashboard with dynamic published-course cards backed by Odoo Website snippet filters, and restores the standard Odoo 19 dynamic-snippet container/content contract required by the Website Builder.
 
 The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
 
