@@ -45,17 +45,17 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `1ff81c0585728037dfb24b3310d5905ce38c6fc7` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `b235940846132a69f8b493c1e9be23646c44ef6a` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `00d9323deff8ecbe300268321ff01e8efcc80cec` |
-| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home` | `83362e0c246c0c5a08261e2045cd883cb9be0544` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `7712c48d35a1625486e01d7cd41638287a3c3257` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
-| `odoo/design-themes` | only `theme_common` | `a1818df4ade65406ac0184382c0fd46f1023a22612c` |
+| `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI theme pin keeps the `19.0.5.0.1` production-compatible Website/Portal header baseline and adds the reusable homepage learning dashboard with dynamic published-course cards backed by Odoo Website snippet filters.
 
 The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
 
-`monodoo_core` and `monodoo_home` are part of the canonical FACODI module set. The migration gate installs them on fresh databases and also detects and initializes them when upgrading an existing FACODI database that predates Monodoo, before updating the complete requested module set.
+The canonical FACODI backend now installs all four generic Monodoo capabilities: `monodoo_core`, `monodoo_home`, `monodoo_theme`, and `monodoo_appsbar`. The migration gate installs missing capabilities on existing databases before updating the complete requested module set. Monodoo remains an independently versioned source: FACODI consumes the pinned release and does not copy its implementation into this repository.
 
 The repository contract validates the expected source paths, required addon manifests and the exact checked-out submodule revision against each superproject gitlink, so the deployment source composition cannot silently drift from the commit being deployed.
 
@@ -98,6 +98,13 @@ Initialize all pinned sources first:
 git submodule update --init --recursive
 ```
 
+Install the disposable browser-acceptance dependencies when running the full suite locally:
+
+```bash
+python3 -m pip install -r tests/requirements.txt
+python3 -m playwright install --with-deps chromium
+```
+
 Run the fast repository contract and Compose validation:
 
 ```bash
@@ -111,7 +118,7 @@ Run the disposable end-to-end runtime acceptance test:
 bash tests/test_coolify_runtime.sh
 ```
 
-That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, and requires successful HTTP responses from the FACODI Website/eLearning routes.
+That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, confirms all four Monodoo addons are installed, checks the Home client-action contract, authenticates a disposable admin session in a real Chromium browser, and requires the Monodoo Home, theme runtime and AppsBar to render without browser errors. It also preserves the existing HTTP checks for the FACODI Website/eLearning routes. The host port used by Chromium is exposed only through `tests/docker-compose.ci.yml`; the production Coolify Compose file does not publish Odoo directly.
 
 GitHub Actions runs the same canonical Coolify acceptance path on pull requests and on `main`.
 
@@ -126,7 +133,7 @@ If a deployed migration must be rolled back, restore the matching PostgreSQL bac
 ## Security and operational invariants
 
 - no plaintext production secrets are committed;
-- PostgreSQL and Odoo ports are not published directly to the host by this Compose file;
+- PostgreSQL and Odoo ports are not published directly to the host by the production Compose file;
 - migration failure prevents `odoo` startup;
 - deploys must not run `docker compose down -v` against the production resource;
 - persistent volume names and the existing Coolify resource identity must be preserved;
