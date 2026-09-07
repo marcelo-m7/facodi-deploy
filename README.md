@@ -45,9 +45,9 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `b235940846132a69f8b493c1e9be23646c44ef6a` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `00d9323deff8ecbe300268321ff01e8efcc80cec` |
-| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `7712c48d35a1625486e01d7cd41638287a3c3257` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `cc0e35881a92a7bda00e468ba0786377313b6d09` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `4d384edf2709ff7cad1a432e3391de0673f3b24d` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `5630c49cc61f4e1a9451f74c9a21d90a888a3e48` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
