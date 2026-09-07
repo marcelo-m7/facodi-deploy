@@ -9,7 +9,7 @@ def login(page: Page) -> None:
     page.goto(f"{BASE_URL}/web/login", wait_until="domcontentloaded")
     page.locator("input[name='login']").fill("admin")
     page.locator("input[name='password']").fill("facodi-ci-admin")
-    page.locator("button[type='submit']").click()
+    page.get_by_role("button", name="Log in").click()
     page.locator(".o_web_client").wait_for(state="attached", timeout=30_000)
 
 
