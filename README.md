@@ -44,14 +44,14 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `0edf3bbcc935c8e9a2da7331bf451d1eeaabc090` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `41f43d402d0ad51b1e16aaed67114f3021c7fb12` |
-| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `ada105778f895087035730009e2ca42fdde3754c` |
+| `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `9a207dd649f4c83e798d8a6247abd5e04d3acdf6` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `bc95136497a349eda1e2a5a611964c7a69aa6445` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `2a4fc8bb46948743139dea5a97ded997450ac33a` |
+| `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home`, `monodoo_theme`, `monodoo_appsbar` | `074aab983ad62436640f0d5db65502f40cfa358e` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The FACODI theme pin keeps the `19.0.5.0.1` production-compatible Website/Portal header baseline, adds the reusable homepage learning dashboard with dynamic published-course cards backed by Odoo Website snippet filters, and restores the standard Odoo 19 dynamic-snippet container/content contract required by the Website Builder.
+The FACODI theme pin includes the production-compatible Website/Portal header, reusable homepage learning dashboard, Website Foundation components, dynamic eLearning thumbnails and the responsive `/slides` catalogue. It also preserves the standard Odoo 19 dynamic-snippet contract and includes the Sass compatibility fix required for successful frontend asset compilation.
 
 The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
 
