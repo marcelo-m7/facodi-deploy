@@ -46,12 +46,12 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `f4c6bbc5cdffd5e4db8b022f43258e363bd7a25b` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `1ff81c0585728037dfb24b3310d5905ce38c6fc7` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `9b7903d32a423cb71f9b324d26817bfbc0f9272e` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `00d9323deff8ecbe300268321ff01e8efcc80cec` |
 | `marcelo-m7/monodoo` | `monodoo_core`, `monodoo_home` | `83362e0c246c0c5a08261e2045cd883cb9be0544` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
-| `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
+| `odoo/design-themes` | only `theme_common` | `a1818df4ade65406ac0184382c0fd46f1023a22612c` |
 
-The FACODI theme pin is the `19.0.5.0.1` production-compatibility release, which keeps the reusable Odoo-native Website/Portal header components while avoiding a brittle dependency on an existing inner `<nav>` in upgraded Website databases.
+The FACODI theme pin keeps the `19.0.5.0.1` production-compatible Website/Portal header baseline and adds the reusable homepage learning dashboard with dynamic published-course cards backed by Odoo Website snippet filters.
 
 The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
 
