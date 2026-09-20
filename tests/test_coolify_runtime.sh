@@ -82,6 +82,19 @@ if home_menu.action.tag != "monodoo_home":
     raise RuntimeError("Monodoo Home root menu has the wrong client action tag")
 print("MONODOO_HOME_ACTION=monodoo_home")
 
+lesti = env["facodi.learning.curriculum.reference"].search(
+    [("provider", "=", "ualg"), ("external_id", "=", "ualg:1941:2026-27")]
+)
+if len(lesti) != 1:
+    raise RuntimeError("LESTI 2026/27 reference is missing")
+if len(lesti.unit_ids) != 43:
+    raise RuntimeError(f"LESTI 2026/27 unit count is {len(lesti.unit_ids)}, expected 43")
+if env["facodi.learning.curriculum.coverage"].search_count(
+    [("curriculum_unit_id.reference_id", "=", lesti.id)]
+):
+    raise RuntimeError("LESTI seed fabricated curriculum coverage")
+print("FACODI_LESTI_REFERENCE=ualg:1941:2026-27:43")
+
 admin = env.ref("base.user_admin")
 admin.password = "facodi-ci-admin"
 env.cr.commit()
@@ -97,11 +110,20 @@ for module in monodoo_core monodoo_home monodoo_theme monodoo_appsbar; do
   grep -Fq "MONODOO_MODULE=${module}:installed" <<<"$state"
 done
 grep -Fq 'MONODOO_HOME_ACTION=monodoo_home' <<<"$state"
+grep -Fq 'FACODI_LESTI_REFERENCE=ualg:1941:2026-27:43' <<<"$state"
 
 "${compose[@]}" exec -T odoo python3 - <<'PY'
 import urllib.request
 
-for route in ("/", "/pt/", "/es/", "/fr/", "/slides"):
+for route in (
+    "/",
+    "/pt/",
+    "/es/",
+    "/fr/",
+    "/slides",
+    "/curriculos",
+    "/curriculos/ualg/1941/2026-27",
+):
     response = urllib.request.urlopen("http://127.0.0.1:8069" + route, timeout=15)
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
