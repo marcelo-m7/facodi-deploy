@@ -115,18 +115,52 @@ grep -Fq 'MONODOO_HOME_ACTION=monodoo_home' <<<"$state"
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 
 "${compose[@]}" exec -T odoo python3 - <<'PY'
+import re
 import urllib.request
 
+base = "http://127.0.0.1:8069"
+curriculum_body = b""
+
 for route in ("/", "/pt/", "/es/", "/fr/", "/slides", "/curriculos"):
-    response = urllib.request.urlopen("http://127.0.0.1:8069" + route, timeout=15)
+    response = urllib.request.urlopen(base + route, timeout=15)
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
-    if route == "/curriculos" and b"Engenharia de Sistemas e Tecnologias Inform" not in body:
-        raise RuntimeError("public curriculum page does not expose the validated LESTI reference")
+    if route == "/curriculos":
+        curriculum_body = body
+        if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
+            raise RuntimeError("public curriculum page does not expose the validated LESTI reference")
     print(f"PASS {route}")
-PY
 
+detail_match = re.search(rb'href="(/curriculos/[0-9]+)"', curriculum_body)
+if not detail_match:
+    raise RuntimeError("public curriculum index does not link to a curriculum detail page")
+
+detail_route = detail_match.group(1).decode("utf-8")
+detail = urllib.request.urlopen(base + detail_route, timeout=15)
+detail_body = detail.read()
+if detail.status != 200:
+    raise RuntimeError(f"{detail_route} returned HTTP {detail.status}")
+if b"Cobertura FACODI" not in detail_body:
+    raise RuntimeError("curriculum detail does not expose the public coverage matrix")
+
+unit_match = re.search(rb'href="(/curriculos/[0-9]+/unidades/19411017)"', detail_body)
+if not unit_match:
+    raise RuntimeError("curriculum detail does not link Base de Dados II to its public unit page")
+
+unit_route = unit_match.group(1).decode("utf-8")
+unit = urllib.request.urlopen(base + unit_route, timeout=15)
+unit_body = unit.read()
+if unit.status != 200:
+    raise RuntimeError(f"{unit_route} returned HTTP {unit.status}")
+if b"BASE DE DADOS II" not in unit_body.upper():
+    raise RuntimeError("public curricular-unit page does not render Base de Dados II")
+if b"Sem cobertura publicada" not in unit_body:
+    raise RuntimeError("empty reviewed coverage must render as a public editorial gap")
+if b"Consultar fonte oficial" not in unit_body:
+    raise RuntimeError("public curricular-unit page lost official-source provenance")
+print(f"PASS {unit_route}")
+PY
 pytest tests/test_monodoo_backend.py -q
 
 echo "PASS: disposable Coolify runtime"
