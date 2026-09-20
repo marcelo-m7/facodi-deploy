@@ -45,11 +45,13 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `a041a674175a221c0ad6a1a97095d22e38f69e72` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `dc3c6334239d87f3f5f40c3203a768aeadb585db` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `6b4ee3005ea022f2cf56ab33cfd390c87f33b797` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `827371a1499dbe8ed1d4bed1da906aab1be7daea` |
 | `marcelo-m7/monodoo` | `monodoo_backend` and its dependencies | `bbc6f6affc730de7cf75c98c0d6d30da10740095` |
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
+
+The FACODI learning pin adds the first public, versioned official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, and exposes only Manager-reviewed course coverage on public course pages.
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
