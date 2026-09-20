@@ -82,6 +82,21 @@ if home_menu.action.tag != "monodoo_home":
     raise RuntimeError("Monodoo Home root menu has the wrong client action tag")
 print("MONODOO_HOME_ACTION=monodoo_home")
 
+curriculum = env["facodi.learning.curriculum.reference"].search(
+    [
+        ("provider", "=", "ualg"),
+        ("external_id", "=", "ualg-1941-2026-27"),
+    ],
+    limit=1,
+)
+if not curriculum:
+    raise RuntimeError("Validated UAlg LESTI curriculum reference is missing")
+if not curriculum.website_published or not curriculum.validated_at:
+    raise RuntimeError("UAlg LESTI curriculum reference is not publicly validated")
+if len(curriculum.unit_ids) != 43:
+    raise RuntimeError(f"UAlg LESTI curriculum expected 43 units, got {len(curriculum.unit_ids)}")
+print(f"FACODI_LESTI_CURRICULUM={curriculum.external_programme_code}:{len(curriculum.unit_ids)}")
+
 admin = env.ref("base.user_admin")
 admin.password = "facodi-ci-admin"
 env.cr.commit()
@@ -97,15 +112,18 @@ for module in monodoo_core monodoo_home monodoo_theme monodoo_appsbar; do
   grep -Fq "MONODOO_MODULE=${module}:installed" <<<"$state"
 done
 grep -Fq 'MONODOO_HOME_ACTION=monodoo_home' <<<"$state"
+grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 
 "${compose[@]}" exec -T odoo python3 - <<'PY'
 import urllib.request
 
-for route in ("/", "/pt/", "/es/", "/fr/", "/slides"):
+for route in ("/", "/pt/", "/es/", "/fr/", "/slides", "/curriculos"):
     response = urllib.request.urlopen("http://127.0.0.1:8069" + route, timeout=15)
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
-    response.read(256)
+    body = response.read()
+    if route == "/curriculos" and b"Engenharia de Sistemas e Tecnologias Inform" not in body:
+        raise RuntimeError("public curriculum page does not expose the validated LESTI reference")
     print(f"PASS {route}")
 PY
 
