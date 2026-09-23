@@ -9,12 +9,10 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/facodi-ai",
     "addons/facodi-learning",
     "addons/facodi-theme",
-    "supabase",
     "vendor/odoo-design-themes",
 }
 
 FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"
-PROCESSING_PLANE_ROOT = ROOT / "supabase" / "facodi-processing-plane"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -55,33 +53,6 @@ class RepositoryContractTest(unittest.TestCase):
             dockerfile,
         )
         self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
-        self.assertNotIn("COPY supabase/", dockerfile)
-
-    def test_processing_plane_scaffold_exists_outside_addons(self):
-        self.assertTrue((PROCESSING_PLANE_ROOT / "README.md").is_file())
-        self.assertTrue((PROCESSING_PLANE_ROOT / "supabase/config.toml").is_file())
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "docs/adr/ADR-001-processing-plane-boundary.md").is_file()
-        )
-        self.assertTrue((PROCESSING_PLANE_ROOT / "docs/live-function-inventory.md").is_file())
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "snapshots/live-open2/functions/v2_process_video_pipeline.json").is_file()
-        )
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "snapshots/live-open2/functions/v2_sync_object_to_odoo.json").is_file()
-        )
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "snapshots/live-open2/functions/v2_push_odoo_learning_object.json").is_file()
-        )
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "supabase/functions/v2_process_video_pipeline/index.ts").is_file()
-        )
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "supabase/functions/v2_sync_object_to_odoo/index.ts").is_file()
-        )
-        self.assertTrue(
-            (PROCESSING_PLANE_ROOT / "supabase/functions/v2_push_odoo_learning_object/index.ts").is_file()
-        )
 
     def test_dockerfile_installs_facodi_ai_python_runtime(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
@@ -187,17 +158,6 @@ class RepositoryContractTest(unittest.TestCase):
             self.assertIn("v0.1.0", text)
         self.assertNotIn("Cloud Run", readme)
         self.assertNotIn("terraform apply", operations.lower())
-
-    def test_docs_describe_processing_plane_scaffold_boundary(self):
-        readme = (ROOT / "README.md").read_text()
-        architecture = (ROOT / "ARCHITECTURE.md").read_text()
-        operations = (ROOT / "docs/operations.md").read_text()
-        self.assertIn("supabase/facodi-processing-plane", readme)
-        self.assertIn("outside `addons/`", readme)
-        self.assertIn("supabase/facodi-processing-plane", architecture)
-        self.assertIn("not under `addons/`", architecture)
-        self.assertIn("supabase/facodi-processing-plane", operations)
-
 
 if __name__ == "__main__":
     unittest.main()

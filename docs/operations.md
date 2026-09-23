@@ -60,8 +60,6 @@ The repository contract pins the expected revisions for:
 - `facodi-theme` / `theme_facodi`;
 - `odoo/design-themes`, exposing only `theme_common`.
 
-The workspace also contains the pinned `supabase/facodi-processing-plane` source for FACODI Supabase functions and migrations. It is validated as source, but it is not copied into the Odoo image and is not part of `FACODI_MODULES`.
-
 Before deployment, install the disposable browser test dependencies and require:
 
 ```bash
@@ -71,8 +69,6 @@ bash scripts/validate-repository.sh
 docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 bash tests/test_coolify_runtime.sh
 ```
-
-If the revision changes `supabase/facodi-processing-plane`, also run its local bootstrap validation before deployment work continues. Supabase worker code and snapshots must be reviewed independently from the Odoo runtime acceptance gate.
 
 The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the authenticated `/odoo` standard webclient renders in Chromium, and the public FACODI routes respond successfully.
 

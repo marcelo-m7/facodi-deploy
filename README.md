@@ -47,10 +47,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `a26874fe67ba359a4d6a137381adfbdbe0f0420d` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `411321643a221813e4b128295cb965cea35d406d` |
-
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
-
-The repository also pins the Processing Plane source at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident.
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
 
@@ -61,8 +58,6 @@ The FACODI theme owns Website presentation and footer navigation. It must remain
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
 
 The repository contract validates the expected source paths, required addon manifests and the exact checked-out submodule revision against each superproject gitlink, so the deployment source composition cannot silently drift from the commit being deployed.
-
-The Processing Plane scaffold is validated separately as a non-addon source boundary: the contract requires its bootstrap docs, Supabase config, captured live snapshots and extracted function sources to exist, while the Docker build must continue to ignore the `supabase/` tree.
 
 ## Migration lifecycle
 

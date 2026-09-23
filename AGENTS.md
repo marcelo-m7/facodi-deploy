@@ -6,7 +6,6 @@
 - It owns the Docker image, Coolify Compose lifecycle, migration gate, source pins and deployment contracts. Business logic belongs in the addon submodules.
 - Before editing an addon, identify its owning repository. Changes under `addons/facodi-ai`, `addons/facodi-learning` or `addons/facodi-theme` must be made in that repository, then consumed here by updating the submodule gitlink.
 - Initialize source pins before validation with `git submodule update --init --recursive`. Do not replace a gitlink with copied addon code or mutable branch contents.
-<!-- - `supabase/facodi-processing-plane` is a separate Processing Plane source boundary. It is not an Odoo addon, is not copied into the Odoo image, and must not become a hidden dependency of the Odoo learning or AI flows. -->
 
 ## Domain and implementation boundaries
 
