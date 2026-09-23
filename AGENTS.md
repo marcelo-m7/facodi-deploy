@@ -38,8 +38,15 @@ bash tests/test_coolify_runtime.sh
 - `tests/test_coolify_runtime.sh` is the disposable end-to-end check: fresh migration, idempotent migration, Odoo health, Website languages and standard-webclient browser acceptance.
 - Do not copy the test-only host port publication from `tests/docker-compose.ci.yml` into production.
 
+## Local development
+
+- Read [`docs/development.md`](docs/development.md) before changing Odoo modules. Use `bash scripts/dev.sh init` for a fresh local database, `bash scripts/dev.sh update <module>` after addon changes, and `bash scripts/dev.sh shell` for Odoo-context inspection.
+- Local Compose state is isolated in `facodi-dev-postgres` and `facodi-dev-odoo`; never use their lifecycle commands as a model for the persistent Coolify volumes.
+- Set `ODOO_SOURCE_PATH` when the default sibling Odoo 19 Community checkout is unavailable. Keep the runtime API compatible with Odoo 19 Community.
+
 ## Documentation and change discipline
 
 - Read [`README.md`](README.md) for architecture and source composition, [`docs/operations.md`](docs/operations.md) for deployment/backup/rollback procedure, and [`docker/migrate.py`](docker/migrate.py) before changing migration behavior.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) is the ownership and installed-module inventory; use it to determine whether a change belongs here, in an addon submodule, or outside the Odoo image.
 - Keep changes small and preserve the existing public module and environment contracts. Update tests or documentation when a contract changes.
 - Do not commit generated local state, credentials, runtime logs or unrelated submodule changes.
