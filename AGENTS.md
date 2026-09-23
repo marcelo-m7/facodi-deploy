@@ -7,6 +7,22 @@
 - Before editing an addon, identify its owning repository. Changes under `addons/facodi-ai`, `addons/facodi-learning` or `addons/facodi-theme` must be made in that repository, then consumed here by updating the submodule gitlink.
 - Initialize source pins before validation with `git submodule update --init --recursive`. Do not replace a gitlink with copied addon code or mutable branch contents.
 
+## Domain and implementation boundaries
+
+- Keep standard Odoo eLearning authoritative: `slide.channel` is the sole course model and `slide.slide` is canonical course content. Do not introduce parallel course, learner-progress or prerequisite models.
+- `facodi_learning` owns course discovery, analysis provenance, reviewed course/content mappings, curriculum references, curricular units, coverage and reusable curriculum modules. `theme_facodi` owns presentation only; do not move domain queries or editorial data into theme QWeb.
+- A curriculum reference/unit is external evidence, not a FACODI degree, credit or enrolment record. Coverage types are `covers`, `partial`, `supports` and `equivalent`; `equivalent` never grants academic equivalence, ECTS, credits or transcript status.
+- Public curriculum data must be explicit and reviewed: render only validated, Website-published references and approved coverage. Public helpers may `sudo()` only to locate editorial audit/module data, then must re-read `slide.channel` and `slide.slide` as the caller and filter standard publication, visibility and website boundaries.
+- Reusable learning composition is `reference -> unit -> module assignment -> module item -> one course or one slide`. Do not create a competing pathway model. Existing live mapping for UAlg LESTI UC `19411018` (Probabilidades e Estatística) uses approved evidence and existing course/content records only; do not invent content to close gaps.
+- `facodi_ai` is a reusable server-side service layer for provider, connection, profile, prompt and request audit; `facodi_ai_website` is its optional Website translation plugin. Provider calls must be on demand, structured, auditable and fail closed. Never claim provider-driven curriculum suggestions are complete without an actual validated provider output, review action and regression coverage.
+
+## UI and translations
+
+- Preserve standard Website, Website Builder, `website_slides`, Portal and Odoo translation mechanisms. The theme provides FACODI styling, header/snippets and eLearning presentation; it does not own routes, menus, controllers or learning data.
+- English is the QWeb source language. Use native module `.po` catalogues for `pt_PT`, `es_ES` and `fr_FR`; QWeb entries for `ir.ui.view` must use `model_terms:ir.ui.view,arch_db:<xmlid>`, not `arch`.
+- Keep public curriculum routes stable: `/curriculos`, `/mapa-curricular`, `/unidades-curriculares`, `/curriculos/<reference>/unidades/<code>`, `/unidades-curriculares/<reference>/<slug>` and `/modulos/<id>`.
+- When adding a menu/view reference in an Odoo manifest, load its action before the menu and load its parent menu before child menus. Fresh installation is the discriminating check; upgrade-only checks can hide ordering defects.
+
 ## Runtime invariants
 
 - `deploy/coolify/docker-compose.yml` is the only active production runtime definition: PostgreSQL 16 -> one-shot `migrate` -> persistent `odoo`.
@@ -37,6 +53,8 @@ bash tests/test_coolify_runtime.sh
 - `scripts/validate-repository.sh` covers manifests, exact gitlinks, shell syntax and entrypoint tests.
 - `tests/test_coolify_runtime.sh` is the disposable end-to-end check: fresh migration, idempotent migration, Odoo health, Website languages and standard-webclient browser acceptance.
 - Do not copy the test-only host port publication from `tests/docker-compose.ci.yml` into production.
+- The runtime test also asserts the validated UAlg LESTI reference has 43 units and verifies anonymous `/curriculos`, `/mapa-curricular`, `/pt/mapa-curricular` and a UC detail route. Stop the local dev `odoo` service first when port `8069` is occupied; this does not affect persistent data.
+- If the host Python lacks `pytest`, use a disposable virtual environment outside the repository and prepend its `bin` directory to `PATH`; do not bypass the final backend check.
 
 ## Local development
 
@@ -50,3 +68,4 @@ bash tests/test_coolify_runtime.sh
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) is the ownership and installed-module inventory; use it to determine whether a change belongs here, in an addon submodule, or outside the Odoo image.
 - Keep changes small and preserve the existing public module and environment contracts. Update tests or documentation when a contract changes.
 - Do not commit generated local state, credentials, runtime logs or unrelated submodule changes.
+- For live Odoo XML-RPC work, use a target guard for exactly `https://facodi.com` and database `facodi`, avoid printing environment values, make the smallest reversible operation, and verify the persisted result through standard models. Source deployment and live business-data changes are separate operations.
