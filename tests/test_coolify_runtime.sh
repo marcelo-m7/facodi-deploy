@@ -125,6 +125,12 @@ env["facodi.learning.curriculum.module.item"].create(
     "slide_id": slide.id,
   }
 )
+env["facodi.learning.curriculum.module.assignment"].create(
+  {
+    "curriculum_unit_id": unit.id,
+    "module_id": module.id,
+  }
+)
 print("FACODI_RUNTIME_MODULE=" + module._facodi_public_path())
 
 admin = env.ref("base.user_admin")
@@ -157,11 +163,35 @@ fi
 import os
 import re
 import urllib.request
+import urllib.error
 
 base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 curriculum_body = b""
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+  def redirect_request(self, request, fp, code, msg, headers, newurl):
+    return None
+
+no_redirect = urllib.request.build_opener(NoRedirect)
+
+for legacy_route, canonical_route in (
+  ("/curriculos", "/roadmaps"),
+  ("/mapa-curricular", "/roadmaps"),
+  ("/curriculos/1", "/roadmaps/1"),
+  ("/curriculos/1/unidades/19411017", "/roadmaps/1/units/19411017"),
+):
+  try:
+    no_redirect.open(base + legacy_route, timeout=15)
+  except urllib.error.HTTPError as error:
+    if error.code != 301 or error.headers.get("Location") != canonical_route:
+      raise RuntimeError(
+        f"{legacy_route} must permanently redirect to {canonical_route}"
+      ) from error
+  else:
+    raise RuntimeError(f"{legacy_route} did not return a permanent redirect")
+  print(f"PASS {legacy_route} -> {canonical_route}")
 
 for route in (
   "/",
@@ -169,39 +199,38 @@ for route in (
   "/es/",
   "/fr/",
   "/slides",
-  "/curriculos",
-  "/mapa-curricular",
-  "/pt/mapa-curricular",
+  "/roadmaps",
+  "/pt/roadmaps",
 ):
     response = urllib.request.urlopen(base + route, timeout=15)
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
-    if route == "/curriculos":
+    if route == "/roadmaps":
         curriculum_body = body
         if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
-            raise RuntimeError("public curriculum page does not expose the validated LESTI reference")
-    if route == "/mapa-curricular" and b"Published learning paths" not in body:
-      raise RuntimeError("public curriculum map does not expose published learning paths")
-    if route == "/pt/mapa-curricular" and b"Mapa curricular" not in body:
-      raise RuntimeError("Portuguese public curriculum map is not translated")
+            raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
+    if route == "/pt/roadmaps" and b"Roadmaps" not in body:
+      raise RuntimeError("Portuguese public roadmap is not rendered")
     print(f"PASS {route}")
 
-detail_match = re.search(rb'href="(/curriculos/[0-9]+)"', curriculum_body)
+detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
 if not detail_match:
-    raise RuntimeError("public curriculum index does not link to a curriculum detail page")
+  raise RuntimeError("public roadmap index does not link to a roadmap detail page")
 
 detail_route = detail_match.group(1).decode("utf-8")
 detail = urllib.request.urlopen(base + detail_route, timeout=15)
 detail_body = detail.read()
 if detail.status != 200:
     raise RuntimeError(f"{detail_route} returned HTTP {detail.status}")
-if b"Cobertura FACODI" not in detail_body:
-    raise RuntimeError("curriculum detail does not expose the public coverage matrix")
+if b"Roadmap" not in detail_body:
+  raise RuntimeError("roadmap detail does not expose the public roadmap matrix")
+if b"FACODI Runtime Public Module" not in detail_body:
+  raise RuntimeError("roadmap detail does not expose published learning modules")
 
-unit_match = re.search(rb'href="(/curriculos/[0-9]+/unidades/19411017)"', detail_body)
+unit_match = re.search(rb'href="(/roadmaps/[0-9]+/units/19411017)"', detail_body)
 if not unit_match:
-    raise RuntimeError("curriculum detail does not link Base de Dados II to its public unit page")
+  raise RuntimeError("roadmap detail does not link Base de Dados II to its public unit page")
 
 unit_route = unit_match.group(1).decode("utf-8")
 unit = urllib.request.urlopen(base + unit_route, timeout=15)

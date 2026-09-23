@@ -54,13 +54,15 @@ This is a mix of authorized production observations and checked-in runtime accep
 | Learning catalog | 19 active, public, published `slide.channel` training courses; 790 `slide.slide` records |
 | Catalog duplicate check | No duplicate course names or `website_url` values |
 | Curriculum reference | Validated, Website-published UAlg LESTI 2026/27 reference, programme code `1941`, with 43 source units |
-| Public curriculum | `/curriculos`, `/mapa-curricular`, `/pt/mapa-curricular` and source-oriented UC detail routes are acceptance-tested public surfaces |
+| Public Roadmaps | `/roadmaps`, `/pt/roadmaps` and Roadmap UC detail routes are acceptance-tested public surfaces; legacy `/curriculos` and `/mapa-curricular` URLs permanently redirect |
 | Probability and Statistics | UC `19411018` has five published reusable modules, 53 existing course-content items and three approved coverage relations; these are reviewed mappings, not newly authored learning content or academic equivalence |
 | Blog | `website_blog` installed; `/blog` is the standard controller route |
 
 `slide.channel` is the only course model and `slide.slide` is canonical course content. Do not create or revise curriculum records, coverage, ECTS claims or equivalence claims without official source evidence and a Manager decision.
 
 Curriculum audit models remain private. Public projection may elevate only enough to discover reviewed editorial records, then must query course and content records as the requesting user so Odoo publication, website and visibility rules remain authoritative.
+
+Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
 
 ## Historical Notes
 
