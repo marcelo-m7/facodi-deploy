@@ -78,6 +78,55 @@ if len(curriculum.unit_ids) != 43:
     raise RuntimeError(f"UAlg LESTI curriculum expected 43 units, got {len(curriculum.unit_ids)}")
 print(f"FACODI_LESTI_CURRICULUM={curriculum.external_programme_code}:{len(curriculum.unit_ids)}")
 
+unit = curriculum.unit_ids.filtered(
+  lambda record: record.external_unit_code == "19411018"
+)
+if not unit:
+    raise RuntimeError("Validated curriculum unit 19411018 is missing")
+course = env["slide.channel"].create(
+  {
+    "name": "FACODI Runtime Curriculum Course",
+    "website_id": website.id,
+    "website_published": True,
+    "is_published": True,
+    "visibility": "public",
+    "enroll": "public",
+  }
+)
+coverage = env["facodi.learning.curriculum.coverage"].create(
+  {
+    "channel_id": course.id,
+    "curriculum_unit_id": unit.id,
+    "coverage_type": "covers",
+    "confidence": 1.0,
+  }
+)
+coverage.action_approve()
+print("FACODI_RUNTIME_COURSE=" + course.website_url)
+
+slide = env["slide.slide"].create(
+  {
+    "channel_id": course.id,
+    "name": "FACODI Runtime Public Module Item",
+    "slide_category": "document",
+    "is_published": True,
+    "website_published": True,
+  }
+)
+module = env["facodi.learning.curriculum.module"].create(
+  {
+    "name": "FACODI Runtime Public Module",
+    "website_published": True,
+  }
+)
+env["facodi.learning.curriculum.module.item"].create(
+  {
+    "module_id": module.id,
+    "slide_id": slide.id,
+  }
+)
+print("FACODI_RUNTIME_MODULE=" + module._facodi_public_path())
+
 admin = env.ref("base.user_admin")
 admin.password = "facodi-ci-admin"
 env.cr.commit()
@@ -90,12 +139,28 @@ for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
 done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
+runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
+if [[ -z "$runtime_course_route" ]]; then
+  echo "Runtime curriculum course route is missing" >&2
+  exit 1
+fi
+runtime_module_route="$(sed -n 's/^FACODI_RUNTIME_MODULE=//p' <<<"$state")"
+if [[ -z "$runtime_module_route" ]]; then
+  echo "Runtime curriculum module route is missing" >&2
+  exit 1
+fi
 
-"${compose[@]}" exec -T odoo python3 - <<'PY'
+"${compose[@]}" exec -T \
+  -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
+  -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
+  odoo python3 - <<'PY'
+import os
 import re
 import urllib.request
 
 base = "http://127.0.0.1:8069"
+runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
+runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 curriculum_body = b""
 
 for route in (
@@ -150,6 +215,22 @@ if b"Sem cobertura publicada" not in unit_body:
 if b"Consultar fonte oficial" not in unit_body:
     raise RuntimeError("public curricular-unit page lost official-source provenance")
 print(f"PASS {unit_route}")
+
+course = urllib.request.urlopen(base + runtime_course_route, timeout=15)
+course_body = course.read()
+if course.status != 200:
+  raise RuntimeError(f"{runtime_course_route} returned HTTP {course.status}")
+if "Ligação a currículos oficiais".encode() not in course_body:
+  raise RuntimeError("public course does not render approved curriculum alignment")
+print(f"PASS {runtime_course_route}")
+
+module = urllib.request.urlopen(base + runtime_module_route, timeout=15)
+module_body = module.read()
+if module.status != 200:
+  raise RuntimeError(f"{runtime_module_route} returned HTTP {module.status}")
+if b"FACODI Runtime Public Module Item" not in module_body:
+  raise RuntimeError("public module does not render its published learning item")
+print(f"PASS {runtime_module_route}")
 PY
 python3 -m pytest tests/test_odoo_backend.py -q
 
