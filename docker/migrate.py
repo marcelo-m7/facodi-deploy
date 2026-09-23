@@ -319,6 +319,29 @@ def apply_theme(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
+def normalize_public_navigation(config: str, database: str) -> None:
+    payload = _website_selector_payload() + """
+    Menu = env["website.menu"]
+    legacy = Menu.search(
+        [
+            ("website_id", "=", facodi_website.id),
+            ("url", "in", ["/roadmap", "/mapa-curricular", "/curriculos"]),
+        ],
+        order="sequence, id",
+    )
+    main_menu = facodi_website.menu_id
+    main_candidates = legacy.filtered(lambda menu: menu.parent_id == main_menu)
+    canonical = main_candidates[:1]
+    if canonical:
+        canonical.write({"name": "Roadmaps", "url": "/roadmaps"})
+        (legacy - canonical).unlink()
+    else:
+        legacy.write({"name": "Roadmaps", "url": "/roadmaps"})
+    env.cr.commit()
+    """
+    run_shell(config, database, payload)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
@@ -345,6 +368,7 @@ def main() -> None:
 
     configure_languages(args.config, args.database)
     apply_theme(args.config, args.database)
+    normalize_public_navigation(args.config, args.database)
 
 
 if __name__ == "__main__":

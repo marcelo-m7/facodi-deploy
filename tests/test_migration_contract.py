@@ -38,6 +38,7 @@ class MigrationContractTest(unittest.TestCase):
             "run_module_operation",
             "configure_languages",
             "apply_theme",
+            "normalize_public_navigation",
         ):
             self.assertIn(f"def {name}", text)
         self.assertNotIn("website.page", text)
@@ -60,6 +61,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -93,6 +95,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -116,6 +119,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation"),
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -130,6 +134,17 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn("button_immediate_uninstall", payload)
         self.assertIn("monodoo_backend", payload)
         self.assertIn("theme_monynha", payload)
+
+    def test_navigation_normalization_is_website_scoped_and_runs_after_theme(self):
+        text = MIGRATION.read_text()
+        self.assertIn('("website_id", "=", facodi_website.id)', text)
+        self.assertIn('("url", "in", ["/roadmap", "/mapa-curricular", "/curriculos"])', text)
+        self.assertIn('canonical.write({"name": "Roadmaps", "url": "/roadmaps"})', text)
+        self.assertIn("(legacy - canonical).unlink()", text)
+        self.assertLess(
+            text.index("apply_theme(args.config, args.database)"),
+            text.index("normalize_public_navigation(args.config, args.database)"),
+        )
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
         text = MIGRATION.read_text()
