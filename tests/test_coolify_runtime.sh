@@ -63,25 +63,6 @@ if not website:
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
-required_monodoo = (
-    "monodoo_core",
-    "monodoo_home",
-    "monodoo_theme",
-    "monodoo_appsbar",
-)
-for module_name in required_monodoo:
-    module = env["ir.module.module"].search([("name", "=", module_name)], limit=1)
-    print(f"MONODOO_MODULE={module_name}:{module.state if module else 'missing'}")
-    if not module or module.state != "installed":
-        raise RuntimeError(f"{module_name} is not installed")
-
-home_menu = env.ref("monodoo_home.menu_monodoo_home")
-if not home_menu.action or home_menu.action._name != "ir.actions.client":
-    raise RuntimeError("Monodoo Home root menu is not bound to a client action")
-if home_menu.action.tag != "monodoo_home":
-    raise RuntimeError("Monodoo Home root menu has the wrong client action tag")
-print("MONODOO_HOME_ACTION=monodoo_home")
-
 curriculum = env["facodi.learning.curriculum.reference"].search(
     [
         ("provider", "=", "ualg"),
@@ -108,10 +89,6 @@ grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
 for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
 done
-for module in monodoo_core monodoo_home monodoo_theme monodoo_appsbar; do
-  grep -Fq "MONODOO_MODULE=${module}:installed" <<<"$state"
-done
-grep -Fq 'MONODOO_HOME_ACTION=monodoo_home' <<<"$state"
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 
 "${compose[@]}" exec -T odoo python3 - <<'PY'
@@ -161,6 +138,6 @@ if b"Consultar fonte oficial" not in unit_body:
     raise RuntimeError("public curricular-unit page lost official-source provenance")
 print(f"PASS {unit_route}")
 PY
-pytest tests/test_monodoo_backend.py -q
+python3 -m pytest tests/test_odoo_backend.py -q
 
 echo "PASS: disposable Coolify runtime"

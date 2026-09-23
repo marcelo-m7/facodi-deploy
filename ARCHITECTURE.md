@@ -11,8 +11,6 @@ Business and presentation changes remain in their owning addon repositories:
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `a041a674175a221c0ad6a1a97095d22e38f69e72` |
 | `marcelo-m7/facodi-learning` | Curriculum and learning domain | `dc3c6334239d87f3f5f40c3203a768aeadb585db` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `827371a1499dbe8ed1d4bed1da906aab1be7daea` |
-| `marcelo-m7/monodoo` | Generic Odoo backend capabilities | `bbc6f6affc730de7cf75c98c0d6d30da10740095` |
-| `marcelo-m7/monynha-odoo` | Optional Monynha modules, not automatically installed | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-20.
@@ -36,9 +34,8 @@ The runtime requests these modules through `FACODI_MODULES`:
 - `theme_facodi`
 - `facodi_ai`
 - `facodi_ai_website`
-- `monodoo_backend`
 
-The image also makes the pinned addon sources available. Availability is not an installation contract: the Monynha modules are intentionally excluded from the automatic FACODI installation set.
+Existing databases retire the removed optional backend and Website modules through the standard Odoo module-uninstall API before the FACODI module set is updated. The standard Odoo webclient is the backend contract.
 
 The `supabase/facodi-processing-plane` tree is outside that runtime surface. It exists to preserve and evolve the Supabase Processing Plane without changing which sources are copied into `/mnt/extra-addons`.
 

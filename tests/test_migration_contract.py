@@ -6,7 +6,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "docker/migrate.py"
-MONODOO_MODULES = "monodoo_core,monodoo_home,monodoo_theme,monodoo_appsbar"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"
 
 
 def load_migration_module():
@@ -34,6 +34,7 @@ class MigrationContractTest(unittest.TestCase):
         text = MIGRATION.read_text()
         for name in (
             "inspect_legacy_state",
+            "uninstall_retired_modules",
             "run_module_operation",
             "configure_languages",
             "apply_theme",
@@ -43,18 +44,19 @@ class MigrationContractTest(unittest.TestCase):
         self.assertNotIn("website_page", text)
 
     def test_existing_database_initializes_required_modules_before_update(self):
-        """New Monodoo capabilities must install on an already-existing FACODI DB."""
+        """New FACODI capabilities must install on an already-existing database."""
         migration = load_migration_module()
         args = argparse.Namespace(
             config="/tmp/odoo.conf",
             database="facodi",
-            modules=MONODOO_MODULES,
+            modules=FACODI_MODULES,
         )
         with (
             mock.patch.object(migration, "parse_args", return_value=args),
             mock.patch.object(migration, "registry_exists", return_value=True),
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
-            mock.patch.object(migration, "psql_scalar", return_value="monodoo_core\nmonodoo_home"),
+            mock.patch.object(migration, "psql_scalar", return_value="facodi_learning\ntheme_facodi"),
+            mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -67,16 +69,16 @@ class MigrationContractTest(unittest.TestCase):
         )
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "monodoo_theme,monodoo_appsbar",
+            "facodi_ai,facodi_ai_website",
         )
-        self.assertEqual(operation.call_args_list[1].args[2], MONODOO_MODULES)
+        self.assertEqual(operation.call_args_list[1].args[2], FACODI_MODULES)
 
     def test_existing_database_updates_without_reinitializing_installed_modules(self):
         migration = load_migration_module()
         args = argparse.Namespace(
             config="/tmp/odoo.conf",
             database="facodi",
-            modules=MONODOO_MODULES,
+            modules=FACODI_MODULES,
         )
         with (
             mock.patch.object(migration, "parse_args", return_value=args),
@@ -85,8 +87,9 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="monodoo_core\nmonodoo_home\nmonodoo_theme\nmonodoo_appsbar",
+                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\ntheme_facodi",
             ),
+            mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -95,7 +98,38 @@ class MigrationContractTest(unittest.TestCase):
 
         self.assertEqual(len(operation.call_args_list), 1)
         self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
-        self.assertEqual(operation.call_args_list[0].args[2], MONODOO_MODULES)
+        self.assertEqual(operation.call_args_list[0].args[2], FACODI_MODULES)
+
+    def test_existing_database_uninstalls_retired_modules_before_update(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(migration, "missing_modules", return_value=""),
+            mock.patch.object(migration, "uninstall_retired_modules") as uninstall,
+            mock.patch.object(migration, "run_module_operation"),
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme"),
+        ):
+            migration.main()
+
+        uninstall.assert_called_once_with("/tmp/odoo.conf", "facodi")
+
+    def test_retired_modules_use_standard_odoo_uninstall_api(self):
+        migration = load_migration_module()
+        with mock.patch.object(migration, "run_shell") as shell:
+            migration.uninstall_retired_modules("/tmp/odoo.conf", "facodi")
+
+        payload = shell.call_args.args[2]
+        self.assertIn("button_immediate_uninstall", payload)
+        self.assertIn("monodoo_backend", payload)
+        self.assertIn("theme_monynha", payload)
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
         text = MIGRATION.read_text()

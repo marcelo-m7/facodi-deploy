@@ -30,7 +30,7 @@ services:
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
       FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP: ${FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP:-0}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -56,7 +56,7 @@ services:
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
-      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,monodoo_backend
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
       FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP: ${FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP:-0}
       ODOO_WORKERS: ${ODOO_WORKERS:-2}

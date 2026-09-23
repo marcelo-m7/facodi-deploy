@@ -24,9 +24,10 @@ class AuditRegressionTest(unittest.TestCase):
         self.assertIn("ODOO_WORKERS", text)
         self.assertNotIn("--workers=0", text)
 
-    def test_complete_monodoo_backend_meta_module_is_requested(self):
+    def test_removed_backend_modules_are_not_requested(self):
         text = COMPOSE.read_text()
-        self.assertIn("monodoo_backend", text)
+        self.assertNotIn("monodoo", text)
+        self.assertNotIn("monynha", text)
 
 
 if __name__ == "__main__":

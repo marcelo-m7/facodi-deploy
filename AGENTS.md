@@ -4,7 +4,7 @@
 
 - This repository is the canonical deployment composition for the FACODI Odoo 19 Community instance at `facodi.com`.
 - It owns the Docker image, Coolify Compose lifecycle, migration gate, source pins and deployment contracts. Business logic belongs in the addon submodules.
-- Before editing an addon, identify its owning repository. Changes under `addons/facodi-ai`, `addons/facodi-learning`, `addons/facodi-theme`, `addons/monodoo` or `addons/monynha-odoo` must be made in that repository, then consumed here by updating the submodule gitlink.
+- Before editing an addon, identify its owning repository. Changes under `addons/facodi-ai`, `addons/facodi-learning` or `addons/facodi-theme` must be made in that repository, then consumed here by updating the submodule gitlink.
 - Initialize source pins before validation with `git submodule update --init --recursive`. Do not replace a gitlink with copied addon code or mutable branch contents.
 
 ## Runtime invariants
@@ -14,7 +14,6 @@
 - The `migrate` service is a fail-closed gate. A failed migration must keep `odoo` stopped; do not bypass it or manually start Odoo against a partially migrated database.
 - Keep PostgreSQL and Odoo unpublished to host ports in the production Compose file. Do not add a Compose `name:` override.
 - The migration must remain idempotent and use standard Odoo APIs. Preserve its guarded `website_facodi` -> `theme_facodi` transition and do not add arbitrary rewrites of Website pages, courses, contacts or Website Builder content.
-- Monynha modules may be available in the image but are not part of the automatic FACODI installation set unless a separately reviewed change updates that contract.
 
 ## Secrets and live instance work
 
@@ -36,7 +35,7 @@ bash tests/test_coolify_runtime.sh
 ```
 
 - `scripts/validate-repository.sh` covers manifests, exact gitlinks, shell syntax and entrypoint tests.
-- `tests/test_coolify_runtime.sh` is the disposable end-to-end check: fresh migration, idempotent migration, Odoo health, Website languages, Monodoo runtime and browser acceptance.
+- `tests/test_coolify_runtime.sh` is the disposable end-to-end check: fresh migration, idempotent migration, Odoo health, Website languages and standard-webclient browser acceptance.
 - Do not copy the test-only host port publication from `tests/docker-compose.ci.yml` into production.
 
 ## Documentation and change discipline

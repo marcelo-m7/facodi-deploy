@@ -9,13 +9,6 @@ for manifest in \
   addons/facodi-ai/facodi_ai_website/__manifest__.py \
   addons/facodi-learning/facodi_learning/__manifest__.py \
   addons/facodi-theme/theme_facodi/__manifest__.py \
-  addons/monodoo/monodoo_core/__manifest__.py \
-  addons/monodoo/monodoo_home/__manifest__.py \
-  addons/monodoo/monodoo_theme/__manifest__.py \
-  addons/monodoo/monodoo_appsbar/__manifest__.py \
-  addons/monynha-odoo/theme_monynha/__manifest__.py \
-  addons/monynha-odoo/monynha_content/__manifest__.py \
-  addons/monynha-odoo/monynha_lead_generator/__manifest__.py \
   vendor/odoo-design-themes/theme_common/__manifest__.py; do
   test -f "$manifest" || { echo "missing Odoo manifest: $manifest" >&2; exit 1; }
 done

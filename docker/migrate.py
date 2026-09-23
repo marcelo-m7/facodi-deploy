@@ -8,6 +8,20 @@ import re
 import subprocess
 import textwrap
 
+RETIRED_MODULES = (
+    "monodoo_backend",
+    "monodoo_core",
+    "monodoo_home",
+    "monodoo_theme",
+    "monodoo_appsbar",
+    "monodoo_views",
+    "monodoo_chatter",
+    "monodoo_dialog",
+    "theme_monynha",
+    "monynha_content",
+    "monynha_lead_generator",
+)
+
 
 def run(command: list[str], *, input_text: str | None = None) -> None:
     subprocess.run(command, input=input_text, text=True, check=True)
@@ -217,6 +231,19 @@ def run_shell(config: str, database: str, payload: str) -> None:
     )
 
 
+def uninstall_retired_modules(config: str, database: str) -> None:
+    module_names = ", ".join(repr(module) for module in RETIRED_MODULES)
+    payload = f"""
+    retired_modules = env["ir.module.module"].search([
+        ("name", "in", ({module_names},)),
+        ("state", "=", "installed"),
+    ])
+    if retired_modules:
+        retired_modules.button_immediate_uninstall()
+    """
+    run_shell(config, database, payload)
+
+
 def _website_selector_payload() -> str:
     return """
     import os
@@ -310,6 +337,7 @@ def main() -> None:
         if state == "legacy":
             transition_legacy_theme()
 
+        uninstall_retired_modules(args.config, args.database)
         to_install = missing_modules(args.database, args.modules)
         if to_install:
             run_module_operation(args.config, args.database, to_install, initialize=True)

@@ -2,7 +2,7 @@
 
 This runbook is the operator procedure for the canonical FACODI Odoo 19 Community deployment serving `facodi.com` through the existing Coolify resource.
 
-The production invariant is simple: keep the existing Coolify resource, keep the project-scoped `postgres-data` and `odoo-data` volumes attached, let the one-shot migration gate succeed before Odoo starts, and verify the Website/eLearning and authenticated Monodoo backend runtime after every consequential deployment.
+The production invariant is simple: keep the existing Coolify resource, keep the project-scoped `postgres-data` and `odoo-data` volumes attached, let the one-shot migration gate succeed before Odoo starts, and verify the Website/eLearning and authenticated standard Odoo backend after every consequential deployment.
 
 ## 1. Canonical deployment shape
 
@@ -58,15 +58,9 @@ The repository contract pins the expected revisions for:
 
 - `facodi-learning` / `facodi_learning`;
 - `facodi-theme` / `theme_facodi`;
-- `monodoo` / `monodoo_core`, `monodoo_home`, `monodoo_theme`, and `monodoo_appsbar`;
-- `monynha-odoo` / `theme_monynha` and `monynha_lead_generator`;
 - `odoo/design-themes`, exposing only `theme_common`.
 
-The workspace also contains `supabase/facodi-processing-plane`, which is the local source scaffold for FACODI Supabase functions and migrations. It is validated as source, but it is not copied into the Odoo image and is not part of `FACODI_MODULES`.
-
-All four Monodoo addons are part of the canonical FACODI module set. Existing databases that already contain `monodoo_core` and `monodoo_home` must install the missing `monodoo_theme` and `monodoo_appsbar` capabilities through the normal migration gate before the complete module set is updated.
-
-Monynha modules are baked into the shared image but are not part of `FACODI_MODULES`; they must not be installed into the FACODI database by the canonical migration gate unless a future, separately reviewed change intentionally alters that contract.
+The workspace also contains the pinned `supabase/facodi-processing-plane` source for FACODI Supabase functions and migrations. It is validated as source, but it is not copied into the Odoo image and is not part of `FACODI_MODULES`.
 
 Before deployment, install the disposable browser test dependencies and require:
 
@@ -80,7 +74,7 @@ bash tests/test_coolify_runtime.sh
 
 If the revision changes `supabase/facodi-processing-plane`, also run its local bootstrap validation before deployment work continues. Supabase worker code and snapshots must be reviewed independently from the Odoo runtime acceptance gate.
 
-The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the four Monodoo addons are installed, the Home client action is valid, the authenticated `/odoo` webclient renders Monodoo Home + Theme + AppsBar in Chromium, and the public FACODI routes respond successfully.
+The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the authenticated `/odoo` standard webclient renders in Chromium, and the public FACODI routes respond successfully.
 
 The browser test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
 
@@ -97,7 +91,7 @@ Use this sequence for the first production adoption of the new Compose lifecycle
 7. Observe the services in order: `db`, then one-shot `migrate`, then `odoo`.
 8. Require the `migrate` service to exit successfully. If it fails, do not bypass the gate and do not manually start the new `odoo` service against the partially migrated database.
 9. Require the `odoo` service health check for `/web/login` to become healthy.
-10. Verify `facodi.com`, existing courses, Website pages, attachments and media, then authenticate to the backend and verify `/odoo` renders Monodoo Home with the sidebar before re-enabling unattended redeploy behavior.
+10. Verify `facodi.com`, existing courses, Website pages, attachments and media, then authenticate to the backend and verify `/odoo` renders the standard Odoo webclient before re-enabling unattended redeploy behavior.
 
 The migration service intentionally blocks the persistent Odoo service on non-zero exit.
 
@@ -107,7 +101,7 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-The generic missing-module phase installs any newly required canonical addon before updating the full `FACODI_MODULES` set. This is the mechanism used to introduce `monodoo_theme` and `monodoo_appsbar` on databases where the earlier Monodoo Home release is already installed.
+For an existing database, the migration first uninstalls the retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon before updating the full `FACODI_MODULES` set.
 
 After module operations the migration uses standard Odoo APIs to:
 
@@ -134,7 +128,7 @@ After `odoo` is healthy, verify at minimum:
 /slides
 ```
 
-For the backend, authenticate as an internal user and verify that `/odoo` renders Monodoo Home, the application sidebar is present according to that user's sidebar preference, and the theme runtime is active. The standard Odoo navigation must remain usable.
+For the backend, authenticate as an internal user and verify that `/odoo` renders the standard Odoo navigation and applications.
 
 Then verify operational persistence using real existing content:
 
@@ -216,9 +210,7 @@ A deployment refactor is ready for merge only when the exact PR head has green C
 - immediate second migration success;
 - healthy persistent Odoo startup;
 - correct Website language state;
-- all four Monodoo addons installed;
-- valid Monodoo Home client action;
-- authenticated browser rendering of Monodoo Home, Theme and AppsBar without page errors;
+- authenticated browser rendering of the standard Odoo webclient without page errors;
 - successful FACODI Website/eLearning HTTP checks.
 
 Any failure in that matrix keeps the PR in draft/review state until corrected.

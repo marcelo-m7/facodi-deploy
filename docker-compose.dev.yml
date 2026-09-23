@@ -27,7 +27,7 @@ services:
       DB_PASSWORD: ${ODOO_DB_PASSWORD:-facodi-dev-postgres-password}
       ODOO_DB: ${ODOO_DB:-facodi_dev}
       ODOO_ADMIN_PASSWD: ${ODOO_ADMIN_PASSWD:-facodi-dev-admin-password}
-      ODOO_ADDONS_PATH: /opt/odoo/addons,/mnt/extra-addons/facodi-ai,/mnt/extra-addons/facodi-learning,/mnt/extra-addons/facodi-theme,/mnt/extra-addons/monodoo,/mnt/extra-addons/monynha-odoo,/mnt/extra-addons/odoo-design-themes
+      ODOO_ADDONS_PATH: /opt/odoo/addons,/mnt/extra-addons/facodi-ai,/mnt/extra-addons/facodi-learning,/mnt/extra-addons/facodi-theme,/mnt/extra-addons/odoo-design-themes
       ODOO_DATA_DIR: /var/lib/odoo
       ODOO_HTTP_PORT: "8069"
       ODOO_WORKERS: "0"
@@ -46,8 +46,6 @@ services:
       - ./addons/facodi-ai:/mnt/extra-addons/facodi-ai
       - ./addons/facodi-learning:/mnt/extra-addons/facodi-learning
       - ./addons/facodi-theme:/mnt/extra-addons/facodi-theme
-      - ./addons/monodoo:/mnt/extra-addons/monodoo
-      - ./addons/monynha-odoo:/mnt/extra-addons/monynha-odoo
       - ./vendor/odoo-design-themes:/mnt/extra-addons/odoo-design-themes
       - facodi-dev-odoo:/var/lib/odoo
 
