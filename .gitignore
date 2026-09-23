@@ -5,3 +5,4 @@ gha-creds-*.json
 !.env.dev.example
 !.env.ci
 __pycache__/
+.prompts/
