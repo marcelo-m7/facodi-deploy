@@ -98,7 +98,16 @@ import urllib.request
 base = "http://127.0.0.1:8069"
 curriculum_body = b""
 
-for route in ("/", "/pt/", "/es/", "/fr/", "/slides", "/curriculos"):
+for route in (
+  "/",
+  "/pt/",
+  "/es/",
+  "/fr/",
+  "/slides",
+  "/curriculos",
+  "/mapa-curricular",
+  "/pt/mapa-curricular",
+):
     response = urllib.request.urlopen(base + route, timeout=15)
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
@@ -107,6 +116,10 @@ for route in ("/", "/pt/", "/es/", "/fr/", "/slides", "/curriculos"):
         curriculum_body = body
         if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
             raise RuntimeError("public curriculum page does not expose the validated LESTI reference")
+    if route == "/mapa-curricular" and b"Published learning paths" not in body:
+      raise RuntimeError("public curriculum map does not expose published learning paths")
+    if route == "/pt/mapa-curricular" and b"Mapa curricular" not in body:
+      raise RuntimeError("Portuguese public curriculum map is not translated")
     print(f"PASS {route}")
 
 detail_match = re.search(rb'href="(/curriculos/[0-9]+)"', curriculum_body)
