@@ -51,7 +51,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The repository also now contains a Processing Plane source scaffold at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident. Until it is published as an independent remote repository, this scaffold is tracked as workspace source rather than a pinned gitlink.
+The repository pins the Processing Plane source at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident.
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
 
@@ -129,6 +129,12 @@ bash tests/test_coolify_runtime.sh
 That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, confirms all four Monodoo addons are installed, checks the Home client-action contract, authenticates a disposable admin session in a real Chromium browser, and requires the Monodoo Home, theme runtime and AppsBar to render without browser errors. It also preserves the existing HTTP checks for the FACODI Website/eLearning routes. The host port used by Chromium is exposed only through `tests/docker-compose.ci.yml`; the production Coolify Compose file does not publish Odoo directly.
 
 GitHub Actions runs the same canonical Coolify acceptance path on pull requests and on `main`.
+
+## Local development
+
+For a disposable local environment that runs the checked-out Odoo 19 source and
+the pinned addon worktrees through bind mounts, follow [`docs/development.md`](docs/development.md).
+It is intentionally separate from the canonical Coolify runtime and its persistent volumes.
 
 ## Architecture inventory
 

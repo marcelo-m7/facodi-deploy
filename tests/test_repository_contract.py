@@ -11,6 +11,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/facodi-theme",
     "addons/monodoo",
     "addons/monynha-odoo",
+    "supabase",
     "vendor/odoo-design-themes",
 }
 

@@ -17,7 +17,7 @@ Business and presentation changes remain in their owning addon repositories:
 
 The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-20.
 
-The workspace also contains a local Processing Plane source scaffold at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the bootstrap home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots until that source is externalized into its own remote repository and pinned back here as a gitlink.
+The Processing Plane source is pinned at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots.
 
 ## Runtime
 

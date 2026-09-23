@@ -1,0 +1,18 @@
+FROM odoo:19.0
+
+USER root
+COPY addons/facodi-ai/requirements.txt /tmp/facodi-ai-requirements.txt
+COPY docker/dev-entrypoint.sh /usr/local/bin/facodi-dev-entrypoint
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends python3-venv; \
+    rm -rf /var/lib/apt/lists/*; \
+    python3 -m venv --system-site-packages /opt/facodi-venv; \
+    /opt/facodi-venv/bin/pip install --no-cache-dir -r /tmp/facodi-ai-requirements.txt; \
+    /opt/facodi-venv/bin/python3 -c "import OpenSSL, cryptography, pydantic_ai"; \
+    rm /tmp/facodi-ai-requirements.txt; \
+    mkdir -p /mnt/extra-addons; \
+    chmod 0755 /usr/local/bin/facodi-dev-entrypoint
+
+USER odoo
+ENTRYPOINT ["/usr/local/bin/facodi-dev-entrypoint"]
