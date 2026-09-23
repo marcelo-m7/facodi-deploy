@@ -11,11 +11,12 @@ Business and presentation changes remain in their owning addon repositories:
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `a041a674175a221c0ad6a1a97095d22e38f69e72` |
 | `marcelo-m7/facodi-learning` | Curriculum and learning domain | `dc3c6334239d87f3f5f40c3203a768aeadb585db` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `827371a1499dbe8ed1d4bed1da906aab1be7daea` |
+
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-20.
 
-The Processing Plane source is pinned at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots.
+The workspace also contains a local Processing Plane source scaffold at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the bootstrap home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots until that source is externalized into its own remote repository and pinned back here as a gitlink.
 
 ## Runtime
 
@@ -34,8 +35,9 @@ The runtime requests these modules through `FACODI_MODULES`:
 - `theme_facodi`
 - `facodi_ai`
 - `facodi_ai_website`
+- `monodoo_backend`
 
-Existing databases retire the removed optional backend and Website modules through the standard Odoo module-uninstall API before the FACODI module set is updated. The standard Odoo webclient is the backend contract.
+The image also makes the pinned addon sources available. Availability is not an installation contract: the Monynha modules are intentionally excluded from the automatic FACODI installation set.
 
 The `supabase/facodi-processing-plane` tree is outside that runtime surface. It exists to preserve and evolve the Supabase Processing Plane without changing which sources are copied into `/mnt/extra-addons`.
 
