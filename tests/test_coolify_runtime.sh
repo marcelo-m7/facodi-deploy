@@ -212,6 +212,9 @@ for route in (
             raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
+    if route == "/slides":
+      if b"Curriculum Map" in body or b">Curricula<" in body:
+        raise RuntimeError("public catalogue navigation retains legacy curriculum labels")
     if route == "/pt/roadmaps" and b"Roadmaps" not in body:
       raise RuntimeError("Portuguese public roadmap is not rendered")
     print(f"PASS {route}")
