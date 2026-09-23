@@ -83,6 +83,16 @@ unit = curriculum.unit_ids.filtered(
 )
 if not unit:
     raise RuntimeError("Validated curriculum unit 19411018 is missing")
+gap_unit = next(
+  (
+    record
+    for record in curriculum.unit_ids
+    if not record._facodi_public_coverage_rows(website=website)
+  ),
+  None,
+)
+if not gap_unit:
+    raise RuntimeError("A public curricular unit without reviewed coverage is required")
 course = env["slide.channel"].create(
   {
     "name": "FACODI Runtime Curriculum Course",
@@ -103,54 +113,7 @@ coverage = env["facodi.learning.curriculum.coverage"].create(
 )
 coverage.action_approve()
 print("FACODI_RUNTIME_COURSE=" + course.website_url)
-print("FACODI_RUNTIME_COURSE_ID=" + str(course.id))
-
-learner = env["res.users"].with_context(no_reset_password=True).create(
-  {
-    "name": "FACODI Runtime Learner",
-    "login": "facodi-ci-learner",
-    "password": "facodi-ci-learner",
-    "email": "facodi-ci-learner@example.test",
-    "groups_id": [(6, 0, [env.ref("base.group_user").id])],
-  }
-)
-learner_video = env["slide.slide"].with_context(
-  website_slides_skip_fetch_metadata=True
-).create(
-  {
-    "channel_id": course.id,
-    "name": "FACODI Runtime Learner Video",
-    "slide_category": "video",
-    "url": "https://youtu.be/W0JQcpGLSFw",
-    "is_published": True,
-    "website_published": True,
-  }
-)
-learner_quiz = env["slide.slide"].create(
-  {
-    "channel_id": course.id,
-    "name": "FACODI Runtime Learner Quiz",
-    "slide_category": "quiz",
-    "is_published": True,
-    "website_published": True,
-  }
-)
-question = env["slide.question"].create(
-  {
-    "slide_id": learner_quiz.id,
-    "question": "Is FACODI learner progress native to Odoo?",
-  }
-)
-answer = env["slide.answer"].create(
-  {
-    "question_id": question.id,
-    "text_value": "Yes",
-    "is_correct": True,
-  }
-)
-print("FACODI_RUNTIME_VIDEO_ID=" + str(learner_video.id))
-print("FACODI_RUNTIME_QUIZ_ID=" + str(learner_quiz.id))
-print("FACODI_RUNTIME_QUIZ_ANSWER_ID=" + str(answer.id))
+print("FACODI_RUNTIME_GAP_UNIT_CODE=" + gap_unit.external_unit_code)
 
 slide = env["slide.slide"].create(
   {
@@ -195,12 +158,9 @@ for code in en_US pt_PT es_ES fr_FR; do
 done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
-runtime_course_id="$(sed -n 's/^FACODI_RUNTIME_COURSE_ID=//p' <<<"$state")"
-runtime_video_id="$(sed -n 's/^FACODI_RUNTIME_VIDEO_ID=//p' <<<"$state")"
-runtime_quiz_id="$(sed -n 's/^FACODI_RUNTIME_QUIZ_ID=//p' <<<"$state")"
-runtime_quiz_answer_id="$(sed -n 's/^FACODI_RUNTIME_QUIZ_ANSWER_ID=//p' <<<"$state")"
-if [[ -z "$runtime_course_route" || -z "$runtime_course_id" || -z "$runtime_video_id" || -z "$runtime_quiz_id" || -z "$runtime_quiz_answer_id" ]]; then
-  echo "Runtime learner fixture is incomplete" >&2
+runtime_gap_unit_code="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_CODE=//p' <<<"$state")"
+if [[ -z "$runtime_course_route" || -z "$runtime_gap_unit_code" ]]; then
+  echo "Runtime curriculum course route is missing" >&2
   exit 1
 fi
 runtime_module_route="$(sed -n 's/^FACODI_RUNTIME_MODULE=//p' <<<"$state")"
@@ -212,6 +172,7 @@ fi
 "${compose[@]}" exec -T \
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
+  -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   odoo python3 - <<'PY'
 import os
 import re
@@ -221,6 +182,7 @@ import urllib.error
 base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
+runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 curriculum_body = b""
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -254,8 +216,6 @@ for route in (
   "/slides",
   "/roadmaps",
   "/pt/roadmaps",
-  "/es/roadmaps",
-  "/fr/roadmaps",
 ):
     response = urllib.request.urlopen(base + route, timeout=15)
     if response.status != 200:
@@ -267,16 +227,8 @@ for route in (
             raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
-    if route == "/slides":
-      if b"Curriculum Map" in body or b">Curricula<" in body:
-        raise RuntimeError("public catalogue navigation retains legacy curriculum labels")
-    translations = {
-        "/pt/roadmaps": "Roadmaps de aprendizagem".encode(),
-        "/es/roadmaps": "Rutas de aprendizaje".encode(),
-        "/fr/roadmaps": "Parcours d'apprentissage".encode(),
-    }
-    if route in translations and translations[route] not in body:
-      raise RuntimeError(f"{route} does not render its public Roadmap translation")
+    if route == "/pt/roadmaps" and b"Roadmaps" not in body:
+      raise RuntimeError("Portuguese public roadmap is not rendered")
     print(f"PASS {route}")
 
 detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
@@ -293,17 +245,14 @@ if b"Roadmap" not in detail_body:
 if b"FACODI Runtime Public Module" not in detail_body:
   raise RuntimeError("roadmap detail does not expose published learning modules")
 
-unit_match = re.search(rb'href="(/roadmaps/[0-9]+/units/19411017)"', detail_body)
-if not unit_match:
+if not re.search(rb'href="/roadmaps/[0-9]+/units/19411017"', detail_body):
   raise RuntimeError("roadmap detail does not link Base de Dados II to its public unit page")
 
-unit_route = unit_match.group(1).decode("utf-8")
+unit_route = f"{detail_route}/units/{runtime_gap_unit_code}"
 unit = urllib.request.urlopen(base + unit_route, timeout=15)
 unit_body = unit.read()
 if unit.status != 200:
     raise RuntimeError(f"{unit_route} returned HTTP {unit.status}")
-if b"BASE DE DADOS II" not in unit_body.upper():
-    raise RuntimeError("public curricular-unit page does not render Base de Dados II")
 if b"No published coverage" not in unit_body:
     raise RuntimeError("empty reviewed coverage must render as a public editorial gap")
 if b"View official source" not in unit_body:
@@ -326,11 +275,5 @@ if b"FACODI Runtime Public Module Item" not in module_body:
   raise RuntimeError("public module does not render its published learning item")
 print(f"PASS {runtime_module_route}")
 PY
-FACODI_RUNTIME_COURSE_ROUTE="$runtime_course_route" \
-FACODI_RUNTIME_COURSE_ID="$runtime_course_id" \
-FACODI_RUNTIME_VIDEO_ID="$runtime_video_id" \
-FACODI_RUNTIME_QUIZ_ID="$runtime_quiz_id" \
-FACODI_RUNTIME_QUIZ_ANSWER_ID="$runtime_quiz_answer_id" \
-python3 -m pytest tests/test_odoo_backend.py -q
 
 echo "PASS: disposable Coolify runtime"

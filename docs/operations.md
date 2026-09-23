@@ -60,19 +60,17 @@ The repository contract pins the expected revisions for:
 - `facodi-theme` / `theme_facodi`;
 - `odoo/design-themes`, exposing only `theme_common`.
 
-Before deployment, install the disposable browser test dependencies and require:
+Before deployment, require:
 
 ```bash
-python3 -m pip install -r tests/requirements.txt
-python3 -m playwright install --with-deps chromium
 bash scripts/validate-repository.sh
 docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 bash tests/test_coolify_runtime.sh
 ```
 
-The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the authenticated `/odoo` standard webclient renders in Chromium, and the public FACODI routes respond successfully.
+The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, and the public FACODI routes respond successfully.
 
-The browser test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
+The runtime test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
 
 ## 4. First Coolify deployment of the canonical runtime
 

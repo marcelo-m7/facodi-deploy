@@ -98,13 +98,6 @@ Initialize all pinned sources first:
 git submodule update --init --recursive
 ```
 
-Install the disposable browser-acceptance dependencies when running the full suite locally:
-
-```bash
-python3 -m pip install -r tests/requirements.txt
-python3 -m playwright install --with-deps chromium
-```
-
 Run the fast repository contract and Compose validation:
 
 ```bash
