@@ -20,6 +20,20 @@ for manifest in \
   test -f "$manifest" || { echo "missing Odoo manifest: $manifest" >&2; exit 1; }
 done
 
+for path in \
+  supabase/facodi-processing-plane/README.md \
+  supabase/facodi-processing-plane/supabase/config.toml \
+  supabase/facodi-processing-plane/docs/adr/ADR-001-processing-plane-boundary.md \
+  supabase/facodi-processing-plane/docs/live-function-inventory.md \
+  supabase/facodi-processing-plane/snapshots/live-open2/functions/v2_process_video_pipeline.json \
+  supabase/facodi-processing-plane/snapshots/live-open2/functions/v2_sync_object_to_odoo.json \
+  supabase/facodi-processing-plane/snapshots/live-open2/functions/v2_push_odoo_learning_object.json \
+  supabase/facodi-processing-plane/supabase/functions/v2_process_video_pipeline/index.ts \
+  supabase/facodi-processing-plane/supabase/functions/v2_sync_object_to_odoo/index.ts \
+  supabase/facodi-processing-plane/supabase/functions/v2_push_odoo_learning_object/index.ts; do
+  test -f "$path" || { echo "missing processing-plane source: $path" >&2; exit 1; }
+done
+
 # The gitlinks recorded by the superproject are the authoritative integration
 # pins. Avoid duplicating mutable SHAs in this shell gate; the repository
 # contract below verifies every checked-out submodule against its exact gitlink.

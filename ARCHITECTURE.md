@@ -17,6 +17,8 @@ Business and presentation changes remain in their owning addon repositories:
 
 The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-20.
 
+The workspace also contains a local Processing Plane source scaffold at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the bootstrap home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots until that source is externalized into its own remote repository and pinned back here as a gitlink.
+
 ## Runtime
 
 ```text
@@ -37,6 +39,8 @@ The runtime requests these modules through `FACODI_MODULES`:
 - `monodoo_backend`
 
 The image also makes the pinned addon sources available. Availability is not an installation contract: the Monynha modules are intentionally excluded from the automatic FACODI installation set.
+
+The `supabase/facodi-processing-plane` tree is outside that runtime surface. It exists to preserve and evolve the Supabase Processing Plane without changing which sources are copied into `/mnt/extra-addons`.
 
 ## Current Live Inventory
 
@@ -63,3 +67,5 @@ Historical audit material is retained under `audit/`. It describes observations 
 ## Validation Boundary
 
 Run `git submodule update --init --recursive` before validation. The repository contract checks source paths, manifests, and that each checked-out submodule exactly matches the superproject gitlink. Runtime changes additionally require Compose configuration validation and the disposable Coolify acceptance test documented in [README.md](README.md).
+
+When the Processing Plane scaffold changes, validate its local bootstrap contract as well: config present, live snapshots preserved, extracted function sources present, and no Dockerfile change that broadens the Odoo image build surface to include `supabase/`.

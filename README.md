@@ -51,6 +51,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | `marcelo-m7/monynha-odoo` | `theme_monynha`, `monynha_content`, `monynha_lead_generator` | `5c9d4513487eb87f8fd3fe36b76765f25a13096d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
+The repository also now contains a Processing Plane source scaffold at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident. Until it is published as an independent remote repository, this scaffold is tracked as workspace source rather than a pinned gitlink.
+
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
@@ -62,6 +64,8 @@ The Monynha source remains available to the shared image but its optional `theme
 The migration gate requests `monodoo_backend`, which owns the required generic backend dependencies. It installs missing requested capabilities on existing databases before updating the complete requested module set. Monodoo remains an independently versioned source: FACODI consumes the pinned release and does not copy its implementation into this repository.
 
 The repository contract validates the expected source paths, required addon manifests and the exact checked-out submodule revision against each superproject gitlink, so the deployment source composition cannot silently drift from the commit being deployed.
+
+The Processing Plane scaffold is validated separately as a non-addon source boundary: the contract requires its bootstrap docs, Supabase config, captured live snapshots and extracted function sources to exist, while the Docker build must continue to ignore the `supabase/` tree.
 
 ## Migration lifecycle
 

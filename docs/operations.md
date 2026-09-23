@@ -62,6 +62,8 @@ The repository contract pins the expected revisions for:
 - `monynha-odoo` / `theme_monynha` and `monynha_lead_generator`;
 - `odoo/design-themes`, exposing only `theme_common`.
 
+The workspace also contains `supabase/facodi-processing-plane`, which is the local source scaffold for FACODI Supabase functions and migrations. It is validated as source, but it is not copied into the Odoo image and is not part of `FACODI_MODULES`.
+
 All four Monodoo addons are part of the canonical FACODI module set. Existing databases that already contain `monodoo_core` and `monodoo_home` must install the missing `monodoo_theme` and `monodoo_appsbar` capabilities through the normal migration gate before the complete module set is updated.
 
 Monynha modules are baked into the shared image but are not part of `FACODI_MODULES`; they must not be installed into the FACODI database by the canonical migration gate unless a future, separately reviewed change intentionally alters that contract.
@@ -75,6 +77,8 @@ bash scripts/validate-repository.sh
 docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 bash tests/test_coolify_runtime.sh
 ```
+
+If the revision changes `supabase/facodi-processing-plane`, also run its local bootstrap validation before deployment work continues. Supabase worker code and snapshots must be reviewed independently from the Odoo runtime acceptance gate.
 
 The disposable runtime test must prove that a fresh database migrates, an immediate second migration is idempotent, Odoo becomes healthy, the required Website languages are configured, the four Monodoo addons are installed, the Home client action is valid, the authenticated `/odoo` webclient renders Monodoo Home + Theme + AppsBar in Chromium, and the public FACODI routes respond successfully.
 
