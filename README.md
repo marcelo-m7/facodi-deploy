@@ -44,13 +44,13 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `a041a674175a221c0ad6a1a97095d22e38f69e72` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `56e7eb326f8680fdd737ce98fae43ed4a290653b` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `827371a1499dbe8ed1d4bed1da906aab1be7daea` |
+| `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `a26874fe67ba359a4d6a137381adfbdbe0f0420d` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `411321643a221813e4b128295cb965cea35d406d` |
 
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The repository also now contains a Processing Plane source scaffold at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident. Until it is published as an independent remote repository, this scaffold is tracked as workspace source rather than a pinned gitlink.
+The repository also pins the Processing Plane source at `supabase/facodi-processing-plane`. It persists FACODI Supabase migrations, Edge Functions, shared helpers and live function snapshots outside `addons/`, so the Odoo image build does not absorb Supabase worker code by accident.
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
 
@@ -58,9 +58,7 @@ The Coolify acceptance gate follows a real curricular unit from the curriculum i
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
-The Monynha source remains available to the shared image but its optional `theme_monynha`, `monynha_content` and `monynha_lead_generator` modules are not part of the FACODI automatic installation set. Its Website chrome remains isolated from `theme_facodi`.
-
-The migration gate requests `monodoo_backend`, which owns the required generic backend dependencies. It installs missing requested capabilities on existing databases before updating the complete requested module set. Monodoo remains an independently versioned source: FACODI consumes the pinned release and does not copy its implementation into this repository.
+Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
 
 The repository contract validates the expected source paths, required addon manifests and the exact checked-out submodule revision against each superproject gitlink, so the deployment source composition cannot silently drift from the commit being deployed.
 
@@ -125,7 +123,7 @@ Run the disposable end-to-end runtime acceptance test:
 bash tests/test_coolify_runtime.sh
 ```
 
-That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, confirms all four Monodoo addons are installed, checks the Home client-action contract, authenticates a disposable admin session in a real Chromium browser, and requires the Monodoo Home, theme runtime and AppsBar to render without browser errors. It also preserves the existing HTTP checks for the FACODI Website/eLearning routes. The host port used by Chromium is exposed only through `tests/docker-compose.ci.yml`; the production Coolify Compose file does not publish Odoo directly.
+That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, authenticates a disposable admin session in a real Chromium browser, and checks the FACODI Website/eLearning routes. The host port used by Chromium is exposed only through `tests/docker-compose.ci.yml`; the production Coolify Compose file does not publish Odoo directly.
 
 GitHub Actions runs the same canonical Coolify acceptance path on pull requests and on `main`.
 

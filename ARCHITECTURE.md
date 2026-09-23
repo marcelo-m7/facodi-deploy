@@ -8,15 +8,15 @@ Business and presentation changes remain in their owning addon repositories:
 
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
-| `marcelo-m7/facodi-ai` | AI runtime and Website integration | `a3045748d80d182936c356715e2929f3e990484e` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `5f91d5705a1acde3667d17f3b480f16aa5668566` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `949912e038ded44504c5c6eab7d2ab88db98ae5e` |
+| `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `a26874fe67ba359a4d6a137381adfbdbe0f0420d` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `411321643a221813e4b128295cb965cea35d406d` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-23.
 
-The workspace also contains a local Processing Plane source scaffold at `supabase/facodi-processing-plane`. It is intentionally not under `addons/`, is not part of the Odoo runtime image build, and is the bootstrap home for FACODI Supabase migrations, Edge Functions, shared helpers and live-function snapshots until that source is externalized into its own remote repository and pinned back here as a gitlink.
+The workspace also pins a Processing Plane source at `supabase/facodi-processing-plane`. It is intentionally not under `addons/` and is not part of the Odoo runtime image build.
 
 ## Runtime
 
