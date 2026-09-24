@@ -96,6 +96,14 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("${POSTGRES_PASSWORD}", compose)
         self.assertNotIn("${ODOO_ADMIN_PASSWD}", compose)
 
+    def test_coolify_preview_uses_generated_database_service_name(self):
+        compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
+        self.assertGreaterEqual(
+            compose.count("DB_HOST: ${SERVICE_NAME_DB:-db}"),
+            2,
+        )
+        self.assertNotIn("DB_HOST: db\n", compose)
+
     def test_coolify_compose_preserves_persistent_names_and_gates_odoo(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertIn("  db:\n", compose)
