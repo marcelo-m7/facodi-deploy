@@ -244,8 +244,9 @@ def uninstall_retired_modules(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
-def _website_selector_payload() -> str:
-    return """
+def _website_selector_payload(*, fresh_database: bool = False) -> str:
+    fresh_database_literal = "True" if fresh_database else "False"
+    return f"""
     import os
     from urllib.parse import urlsplit
 
@@ -257,6 +258,7 @@ def _website_selector_payload() -> str:
         return (parsed.hostname or "").lower().rstrip(".")
 
     target_domain = normalize_domain(os.environ.get("FACODI_WEBSITE_DOMAIN", ""))
+    fresh_database = {fresh_database_literal}
     allow_single = os.environ.get(
         "FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP", "0"
     ).strip().lower() in {"1", "true", "yes", "on"}
@@ -271,7 +273,7 @@ def _website_selector_payload() -> str:
 
     if len(matches) == 1:
         facodi_website = matches
-    elif not matches and allow_single and len(websites) == 1:
+    elif not matches and len(websites) == 1 and (fresh_database or allow_single):
         facodi_website = websites
     else:
         raise RuntimeError(
@@ -282,8 +284,10 @@ def _website_selector_payload() -> str:
     """
 
 
-def configure_languages(config: str, database: str) -> None:
-    payload = _website_selector_payload() + """
+def configure_languages(
+    config: str, database: str, *, fresh_database: bool = False
+) -> None:
+    payload = _website_selector_payload(fresh_database=fresh_database) + """
     Lang = env["res.lang"]
     lang_en = env.ref("base.lang_en")
     lang_pt = Lang._activate_lang("pt_PT")
@@ -306,8 +310,10 @@ def configure_languages(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
-def apply_theme(config: str, database: str) -> None:
-    payload = _website_selector_payload() + """
+def apply_theme(
+    config: str, database: str, *, fresh_database: bool = False
+) -> None:
+    payload = _website_selector_payload(fresh_database=fresh_database) + """
     theme = env["ir.module.module"].search(
         [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
     )
@@ -319,8 +325,10 @@ def apply_theme(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
-def normalize_public_navigation(config: str, database: str) -> None:
-    payload = _website_selector_payload() + """
+def normalize_public_navigation(
+    config: str, database: str, *, fresh_database: bool = False
+) -> None:
+    payload = _website_selector_payload(fresh_database=fresh_database) + """
     Menu = env["website.menu"]
     legacy = Menu.search(
         [
@@ -366,9 +374,15 @@ def main() -> None:
             run_module_operation(args.config, args.database, to_install, initialize=True)
         run_module_operation(args.config, args.database, args.modules, initialize=False)
 
-    configure_languages(args.config, args.database)
-    apply_theme(args.config, args.database)
-    normalize_public_navigation(args.config, args.database)
+    configure_languages(
+        args.config, args.database, fresh_database=initialize
+    )
+    apply_theme(
+        args.config, args.database, fresh_database=initialize
+    )
+    normalize_public_navigation(
+        args.config, args.database, fresh_database=initialize
+    )
 
 
 if __name__ == "__main__":
