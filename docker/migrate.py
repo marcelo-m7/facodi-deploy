@@ -273,13 +273,25 @@ def _website_selector_payload(*, fresh_database: bool = False) -> str:
 
     if len(matches) == 1:
         facodi_website = matches
-    elif not matches and len(websites) == 1 and (fresh_database or allow_single):
+    elif (
+        not matches
+        and len(websites) == 1
+        and (
+            fresh_database
+            or allow_single
+            or not normalize_domain(websites.domain)
+        )
+    ):
+        # A single domainless Website is unambiguous. This covers a new
+        # database and a persisted preview database without weakening the
+        # fail-closed behavior for a Website that has a different domain.
         facodi_website = websites
     else:
         raise RuntimeError(
             "Unable to resolve exactly one FACODI Website. "
             "Set FACODI_WEBSITE_DOMAIN to the website domain. "
-            "Single-website bootstrap is disabled by default."
+            "A single Website is selected automatically only for a fresh "
+            "database or when that Website has no configured domain."
         )
     """
 
