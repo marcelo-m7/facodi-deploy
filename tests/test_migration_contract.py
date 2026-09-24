@@ -142,8 +142,8 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn('canonical.write({"name": "Roadmaps", "url": "/roadmaps"})', text)
         self.assertIn("(legacy - canonical).unlink()", text)
         self.assertLess(
-            text.index("apply_theme(args.config, args.database)"),
-            text.index("normalize_public_navigation(args.config, args.database)"),
+            text.rindex("apply_theme("),
+            text.rindex("normalize_public_navigation("),
         )
 
 
