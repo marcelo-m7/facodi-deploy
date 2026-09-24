@@ -24,7 +24,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
+      DB_HOST: ${SERVICE_NAME_DB:-db}
       DB_PORT: "5432"
       DB_USER: odoo
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
@@ -50,7 +50,7 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_HOST: db
+      DB_HOST: ${SERVICE_NAME_DB:-db}
       DB_PORT: "5432"
       DB_USER: odoo
       DB_PASSWORD: $SERVICE_PASSWORD_64_POSTGRES
