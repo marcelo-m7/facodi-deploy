@@ -201,7 +201,21 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn("SUPABASE_URL", payload)
         self.assertIn("SUPABASE_SECRET_KEY", payload)
         self.assertIn("must be configured together", payload)
-        self.assertIn('parsed.scheme != "https"', payload)
+        self.assertIn('parsed.scheme.lower() != "https"', payload)
+        self.assertIn('parsed.username', payload)
+        self.assertIn('parsed.password', payload)
+        self.assertIn('port not in (None, 443)', payload)
+        self.assertIn('parsed.path not in ("", "/")', payload)
+        self.assertIn('parsed.query', payload)
+        self.assertIn('parsed.fragment', payload)
+        self.assertIn(
+            'params.set_param("facodi_learning.analysis_provider", "local_metadata")',
+            payload,
+        )
+        self.assertIn(
+            'params.set_param("facodi_learning.processing_plane", "local")',
+            payload,
+        )
         self.assertIn(
             'params.set_param("facodi_learning.analysis_provider", "supabase_edge")',
             payload,
