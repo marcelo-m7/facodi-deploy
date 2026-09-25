@@ -250,12 +250,17 @@ for route in (
             f"guided resource submission form lost URL-first discovery marker: {marker!r}"
           )
       title_match = re.search(
-        rb'id="facodi_submission_name"[^>]*>',
+        rb'<input\\b[^>]*\\bid=["\\\']facodi_submission_name["\\\'][^>]*>',
         body,
+        flags=re.IGNORECASE,
       )
       if not title_match:
         raise RuntimeError("guided resource submission title field is missing")
-      if b'required="required"' in title_match.group(0):
+      if re.search(
+        rb'\\brequired(?:\\s*=\\s*(?:"[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+))?',
+        title_match.group(0),
+        flags=re.IGNORECASE,
+      ):
         raise RuntimeError(
           "resource title still blocks server-side URL metadata discovery without JavaScript"
         )
