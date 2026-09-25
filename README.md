@@ -55,6 +55,8 @@ The Coolify acceptance gate follows a real curricular unit from the curriculum i
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
+Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.
+
 This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
 
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
@@ -90,7 +92,18 @@ The canonical Compose deployment keeps the existing Coolify-generated PostgreSQL
 $SERVICE_PASSWORD_64_POSTGRES
 ```
 
-The migration does not introduce a new mandatory production secret. `DB_HOST`, `DB_PORT`, `DB_USER`, `ODOO_DB`, `FACODI_MODULES` and the generated Odoo configuration are wired by the Compose/entrypoint layer.
+The core database/Odoo lifecycle still uses the existing generated Coolify secrets. The optional FACODI processing-plane integration is activated only when the following server-side pair is configured together:
+
+```text
+SUPABASE_URL
+SUPABASE_SECRET_KEY
+```
+
+When that pair is present, the migration fail-closes on malformed configuration and sets `facodi_learning.analysis_provider=supabase_edge`. The Odoo service delegates resource enrichment/analysis to the versioned Supabase Edge Function instead of performing provider-specific analysis locally.
+
+The Compose runtime also forwards `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` for future public-safe/authenticated processing-plane surfaces. Neither is used as the privileged Odoo-to-Supabase credential. `GEMINI_API_KEY` remains server-only and may be forwarded to the authenticated Edge call as a transitional fallback until that provider secret is configured directly in Supabase.
+
+No Supabase or Gemini secret is committed to this repository.
 
 ## Validation
 
