@@ -36,6 +36,23 @@ The runtime requests these modules through `FACODI_MODULES`:
 
 The image also makes the pinned addon sources available. Retired Monodoo/Monynha modules are explicitly uninstalled by the migration and are not part of the installation contract.
 
+### Supabase processing plane
+
+Network enrichment and learning-resource analysis are owned outside the Odoo image by `marcelo-m7/facodi-supabase`. The production boundary is:
+
+```text
+Odoo submission / canonical source
+  -> facodi.learning.analysis.job
+  -> authenticated Supabase Edge Function
+  -> metadata + AI analysis
+  -> normalized immutable Odoo analysis result
+  -> human review
+```
+
+Odoo authenticates server-to-server with `SUPABASE_SECRET_KEY`; `SUPABASE_URL` and the secret key must be configured together. Migration sets `facodi_learning.analysis_provider=supabase_edge` only when that pair is valid. `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are forwarded for future lower-privilege surfaces but do not authorize the privileged analysis bridge.
+
+Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical.
+
 ## Current Live Inventory
 
 This is a mix of authorized production observations and checked-in runtime acceptance facts. It is not a seed or an authorization to rewrite live editorial data.
