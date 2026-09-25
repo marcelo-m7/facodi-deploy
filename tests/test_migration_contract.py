@@ -198,7 +198,11 @@ class MigrationContractTest(unittest.TestCase):
             migration.configure_processing_plane("/tmp/odoo.conf", "facodi")
 
         payload = shell.call_args.args[2]
-        compile(payload, "<facodi-processing-plane>", "exec")
+        compile(
+            migration.textwrap.dedent(payload),
+            "<facodi-processing-plane>",
+            "exec",
+        )
         self.assertIn("SUPABASE_URL", payload)
         self.assertIn("SUPABASE_SECRET_KEY", payload)
         self.assertIn("must be configured together", payload)
