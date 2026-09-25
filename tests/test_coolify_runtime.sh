@@ -113,6 +113,11 @@ coverage = env["facodi.learning.curriculum.coverage"].create(
 )
 coverage.action_approve()
 print("FACODI_RUNTIME_COURSE=" + course.website_url)
+print("FACODI_RUNTIME_ROADMAP=/roadmaps/" + str(curriculum.id))
+print(
+  "FACODI_RUNTIME_UNIT=/roadmaps/%s/units/%s"
+  % (curriculum.id, unit.external_unit_code)
+)
 print("FACODI_RUNTIME_GAP_UNIT_CODE=" + gap_unit.external_unit_code)
 print("FACODI_RUNTIME_GAP_UNIT_ID=" + str(gap_unit.id))
 
@@ -209,10 +214,12 @@ done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 grep -Fq 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state' <<<"$state"
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
+runtime_roadmap_route="$(sed -n 's/^FACODI_RUNTIME_ROADMAP=//p' <<<"$state")"
+runtime_unit_route="$(sed -n 's/^FACODI_RUNTIME_UNIT=//p' <<<"$state")"
 runtime_gap_unit_code="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_CODE=//p' <<<"$state")"
 runtime_gap_unit_id="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_ID=//p' <<<"$state")"
-if [[ -z "$runtime_course_route" || -z "$runtime_gap_unit_code" || -z "$runtime_gap_unit_id" ]]; then
-  echo "Runtime curriculum course/unit context is missing" >&2
+if [[ -z "$runtime_course_route" || -z "$runtime_roadmap_route" || -z "$runtime_unit_route" || -z "$runtime_gap_unit_code" || -z "$runtime_gap_unit_id" ]]; then
+  echo "Runtime curriculum course/roadmap/unit context is missing" >&2
   exit 1
 fi
 runtime_module_route="$(sed -n 's/^FACODI_RUNTIME_MODULE=//p' <<<"$state")"
@@ -382,5 +389,18 @@ if b"FACODI Runtime Public Module Item" not in module_body:
   raise RuntimeError("public module does not render its published learning item")
 print(f"PASS {runtime_module_route}")
 PY
+
+if [[ "${FACODI_BROWSER_ACCEPTANCE:-0}" == "1" ]]; then
+  : "${FACODI_BROWSER_CHROME_BIN:?FACODI_BROWSER_CHROME_BIN is required}"
+  : "${FACODI_BROWSER_SCREENSHOT_DIR:?FACODI_BROWSER_SCREENSHOT_DIR is required}"
+  FACODI_BROWSER_BASE_URL="http://127.0.0.1:8069" \
+  FACODI_BROWSER_COURSE_ROUTE="$runtime_course_route" \
+  FACODI_BROWSER_ROADMAP_ROUTE="$runtime_roadmap_route" \
+  FACODI_BROWSER_UNIT_ROUTE="$runtime_unit_route" \
+  FACODI_BROWSER_MODULE_ROUTE="$runtime_module_route" \
+  FACODI_BROWSER_CHROME_BIN="$FACODI_BROWSER_CHROME_BIN" \
+  FACODI_BROWSER_SCREENSHOT_DIR="$FACODI_BROWSER_SCREENSHOT_DIR" \
+    node tests/test_campus_paper_browser.mjs
+fi
 
 echo "PASS: disposable Coolify runtime"
