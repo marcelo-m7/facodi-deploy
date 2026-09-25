@@ -38,6 +38,7 @@ class MigrationContractTest(unittest.TestCase):
             "run_module_operation",
             "configure_languages",
             "apply_theme",
+            "configure_processing_plane",
             "normalize_public_navigation",
         ):
             self.assertIn(f"def {name}", text)
@@ -61,6 +62,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
             mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
@@ -95,6 +97,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
             mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
@@ -119,6 +122,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation"),
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
             mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
@@ -172,6 +176,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "run_module_operation"),
             mock.patch.object(migration, "configure_languages") as configure,
             mock.patch.object(migration, "apply_theme") as apply_theme,
+            mock.patch.object(migration, "configure_processing_plane") as processing,
             mock.patch.object(migration, "normalize_public_navigation") as normalize,
         ):
             migration.main()
@@ -182,8 +187,39 @@ class MigrationContractTest(unittest.TestCase):
         apply_theme.assert_called_once_with(
             "/tmp/odoo.conf", "facodi", fresh_database=True
         )
+        processing.assert_called_once_with("/tmp/odoo.conf", "facodi")
         normalize.assert_called_once_with(
             "/tmp/odoo.conf", "facodi", fresh_database=True
+        )
+
+    def test_processing_plane_configuration_is_fail_closed_and_selects_supabase(self):
+        migration = load_migration_module()
+        with mock.patch.object(migration, "run_shell") as shell:
+            migration.configure_processing_plane("/tmp/odoo.conf", "facodi")
+
+        payload = shell.call_args.args[2]
+        self.assertIn("SUPABASE_URL", payload)
+        self.assertIn("SUPABASE_SECRET_KEY", payload)
+        self.assertIn("must be configured together", payload)
+        self.assertIn('parsed.scheme != "https"', payload)
+        self.assertIn(
+            'params.set_param("facodi_learning.analysis_provider", "supabase_edge")',
+            payload,
+        )
+        self.assertIn(
+            'params.set_param("facodi_learning.processing_plane", "supabase")',
+            payload,
+        )
+
+    def test_processing_plane_configuration_runs_after_theme_before_navigation(self):
+        text = MIGRATION.read_text()
+        self.assertLess(
+            text.rindex("apply_theme("),
+            text.rindex("configure_processing_plane("),
+        )
+        self.assertLess(
+            text.rindex("configure_processing_plane("),
+            text.rindex("normalize_public_navigation("),
         )
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
