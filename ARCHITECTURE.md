@@ -54,7 +54,7 @@ Odoo submission
 
 Odoo authenticates server-to-server with `SUPABASE_SECRET_KEY`; `SUPABASE_URL` and the secret key must be configured together. Migration sets `facodi_learning.analysis_provider=supabase_edge` only when that pair is valid. `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are forwarded for future lower-privilege surfaces but do not authorize the privileged analysis bridge.
 
-Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical. Submission audit rows expose the downstream source/content/job/result trace without granting Officers direct access to the private canonical-source model. Source linkage is serialized and canonical reuse is accepted only for the same provider identity and resolved course.
+Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical. Submission audit rows expose the downstream source/content/job/result trace without granting Officers direct access to the private canonical-source model. Source linkage is serialized and canonical reuse is accepted only when provider identity, external resource identity and resolved target course all match.
 
 ## Current Live Inventory
 
