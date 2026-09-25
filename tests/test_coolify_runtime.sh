@@ -160,7 +160,13 @@ if missing_trace_fields:
     "FACODI submission processing trace fields are missing: "
     + ", ".join(missing_trace_fields)
   )
-for field_name in ("analysis_job_id", "analysis_result_id", "processing_state"):
+for field_name in (
+  "source_state",
+  "slide_id",
+  "analysis_job_id",
+  "analysis_result_id",
+  "processing_state",
+):
   if not submission_fields[field_name].compute_sudo:
     raise RuntimeError(
       f"FACODI submission trace field {field_name} must compute with audit read privileges"
