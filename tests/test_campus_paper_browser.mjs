@@ -5,7 +5,7 @@ import { chromium } from "playwright-core";
 const required = (name, fallback = "") => {
     const value = process.env[name] || fallback;
     if (!value) {
-        throw new Error(\`Missing required environment variable: \${name}\`);
+        throw new Error(`Missing required environment variable: ${name}`);
     }
     return value;
 };
@@ -97,7 +97,7 @@ try {
             });
             if (!response || response.status() >= 400) {
                 throw new Error(
-                    \`\${testCase.name} \${sizeName}: HTTP \${response ? response.status() : "no response"}\`
+                    `${testCase.name} ${sizeName}: HTTP ${response ? response.status() : "no response"}`
                 );
             }
 
@@ -105,13 +105,13 @@ try {
 
             const bodyText = (await page.locator("body").innerText()).trim();
             if (!bodyText) {
-                throw new Error(\`\${testCase.name} \${sizeName}: body text is empty\`);
+                throw new Error(`${testCase.name} ${sizeName}: body text is empty`);
             }
 
             for (const selector of testCase.selectors) {
                 const locator = page.locator(selector).first();
                 if ((await locator.count()) < 1) {
-                    throw new Error(\`\${testCase.name} \${sizeName}: missing selector \${selector}\`);
+                    throw new Error(`${testCase.name} ${sizeName}: missing selector ${selector}`);
                 }
             }
 
@@ -122,24 +122,24 @@ try {
             }));
             if (overflow.overflow) {
                 throw new Error(
-                    \`\${testCase.name} \${sizeName}: page-level horizontal overflow \${overflow.scrollWidth}px > \${overflow.viewportWidth}px\`
+                    `${testCase.name} ${sizeName}: page-level horizontal overflow ${overflow.scrollWidth}px > ${overflow.viewportWidth}px`
                 );
             }
 
             if (testCase.mobileMenu && viewport.width <= 390) {
                 const toggle = page.locator('[data-bs-target="#top_menu_collapse_mobile"]').first();
                 if ((await toggle.count()) < 1) {
-                    throw new Error(\`\${testCase.name} \${sizeName}: native Odoo mobile menu toggle missing\`);
+                    throw new Error(`${testCase.name} ${sizeName}: native Odoo mobile menu toggle missing`);
                 }
                 await toggle.click();
                 const mobileMenu = page.locator("#top_menu_collapse_mobile");
                 await mobileMenu.waitFor({ state: "visible", timeout: 5000 });
             }
 
-            const screenshotPath = path.join(screenshotDir, \`\${testCase.name}-\${sizeName}.png\`);
+            const screenshotPath = path.join(screenshotDir, `${testCase.name}-${sizeName}.png`);
             await page.screenshot({ path: screenshotPath, fullPage: true });
             console.log(
-                \`PASS \${testCase.name} \${sizeName} \${viewport.width}x\${viewport.height}\`
+                `PASS ${testCase.name} ${sizeName} ${viewport.width}x${viewport.height}`
             );
             await context.close();
         }
