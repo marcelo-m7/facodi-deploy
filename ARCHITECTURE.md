@@ -14,7 +14,7 @@ Business and presentation changes remain in their owning addon repositories:
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The gitlinks are the authoritative pins. The values above were verified from the superproject on 2026-09-23.
+The gitlinks are the authoritative pins. The values above are verified from the superproject for this release.
 
 ## Runtime
 
