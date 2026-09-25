@@ -365,29 +365,28 @@ def configure_processing_plane(config: str, database: str) -> None:
         # fallback; never leave a stale persisted Supabase provider selected.
         params.set_param("facodi_learning.analysis_provider", "local_metadata")
         params.set_param("facodi_learning.processing_plane", "local")
-        env.cr.commit()
-        return
+    else:
+        try:
+            parsed = urlsplit(supabase_url)
+            port = parsed.port
+        except ValueError as exc:
+            raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin") from exc
 
-    try:
-        parsed = urlsplit(supabase_url)
-        port = parsed.port
-    except ValueError as exc:
-        raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin") from exc
+        if (
+            parsed.scheme.lower() != "https"
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+            or port not in (None, 443)
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin")
 
-    if (
-        parsed.scheme.lower() != "https"
-        or not parsed.hostname
-        or parsed.username
-        or parsed.password
-        or port not in (None, 443)
-        or parsed.path not in ("", "/")
-        or parsed.query
-        or parsed.fragment
-    ):
-        raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin")
+        params.set_param("facodi_learning.analysis_provider", "supabase_edge")
+        params.set_param("facodi_learning.processing_plane", "supabase")
 
-    params.set_param("facodi_learning.analysis_provider", "supabase_edge")
-    params.set_param("facodi_learning.processing_plane", "supabase")
     env.cr.commit()
     """
     run_shell(config, database, payload)
