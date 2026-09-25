@@ -10,3 +10,10 @@
 [submodule "vendor/odoo-design-themes"]
 	path = vendor/odoo-design-themes
 	url = https://github.com/odoo/design-themes.git
+[submodule "addons/muk_web_theme-19.0.1.4.9"]
+	path = addons/muk_web_theme-19.0.1.4.9
+	url = https://github.com/marcelo-m7/muk_web_theme-19.0.1.4.9.git
+[submodule "addons/onlyoffice_odoo"]
+	path = addons/onlyoffice_odoo
+	url = https://github.com/ONLYOFFICE/onlyoffice-odoo.git
+	branch = 19.0

@@ -9,10 +9,12 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/facodi-ai",
     "addons/facodi-learning",
     "addons/facodi-theme",
+    "addons/muk_web_theme-19.0.1.4.9",
+    "addons/onlyoffice_odoo",
     "vendor/odoo-design-themes",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -26,6 +28,8 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/muk_web_theme-19.0.1.4.9/muk_web_theme/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/onlyoffice_odoo/onlyoffice_odoo/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
     def test_exact_integration_pins_match_superproject_gitlinks(self):
@@ -59,6 +63,7 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("python3-venv", dockerfile)
         self.assertIn("/opt/facodi-addon-sources/facodi-ai/requirements.txt", dockerfile)
         self.assertIn("pydantic_ai", dockerfile)
+        self.assertIn("PyJWT", dockerfile)
         self.assertIn("/opt/facodi-venv", dockerfile)
 
     def test_facodi_modules_are_auto_installed_and_runtime_secret_is_forwarded(self):

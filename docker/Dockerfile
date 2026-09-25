@@ -13,7 +13,7 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends python3-venv; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m venv --system-site-packages /opt/facodi-venv; \
-    /opt/facodi-venv/bin/pip install --no-cache-dir -r /opt/facodi-addon-sources/facodi-ai/requirements.txt; \
+    /opt/facodi-venv/bin/pip install --no-cache-dir -r /opt/facodi-addon-sources/facodi-ai/requirements.txt PyJWT; \
     /opt/facodi-venv/bin/python3 -c "import OpenSSL, cryptography, pydantic_ai"; \
     printf '%s\n' '#!/bin/sh' 'exec /opt/facodi-venv/bin/python3 /usr/bin/odoo "$@"' > /usr/local/bin/odoo; \
     chmod 0755 /usr/local/bin/odoo; \

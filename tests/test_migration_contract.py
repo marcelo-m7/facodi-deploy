@@ -6,7 +6,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "docker/migrate.py"
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo"
 
 
 def load_migration_module():
@@ -73,7 +73,7 @@ class MigrationContractTest(unittest.TestCase):
         )
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "facodi_ai,facodi_ai_website",
+            "facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo",
         )
         self.assertEqual(operation.call_args_list[1].args[2], FACODI_MODULES)
 
@@ -91,7 +91,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\ntheme_facodi",
+                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmuk_web_theme\nonlyoffice_odoo\ntheme_facodi",
             ),
             mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "run_module_operation") as operation,
