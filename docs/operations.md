@@ -31,7 +31,9 @@ odoo-data:/var/lib/odoo
 
 Do not rename these volumes, add explicit Compose `name:` overrides, delete them, or recreate the Coolify resource simply to deploy a revision.
 
-The existing generated secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. A normal deployment of this refactor must not introduce an additional mandatory secret.
+The existing generated database secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. FACODI resource analysis additionally uses a server-only Supabase configuration. `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are an atomic pair: configure both or neither. If only one is present, migration intentionally fails before the persistent Odoo service starts.
+
+The current Coolify environment may also provide `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_JWKS_URL` and `GEMINI_API_KEY`. The publishable/JWKS values do not replace the privileged secret key. Never expose `SUPABASE_SECRET_KEY` or `GEMINI_API_KEY` in Website/browser code or logs.
 
 ## 2. Pre-deployment backup gate
 
@@ -104,7 +106,8 @@ After module operations the migration uses standard Odoo APIs to:
 - make English the Website default;
 - expose the four languages on the Website;
 - load theme translations;
-- apply `theme_facodi` through the native theme mechanism.
+- apply `theme_facodi` through the native theme mechanism;
+- when `SUPABASE_URL` + `SUPABASE_SECRET_KEY` are configured, validate the HTTPS processing-plane origin and activate `facodi_learning.analysis_provider=supabase_edge`.
 
 The migration does not directly rewrite arbitrary `website.page` content, course data, contacts or Website Builder records.
 
@@ -123,6 +126,8 @@ After `odoo` is healthy, verify at minimum:
 ```
 
 For the backend, authenticate as an internal user and verify that `/odoo` renders the standard Odoo navigation and applications.
+
+When the Supabase processing plane is enabled, also verify that an imported URL-bearing resource queues one `supabase_edge` analysis job and that provider/network failures remain sanitized. Do not use a production publication decision as the smoke test; analysis output must remain review-only.
 
 Then verify operational persistence using real existing content:
 
