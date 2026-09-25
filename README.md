@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `247ab8d3e4e6b41cb893e921375d458b3a5115ef` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `9052ac22df069d5a637ce30e20f896f099269c4f` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `fea2f307f1d4aa7ae495c186896009507d8385da` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -56,6 +56,8 @@ The Coolify acceptance gate follows a real curricular unit from the curriculum i
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
 Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.
+
+The reviewed-submission trace is explicit in Odoo: a submission can be followed through its course candidate to the canonical source and unpublished `slide.slide`, then to the latest analysis job and immutable result. Canonical sources may be reused by multiple candidates only when provider identity, external resource identity and resolved target course all match; the submission records retain their own candidate provenance.
 
 This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
 

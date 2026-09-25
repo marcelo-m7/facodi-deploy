@@ -146,6 +146,36 @@ env["facodi.learning.curriculum.module.assignment"].create(
 )
 print("FACODI_RUNTIME_MODULE=" + module._facodi_public_path())
 
+submission_fields = env["facodi.learning.submission"]._fields
+required_trace_fields = {
+  "source_state",
+  "slide_id",
+  "analysis_job_id",
+  "analysis_result_id",
+  "processing_state",
+}
+missing_trace_fields = sorted(required_trace_fields - set(submission_fields))
+if missing_trace_fields:
+  raise RuntimeError(
+    "FACODI submission processing trace fields are missing: "
+    + ", ".join(missing_trace_fields)
+  )
+for field_name in (
+  "source_state",
+  "slide_id",
+  "analysis_job_id",
+  "analysis_result_id",
+  "processing_state",
+):
+  if not submission_fields[field_name].compute_sudo:
+    raise RuntimeError(
+      f"FACODI submission trace field {field_name} must compute with audit read privileges"
+    )
+print(
+  "FACODI_SUBMISSION_TRACE_FIELDS="
+  + ",".join(sorted(required_trace_fields))
+)
+
 admin = env.ref("base.user_admin")
 admin.password = "facodi-ci-admin"
 env.cr.commit()
@@ -158,6 +188,7 @@ for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
 done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
+grep -Fq 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state' <<<"$state"
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
 runtime_gap_unit_code="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_CODE=//p' <<<"$state")"
 runtime_gap_unit_id="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_ID=//p' <<<"$state")"

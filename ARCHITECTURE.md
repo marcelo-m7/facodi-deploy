@@ -9,7 +9,7 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `247ab8d3e4e6b41cb893e921375d458b3a5115ef` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `9052ac22df069d5a637ce30e20f896f099269c4f` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `fea2f307f1d4aa7ae495c186896009507d8385da` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
@@ -41,7 +41,10 @@ The image also makes the pinned addon sources available. Retired Monodoo/Monynha
 Network enrichment and learning-resource analysis are owned outside the Odoo image by `marcelo-m7/facodi-supabase`. The production boundary is:
 
 ```text
-Odoo submission / canonical source
+Odoo submission
+  -> course candidate
+  -> canonical facodi.learning.source
+  -> unpublished slide.slide
   -> facodi.learning.analysis.job
   -> authenticated Supabase Edge Function
   -> metadata + AI analysis
@@ -51,7 +54,7 @@ Odoo submission / canonical source
 
 Odoo authenticates server-to-server with `SUPABASE_SECRET_KEY`; `SUPABASE_URL` and the secret key must be configured together. Migration sets `facodi_learning.analysis_provider=supabase_edge` only when that pair is valid. `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are forwarded for future lower-privilege surfaces but do not authorize the privileged analysis bridge.
 
-Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical.
+Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical. Submission audit rows expose the downstream source/content/job/result trace without granting Officers direct access to the private canonical-source model. Source linkage is serialized and canonical reuse is accepted only when provider identity, external resource identity and resolved target course all match.
 
 ## Current Live Inventory
 
