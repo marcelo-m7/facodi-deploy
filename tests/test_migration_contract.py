@@ -142,8 +142,48 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn('canonical.write({"name": "Roadmaps", "url": "/roadmaps"})', text)
         self.assertIn("(legacy - canonical).unlink()", text)
         self.assertLess(
-            text.index("apply_theme(args.config, args.database)"),
-            text.index("normalize_public_navigation(args.config, args.database)"),
+            text.rindex("apply_theme("),
+            text.rindex("normalize_public_navigation("),
+        )
+
+
+    def test_fresh_or_domainless_single_website_is_an_unambiguous_bootstrap(self):
+        migration = load_migration_module()
+
+        fresh_payload = migration._website_selector_payload(fresh_database=True)
+        self.assertIn("fresh_database = True", fresh_payload)
+        self.assertIn("or not normalize_domain(websites.domain)", fresh_payload)
+
+        existing_payload = migration._website_selector_payload(fresh_database=False)
+        self.assertIn("fresh_database = False", existing_payload)
+        self.assertIn("len(websites) == 1", existing_payload)
+        self.assertIn("or not normalize_domain(websites.domain)", existing_payload)
+
+    def test_main_propagates_fresh_database_state_to_website_phases(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=False),
+            mock.patch.object(migration, "run_module_operation"),
+            mock.patch.object(migration, "configure_languages") as configure,
+            mock.patch.object(migration, "apply_theme") as apply_theme,
+            mock.patch.object(migration, "normalize_public_navigation") as normalize,
+        ):
+            migration.main()
+
+        configure.assert_called_once_with(
+            "/tmp/odoo.conf", "facodi", fresh_database=True
+        )
+        apply_theme.assert_called_once_with(
+            "/tmp/odoo.conf", "facodi", fresh_database=True
+        )
+        normalize.assert_called_once_with(
+            "/tmp/odoo.conf", "facodi", fresh_database=True
         )
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):

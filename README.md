@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `a26874fe67ba359a4d6a137381adfbdbe0f0420d` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `411321643a221813e4b128295cb965cea35d406d` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `132b9fdd73b2891621589d677bc552fdd2acde20` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `1d85bac6e97a5f71ae0c2c23070152532b5d1a83` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
