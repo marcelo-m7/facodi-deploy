@@ -337,6 +337,61 @@ def apply_theme(
     run_shell(config, database, payload)
 
 
+def configure_processing_plane(config: str, database: str) -> None:
+    payload = """
+    import os
+    from urllib.parse import urlsplit
+
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").strip()
+    supabase_secret = (os.environ.get("SUPABASE_SECRET_KEY") or "").strip()
+
+    if bool(supabase_url) != bool(supabase_secret):
+        raise RuntimeError(
+            "SUPABASE_URL and SUPABASE_SECRET_KEY must be configured together"
+        )
+
+    module = env["ir.module.module"].search(
+        [("name", "=", "facodi_learning"), ("state", "=", "installed")],
+        limit=1,
+    )
+    if not module:
+        raise RuntimeError(
+            "facodi_learning must be installed before configuring resource analysis"
+        )
+
+    params = env["ir.config_parameter"].sudo()
+    if not supabase_url:
+        # Removing the runtime pair is an explicit switch back to the safe local
+        # fallback; never leave a stale persisted Supabase provider selected.
+        params.set_param("facodi_learning.analysis_provider", "local_metadata")
+        params.set_param("facodi_learning.processing_plane", "local")
+    else:
+        try:
+            parsed = urlsplit(supabase_url)
+            port = parsed.port
+        except ValueError as exc:
+            raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin") from exc
+
+        if (
+            parsed.scheme.lower() != "https"
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+            or port not in (None, 443)
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise RuntimeError("SUPABASE_URL must be a valid HTTPS origin")
+
+        params.set_param("facodi_learning.analysis_provider", "supabase_edge")
+        params.set_param("facodi_learning.processing_plane", "supabase")
+
+    env.cr.commit()
+    """
+    run_shell(config, database, payload)
+
+
 def normalize_public_navigation(
     config: str, database: str, *, fresh_database: bool = False
 ) -> None:
@@ -392,6 +447,7 @@ def main() -> None:
     apply_theme(
         args.config, args.database, fresh_database=initialize
     )
+    configure_processing_plane(args.config, args.database)
     normalize_public_navigation(
         args.config, args.database, fresh_database=initialize
     )
