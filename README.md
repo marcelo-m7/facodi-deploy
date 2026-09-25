@@ -57,6 +57,8 @@ The FACODI theme owns Website presentation and footer navigation. It must remain
 
 Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.
 
+The reviewed-submission trace is explicit in Odoo: a submission can be followed through its course candidate to the canonical source and unpublished `slide.slide`, then to the latest analysis job and immutable result. Canonical sources may be reused by multiple candidates only when provider identity and target course match; the submission records retain their own candidate provenance.
+
 This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
 
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
