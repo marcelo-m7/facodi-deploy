@@ -236,8 +236,34 @@ for route in (
           raise RuntimeError("public roadmap index does not expose the guided contribution CTA")
     if route == "/pt/roadmaps" and b"Roadmaps" not in body:
       raise RuntimeError("Portuguese public roadmap is not rendered")
-    if route == "/contribuir/recurso" and b"Suggest a learning resource" not in body:
-      raise RuntimeError("guided resource submission form is not public")
+    if route == "/contribuir/recurso":
+      if b"Suggest a learning resource" not in body:
+        raise RuntimeError("guided resource submission form is not public")
+      for marker in (
+        b'data-metadata-endpoint="/contribuir/recurso/metadata"',
+        b'data-facodi-discover-button="1"',
+        b'data-facodi-metadata-preview="1"',
+        b"Detect details",
+      ):
+        if marker not in body:
+          raise RuntimeError(
+            f"guided resource submission form lost URL-first discovery marker: {marker!r}"
+          )
+      title_match = re.search(
+        rb'<input\b[^>]*\bid=["\']facodi_submission_name["\'][^>]*>',
+        body,
+        flags=re.IGNORECASE,
+      )
+      if not title_match:
+        raise RuntimeError("guided resource submission title field is missing")
+      if re.search(
+        rb'\brequired(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+))?',
+        title_match.group(0),
+        flags=re.IGNORECASE,
+      ):
+        raise RuntimeError(
+          "resource title still blocks server-side URL metadata discovery without JavaScript"
+        )
     print(f"PASS {route}")
 
 detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
