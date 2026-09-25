@@ -250,14 +250,14 @@ for route in (
             f"guided resource submission form lost URL-first discovery marker: {marker!r}"
           )
       title_match = re.search(
-        rb'<input\\b[^>]*\\bid=["\\\']facodi_submission_name["\\\'][^>]*>',
+        rb'<input\b[^>]*\bid=["\']facodi_submission_name["\'][^>]*>',
         body,
         flags=re.IGNORECASE,
       )
       if not title_match:
         raise RuntimeError("guided resource submission title field is missing")
       if re.search(
-        rb'\\brequired(?:\\s*=\\s*(?:"[^"]*"|\\\'[^\\\']*\\\'|[^\\s>]+))?',
+        rb'\brequired(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+))?',
         title_match.group(0),
         flags=re.IGNORECASE,
       ):
