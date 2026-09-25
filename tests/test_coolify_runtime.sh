@@ -114,6 +114,7 @@ coverage = env["facodi.learning.curriculum.coverage"].create(
 coverage.action_approve()
 print("FACODI_RUNTIME_COURSE=" + course.website_url)
 print("FACODI_RUNTIME_GAP_UNIT_CODE=" + gap_unit.external_unit_code)
+print("FACODI_RUNTIME_GAP_UNIT_ID=" + str(gap_unit.id))
 
 slide = env["slide.slide"].create(
   {
@@ -159,8 +160,9 @@ done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
 runtime_gap_unit_code="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_CODE=//p' <<<"$state")"
-if [[ -z "$runtime_course_route" || -z "$runtime_gap_unit_code" ]]; then
-  echo "Runtime curriculum course route is missing" >&2
+runtime_gap_unit_id="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_ID=//p' <<<"$state")"
+if [[ -z "$runtime_course_route" || -z "$runtime_gap_unit_code" || -z "$runtime_gap_unit_id" ]]; then
+  echo "Runtime curriculum course/unit context is missing" >&2
   exit 1
 fi
 runtime_module_route="$(sed -n 's/^FACODI_RUNTIME_MODULE=//p' <<<"$state")"
@@ -173,6 +175,7 @@ fi
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
+  -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
   odoo python3 - <<'PY'
 import os
 import re
@@ -183,6 +186,7 @@ base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
+runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
 curriculum_body = b""
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -216,6 +220,7 @@ for route in (
   "/slides",
   "/roadmaps",
   "/pt/roadmaps",
+  "/contribuir/recurso",
 ):
     response = urllib.request.urlopen(base + route, timeout=15)
     if response.status != 200:
@@ -227,8 +232,12 @@ for route in (
             raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
+        if b'href="/contribuir/recurso"' not in body:
+          raise RuntimeError("public roadmap index does not expose the guided contribution CTA")
     if route == "/pt/roadmaps" and b"Roadmaps" not in body:
       raise RuntimeError("Portuguese public roadmap is not rendered")
+    if route == "/contribuir/recurso" and b"Suggest a learning resource" not in body:
+      raise RuntimeError("guided resource submission form is not public")
     print(f"PASS {route}")
 
 detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
@@ -257,7 +266,27 @@ if b"No published coverage" not in unit_body:
     raise RuntimeError("empty reviewed coverage must render as a public editorial gap")
 if b"View official source" not in unit_body:
     raise RuntimeError("public curricular-unit page lost official-source provenance")
+expected_contribution_href = (
+    f'/contribuir/recurso?curriculum_unit_id={runtime_gap_unit_id}'.encode("utf-8")
+)
+if expected_contribution_href not in unit_body:
+    raise RuntimeError("curricular-unit page does not preserve context in its contribution CTA")
 print(f"PASS {unit_route}")
+
+contextual_submission_route = (
+    f"/contribuir/recurso?curriculum_unit_id={runtime_gap_unit_id}"
+)
+contextual_submission = urllib.request.urlopen(
+    base + contextual_submission_route, timeout=15
+)
+contextual_submission_body = contextual_submission.read()
+if contextual_submission.status != 200:
+    raise RuntimeError(
+        f"{contextual_submission_route} returned HTTP {contextual_submission.status}"
+    )
+if b"Suggested for curricular unit" not in contextual_submission_body:
+    raise RuntimeError("guided contribution form lost curricular-unit context")
+print(f"PASS {contextual_submission_route}")
 
 course = urllib.request.urlopen(base + runtime_course_route, timeout=15)
 course_body = course.read()
@@ -265,6 +294,8 @@ if course.status != 200:
   raise RuntimeError(f"{runtime_course_route} returned HTTP {course.status}")
 if b"Official curriculum alignment" not in course_body:
   raise RuntimeError("public course does not render approved curriculum alignment")
+if b"Contribute to FACODI" not in course_body or b'href="/contribuir/recurso"' not in course_body:
+  raise RuntimeError("public course does not expose the guided contribution CTA")
 print(f"PASS {runtime_course_route}")
 
 module = urllib.request.urlopen(base + runtime_module_route, timeout=15)

@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `57e34ad1fd61a9efd134927c59325a57fe38640e` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `1d85bac6e97a5f71ae0c2c23070152532b5d1a83` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `1f1f7c8204cb02573f2bb16b89c4ab1fc5b6342b` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `fea2f307f1d4aa7ae495c186896009507d8385da` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -59,6 +59,8 @@ This is a mix of authorized production observations and checked-in runtime accep
 Curriculum audit models remain private. Public projection may elevate only enough to discover reviewed editorial records, then must query course and content records as the requesting user so Odoo publication, website and visibility rules remain authoritative.
 
 Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
+
+Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
 
 ## Historical Notes
 
