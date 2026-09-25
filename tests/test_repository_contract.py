@@ -67,6 +67,16 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertGreaterEqual(compose.count(f"FACODI_MODULES: {FACODI_MODULES}"), 2)
         self.assertIn(f'FACODI_MODULES:={FACODI_MODULES}', entrypoint)
         self.assertGreaterEqual(compose.count("GEMINI_API_KEY: ${GEMINI_API_KEY:-}"), 2)
+        for variable in (
+            "SUPABASE_URL",
+            "SUPABASE_SECRET_KEY",
+            "SUPABASE_PUBLISHABLE_KEY",
+            "SUPABASE_JWKS_URL",
+        ):
+            self.assertGreaterEqual(
+                compose.count(f"{variable}: ${{{variable}:-}}"),
+                2,
+            )
 
     def test_removed_addon_sources_are_not_present_in_runtime_contract(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
