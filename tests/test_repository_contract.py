@@ -48,6 +48,46 @@ class RepositoryContractTest(unittest.TestCase):
             ).strip()
             self.assertEqual(actual, expected, path)
 
+    def test_d1_learning_interfaces_browser_acceptance_contract(self):
+        theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
+        learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
+        self.assertIn('"version": "19.0.8.0.0"', theme_manifest)
+        self.assertIn('"version": "19.0.1.22.0"', learning_manifest)
+
+        browser = ROOT / "tests/test_campus_paper_browser.mjs"
+        self.assertTrue(browser.is_file(), str(browser))
+        browser_source = browser.read_text()
+        for marker in (
+            "facodi-learning-catalogue-hero",
+            "facodi-course-study-shell",
+            "facodi-roadmap-study-path",
+            "facodi-filter-sheet",
+            "facodi-unit-layout",
+            "facodi-reference-rail",
+            "facodi-module-detail",
+            "document.documentElement.scrollWidth",
+            "window.innerWidth + 1",
+        ):
+            self.assertIn(marker, browser_source)
+
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        self.assertIn("FACODI_BROWSER_ACCEPTANCE", runtime)
+        self.assertIn("tests/test_campus_paper_browser.mjs", runtime)
+        for variable in (
+            "FACODI_BROWSER_COURSE_ROUTE",
+            "FACODI_BROWSER_ROADMAP_ROUTE",
+            "FACODI_BROWSER_UNIT_ROUTE",
+            "FACODI_BROWSER_MODULE_ROUTE",
+        ):
+            self.assertIn(variable, runtime)
+
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("actions/setup-node@v4", workflow)
+        self.assertIn("playwright-core@1.55.0", workflow)
+        self.assertIn("FACODI_BROWSER_ACCEPTANCE", workflow)
+        self.assertIn("facodi-browser-acceptance", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
         self.assertIn("FROM odoo:19.0", dockerfile)
