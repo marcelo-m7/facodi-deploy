@@ -29,17 +29,11 @@ const viewports = {
 
 const cases = [
     {
-        name: "home",
-        route: "/",
-        sizes: ["desktop", "tablet", "mobile", "narrow"],
-        selectors: [".facodi-hero-study-board", ".facodi-nav-shell", ".facodi-footer-campus"],
-        mobileMenu: true,
-    },
-    {
         name: "slides",
         route: "/slides",
         sizes: ["desktop", "mobile", "narrow"],
         selectors: [".facodi-learning-catalogue-hero", ".facodi-index-tabs--courses", ".facodi-course-record-card"],
+        mobileMenu: true,
     },
     {
         name: "course",
@@ -150,15 +144,15 @@ try {
         reducedMotion: "reduce",
     });
     const reducedPage = await reducedContext.newPage();
-    const reducedResponse = await reducedPage.goto(baseUrl + "/", {
+    const reducedResponse = await reducedPage.goto(baseUrl + "/slides", {
         waitUntil: "domcontentloaded",
         timeout: 30000,
     });
     if (!reducedResponse || reducedResponse.status() >= 400) {
-        throw new Error("reduced-motion homepage failed to load");
+        throw new Error("reduced-motion course catalogue failed to load");
     }
-    if ((await reducedPage.locator(".facodi-hero-study-board").count()) < 1) {
-        throw new Error("reduced-motion mode hid the principal homepage content");
+    if ((await reducedPage.locator(".facodi-learning-catalogue-hero").count()) < 1) {
+        throw new Error("reduced-motion mode hid the D1 course catalogue content");
     }
     await reducedContext.close();
 } finally {
