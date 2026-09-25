@@ -41,10 +41,7 @@ The image also makes the pinned addon sources available. Retired Monodoo/Monynha
 Network enrichment and learning-resource analysis are owned outside the Odoo image by `marcelo-m7/facodi-supabase`. The production boundary is:
 
 ```text
-Odoo submission
-  -> course candidate
-  -> canonical facodi.learning.source
-  -> unpublished slide.slide
+Odoo submission / canonical source
   -> facodi.learning.analysis.job
   -> authenticated Supabase Edge Function
   -> metadata + AI analysis
@@ -54,7 +51,7 @@ Odoo submission
 
 Odoo authenticates server-to-server with `SUPABASE_SECRET_KEY`; `SUPABASE_URL` and the secret key must be configured together. Migration sets `facodi_learning.analysis_provider=supabase_edge` only when that pair is valid. `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are forwarded for future lower-privilege surfaces but do not authorize the privileged analysis bridge.
 
-Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical. Submission audit rows expose the downstream source/content/job/result trace without granting Officers direct access to the private canonical-source model. Source linkage is serialized and canonical reuse is accepted only when provider identity, external resource identity and resolved target course all match.
+Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical.
 
 On Edge failures, cross-system correlation is deliberately narrow: the private Supabase job must first persist its failed state and private diagnostics. Only then may the Edge response expose the opaque `processing_job_id` UUID. Odoo bounds the error response, accepts only that UUID, revalidates it as a trusted `SupabaseAnalysisError`, and persists only the sanitized correlation marker in job/attempt audit evidence.
 
