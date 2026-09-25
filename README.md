@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `9052ac22df069d5a637ce30e20f896f099269c4f` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `fea2f307f1d4aa7ae495c186896009507d8385da` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `bd52c200d731af3ab7665d24dc575952ef8cdc4d` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `128c5a712f7aab51031d5767adaa6867495330f7` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
@@ -58,6 +58,8 @@ The FACODI theme owns Website presentation and footer navigation. It must remain
 Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.
 
 The reviewed-submission trace is explicit in Odoo: a submission can be followed through its course candidate to the canonical source and unpublished `slide.slide`, then to the latest analysis job and immutable result. Canonical sources may be reused by multiple candidates only when provider identity, external resource identity and resolved target course all match; the submission records retain their own candidate provenance.
+
+Failed Supabase analysis calls preserve a safe cross-system correlation boundary: Odoo reads a bounded error body, accepts only the opaque UUID returned as `details.processing_job_id`, revalidates it at the audit boundary, and stores no provider response details or secrets. The Edge Function returns that UUID only after the private Supabase failure row has been durably persisted; otherwise it fails closed without exposing a misleading correlation ID.
 
 This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
 
