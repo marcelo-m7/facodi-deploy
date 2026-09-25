@@ -116,16 +116,36 @@ print("FACODI_RUNTIME_COURSE=" + course.website_url)
 print("FACODI_RUNTIME_GAP_UNIT_CODE=" + gap_unit.external_unit_code)
 print("FACODI_RUNTIME_GAP_UNIT_ID=" + str(gap_unit.id))
 
+# Publication governance is enabled by the migration. Model the production
+# contract in the disposable fixture instead of bypassing it: create canonical
+# content unpublished, record explicit review evidence, approve as an eLearning
+# Manager, and only then publish.
 slide = env["slide.slide"].create(
   {
     "channel_id": course.id,
     "name": "FACODI Runtime Public Module Item",
     "slide_category": "document",
-    "is_published": True,
-    "website_published": True,
+    "is_published": False,
+    "website_published": False,
     "is_preview": True,
   }
 )
+admin = env.ref("base.user_admin")
+manager_group = env.ref("website_slides.group_website_slides_manager")
+if manager_group not in admin.group_ids:
+    admin.write({"group_ids": [(4, manager_group.id)]})
+review = env["facodi.learning.content.review"].create(
+  {
+    "slide_id": slide.id,
+    "author": "FACODI CI",
+    "rights_mode": "original",
+    "usage_basis": "Disposable runtime fixture created by FACODI CI.",
+    "purpose": "Validate governed public module rendering in the disposable runtime.",
+  }
+)
+review.with_user(admin).action_approve()
+slide.write({"is_published": True, "website_published": True})
+
 module = env["facodi.learning.curriculum.module"].create(
   {
     "name": "FACODI Runtime Public Module",
@@ -176,7 +196,6 @@ print(
   + ",".join(sorted(required_trace_fields))
 )
 
-admin = env.ref("base.user_admin")
 admin.password = "facodi-ci-admin"
 env.cr.commit()
 PY
