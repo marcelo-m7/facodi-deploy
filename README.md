@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `57e34ad1fd61a9efd134927c59325a57fe38640e` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `1d85bac6e97a5f71ae0c2c23070152532b5d1a83` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `1f1f7c8204cb02573f2bb16b89c4ab1fc5b6342b` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `fea2f307f1d4aa7ae495c186896009507d8385da` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
@@ -54,6 +54,8 @@ The FACODI learning pin provides the public official-curriculum golden path: UAl
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
+
+This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
 
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
 
