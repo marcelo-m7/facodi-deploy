@@ -99,7 +99,7 @@ SUPABASE_URL
 SUPABASE_SECRET_KEY
 ```
 
-When that pair is present, the migration fail-closes on malformed configuration and sets `facodi_learning.analysis_provider=supabase_edge`. The Odoo service delegates resource enrichment/analysis to the versioned Supabase Edge Function instead of performing provider-specific analysis locally.
+When that pair is present, the migration fail-closes on malformed configuration and sets `facodi_learning.analysis_provider=supabase_edge`. Removing both values explicitly returns the persisted provider to the deterministic `local_metadata` fallback, so a stale Supabase selection cannot survive without runtime credentials. The Odoo service delegates resource enrichment/analysis to the versioned Supabase Edge Function instead of performing provider-specific analysis locally.
 
 The Compose runtime also forwards `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` for future public-safe/authenticated processing-plane surfaces. Neither is used as the privileged Odoo-to-Supabase credential. `GEMINI_API_KEY` remains server-only and may be forwarded to the authenticated Edge call as a transitional fallback until that provider secret is configured directly in Supabase.
 
