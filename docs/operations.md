@@ -31,7 +31,7 @@ odoo-data:/var/lib/odoo
 
 Do not rename these volumes, add explicit Compose `name:` overrides, delete them, or recreate the Coolify resource simply to deploy a revision.
 
-The existing generated database secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. FACODI resource analysis additionally uses a server-only Supabase configuration. `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are an atomic pair: configure both or neither. If only one is present, migration intentionally fails before the persistent Odoo service starts.
+The existing generated database secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. FACODI resource analysis additionally uses a server-only Supabase configuration. `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are an atomic pair: configure both or neither. If only one is present, migration intentionally fails before the persistent Odoo service starts. If both are intentionally removed later, migration resets the persisted FACODI analysis provider to the deterministic local fallback instead of leaving stale Supabase activation behind.
 
 The current Coolify environment may also provide `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_JWKS_URL` and `GEMINI_API_KEY`. The publishable/JWKS values do not replace the privileged secret key. Never expose `SUPABASE_SECRET_KEY` or `GEMINI_API_KEY` in Website/browser code or logs.
 
