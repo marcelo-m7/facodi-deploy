@@ -173,7 +173,7 @@ class MigrationContractTest(unittest.TestCase):
         ):
             self.assertIn(label, text)
         self.assertIn("with_context(lang=lang).write", text)
-        self.assertIn("(duplicates - canonical).unlink()", text)
+        self.assertIn("duplicates.unlink()", text)
         self.assertIn('"url": "#"', text)
         self.assertLess(
             text.rindex("apply_theme("),
