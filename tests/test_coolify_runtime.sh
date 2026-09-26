@@ -201,6 +201,16 @@ print(
   + ",".join(sorted(required_trace_fields))
 )
 
+community_submission = env["facodi.learning.submission"].create(
+  {
+    "name": "FACODI Runtime Pending Community Video",
+    "source_url": "https://youtu.be/w9gb71ZUJDs",
+    "context": "FACODI_RUNTIME_PRIVATE_CONTEXT_MUST_NOT_LEAK",
+    "language": "pt",
+  }
+)
+print("FACODI_RUNTIME_COMMUNITY_TOKEN=" + community_submission.access_token)
+
 admin.password = "facodi-ci-admin"
 env.cr.commit()
 PY
@@ -213,6 +223,11 @@ for code in en_US pt_PT es_ES fr_FR; do
 done
 grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
 grep -Fq 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state' <<<"$state"
+runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
+if [[ -z "$runtime_community_token" ]]; then
+  echo "Runtime community submission token is missing" >&2
+  exit 1
+fi
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
 runtime_roadmap_route="$(sed -n 's/^FACODI_RUNTIME_ROADMAP=//p' <<<"$state")"
 runtime_unit_route="$(sed -n 's/^FACODI_RUNTIME_UNIT=//p' <<<"$state")"
@@ -233,6 +248,7 @@ fi
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
+  -e "RUNTIME_COMMUNITY_TOKEN=$runtime_community_token" \
   odoo python3 - <<'PY'
 import os
 import re
@@ -244,6 +260,7 @@ runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
+runtime_community_token = os.environ["RUNTIME_COMMUNITY_TOKEN"]
 curriculum_body = b""
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -278,6 +295,7 @@ for route in (
   "/explorar",
   "/explorar/areas",
   "/explorar/conteudos",
+  "/explorar/videos",
   "/roadmaps",
   "/pt/roadmaps",
   "/contribuir/recurso",
@@ -287,7 +305,7 @@ for route in (
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
     if route == "/explorar":
-        for marker in (b"/explorar/areas", b"/explorar/conteudos", b"/explorar/cursos"):
+        for marker in (b"/explorar/areas", b"/explorar/conteudos", b"/explorar/videos", b"/explorar/cursos"):
           if marker not in body:
             raise RuntimeError(f"Explore landing lost discovery entry point: {marker!r}")
     if route == "/explorar/conteudos":
@@ -295,6 +313,17 @@ for route in (
           raise RuntimeError("Explore content catalogue does not expose governed public learning content")
         if b"/explorar/cursos" in body:
           raise RuntimeError("Explore content catalogue unexpectedly duplicates course navigation")
+    if route == "/explorar/videos":
+        if b"FACODI Runtime Pending Community Video" not in body:
+          raise RuntimeError("pending YouTube submission is missing from the public community queue")
+        if b"Awaiting review" not in body:
+          raise RuntimeError("pending community video lost its pre-review status")
+        if runtime_community_token.encode("utf-8") in body:
+          raise RuntimeError("private community submission token leaked into the public page")
+        if b"FACODI_RUNTIME_PRIVATE_CONTEXT_MUST_NOT_LEAK" in body:
+          raise RuntimeError("private submission context leaked into the public page")
+        if b"https://www.youtube.com/watch?v=w9gb71ZUJDs" not in body:
+          raise RuntimeError("community queue did not canonicalize the YouTube URL")
     if route == "/roadmaps":
         curriculum_body = body
         if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
