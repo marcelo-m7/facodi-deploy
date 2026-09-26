@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `99e66a719403734c9fe813cbbc34df2602fe9a7c` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `a092dfeb3c73ecbd7e0f199d8afbfbabe07e485c` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `945463c03cf87d16a73d6f1296389234bd5d80af` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -161,3 +161,5 @@ If a deployed migration must be rolled back, restore the matching PostgreSQL bac
 - persistent volume names and the existing Coolify resource identity must be preserved;
 - language handling remains standard Odoo Website behavior;
 - exact source pins are part of the repository contract.
+
+The native Odoo Website navigation now groups the main discovery routes under the Explore submenu: Courses, Areas, Learning resources, Community videos, Roadmaps, and Curricular units.
