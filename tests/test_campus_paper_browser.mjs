@@ -23,6 +23,7 @@ await fs.mkdir(screenshotDir, { recursive: true });
 const viewports = {
     desktop: { width: 1440, height: 1200 },
     tablet: { width: 1024, height: 1366 },
+    mobileWide: { width: 430, height: 932 },
     mobile: { width: 390, height: 844 },
     narrow: { width: 320, height: 700 },
 };
@@ -31,7 +32,7 @@ const cases = [
     {
         name: "slides",
         route: "/slides",
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop", "tablet", "mobileWide", "mobile", "narrow"],
         selectors: [".facodi-learning-catalogue-hero", ".facodi-index-tabs--courses", ".facodi-course-record-card"],
         mobileMenu: true,
     },
@@ -56,13 +57,13 @@ const cases = [
     {
         name: "units",
         route: "/unidades-curriculares",
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop", "tablet", "mobileWide", "mobile", "narrow"],
         selectors: [".facodi-filter-sheet", ".facodi-record-card--unit"],
     },
     {
         name: "unit-detail",
         route: unitRoute,
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop", "tablet", "mobileWide", "mobile", "narrow"],
         selectors: [".facodi-unit-layout", ".facodi-reference-rail", ".facodi-module-stack"],
     },
     {
@@ -120,7 +121,40 @@ try {
                 );
             }
 
-            if (testCase.mobileMenu && viewport.width <= 390) {
+            const clippedInteractive = await page.evaluate(() => {
+                const viewportWidth = window.innerWidth;
+                const insideIntentionalHorizontalScroller = (el) => {
+                    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+                        const style = getComputedStyle(parent);
+                        const scrollable = ["auto", "scroll"].includes(style.overflowX)
+                            && parent.scrollWidth > parent.clientWidth + 1;
+                        if (scrollable) return true;
+                    }
+                    return false;
+                };
+                return [...document.querySelectorAll("a, button, input, select, textarea")]
+                    .filter((el) => {
+                        const style = getComputedStyle(el);
+                        if (style.display === "none" || style.visibility === "hidden") return false;
+                        if (insideIntentionalHorizontalScroller(el)) return false;
+                        const rect = el.getBoundingClientRect();
+                        return rect.width > 0 && (rect.left < -1 || rect.right > viewportWidth + 1);
+                    })
+                    .slice(0, 8)
+                    .map((el) => ({
+                        tag: el.tagName,
+                        text: (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 80),
+                        left: Math.round(el.getBoundingClientRect().left),
+                        right: Math.round(el.getBoundingClientRect().right),
+                    }));
+            });
+            if (clippedInteractive.length) {
+                throw new Error(
+                    `${testCase.name} ${sizeName}: interactive controls clipped outside viewport: ${JSON.stringify(clippedInteractive)}`
+                );
+            }
+
+            if (testCase.mobileMenu && viewport.width <= 430) {
                 const toggle = page.locator('[data-bs-target="#top_menu_collapse_mobile"]').first();
                 if ((await toggle.count()) < 1) {
                     throw new Error(`${testCase.name} ${sizeName}: native Odoo mobile menu toggle missing`);
@@ -151,7 +185,7 @@ try {
         await page.locator('input[name="password"]').fill("facodi-ci-admin");
         await Promise.all([
             page.waitForURL(/\/my\/home/, { timeout: 30000 }),
-            page.locator('button[type="submit"]').click(),
+            page.getByRole("button", { name: "Log in" }).click(),
         ]);
         await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
 
