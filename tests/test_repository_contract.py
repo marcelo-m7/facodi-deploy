@@ -51,7 +51,7 @@ class RepositoryContractTest(unittest.TestCase):
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.0.1"', theme_manifest)
+        self.assertIn('"version": "19.0.10.1.0"', theme_manifest)
         self.assertIn('"version": "19.0.1.24.0"', learning_manifest)
 
         browser = ROOT / "tests/test_campus_paper_browser.mjs"
@@ -90,7 +90,7 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_d2_editorial_public_pages_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.0.1"', theme_manifest)
+        self.assertIn('"version": "19.0.10.1.0"', theme_manifest)
         self.assertIn('"website_blog"', theme_manifest)
 
         fixture = ROOT / "tests/ci_seed_d2_editorial_runtime.py"
@@ -121,6 +121,41 @@ class RepositoryContractTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
         self.assertIn("facodi-d2-browser-acceptance", workflow)
+
+    def test_permanent_editorial_redirect_release_contract(self):
+        theme_root = ROOT / "addons/facodi-theme"
+        manifest = (theme_root / "theme_facodi/__manifest__.py").read_text()
+        self.assertIn('"version": "19.0.10.1.0"', manifest)
+
+        redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
+        redirect_migration = (
+            theme_root
+            / "theme_facodi/migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
+        )
+        self.assertTrue(redirect_data.is_file(), str(redirect_data))
+        self.assertTrue(redirect_migration.is_file(), str(redirect_migration))
+
+        source = redirect_data.read_text()
+        for old, new in (
+            ("/facodi", "/"),
+            ("/manifesto", "/sobre"),
+            ("/comunidade", "/sobre"),
+            ("/parceiros", "/sobre"),
+            ("/roadmap", "/sobre#how-it-works"),
+            ("/como-contribuir", "/contribuir/recurso"),
+            ("/contribuir", "/contribuir/recurso"),
+        ):
+            self.assertIn(f"<field name=\"url_from\">{old}</field>", source)
+            self.assertIn(f"<field name=\"url_to\">{new}</field>", source)
+        self.assertEqual(source.count('<field name="redirect_type">301</field>'), 7)
+        self.assertNotIn('<field name="url_from">/roadmaps</field>', source)
+        self.assertNotIn('<field name="url_from">/contribuir/recurso</field>', source)
+
+        website_scss = (
+            theme_root / "theme_facodi/static/src/scss/website.scss"
+        ).read_text()
+        self.assertIn("background-color: #0B1325 !important", website_scss)
+        self.assertIn("background: #0B1325", website_scss)
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
