@@ -143,6 +143,10 @@ try {
         const viewport = viewports[sizeName];
         const context = await browser.newContext({ viewport });
         const page = await context.newPage();
+        const portalPageErrors = [];
+        page.on("pageerror", (error) => {
+            portalPageErrors.push(error.stack || error.message || String(error));
+        });
         await page.goto(baseUrl + "/web/login?redirect=/my/home", {
             waitUntil: "domcontentloaded",
             timeout: 30000,
@@ -154,6 +158,39 @@ try {
             page.locator('button[type="submit"]').click(),
         ]);
         await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(750);
+
+        const counterPayload = await page.evaluate(async () => {
+            const response = await fetch("/my/counters", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "call",
+                    id: 1,
+                    params: { counters: ["__facodi_counter_probe__"] },
+                }),
+            });
+            const payload = await response.json();
+            if (payload.error) {
+                throw new Error(JSON.stringify(payload.error));
+            }
+            return payload.result || {};
+        });
+        const leakedDashboardKeys = Object.keys(counterPayload).filter((key) =>
+            key.startsWith("facodi_")
+        );
+        if (leakedDashboardKeys.length) {
+            throw new Error(
+                `portal ${sizeName}: /my/counters leaked dashboard keys: ${leakedDashboardKeys.join(", ")}`
+            );
+        }
+
+        if (portalPageErrors.length) {
+            throw new Error(
+                `portal ${sizeName}: frontend pageerror after /my/home load:\n${portalPageErrors.join("\n---\n")}`
+            );
+        }
 
         for (const selector of [
             '[data-facodi-portal-home="1"]',
