@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `bfbb51954d3ee9e4ca2e110838303dc4948d03df` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `77490a0c8e3e795ece38feb061d56120bd4e63ba` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `b3e2a2eb04a4749c7eb75ddbf5480af6428c5603` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `73fb649eb269658f5c343a0aa573a728cfc525f7` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -38,7 +38,7 @@ The runtime requests these modules through `FACODI_MODULES`:
 
 ### Minha FACODI portal
 
-The authenticated learner home is standard Odoo Portal at `/my/home`, extended by `facodi_learning` through `CustomerPortal._prepare_home_portal_values()` and by `theme_facodi` through a scoped Digital Highlighter Campus presentation layer. Native portal authentication, account/security cards, sidebar identity, and module-owned portal entries remain authoritative. FACODI adds only learner-specific course/contribution projections for the signed-in user. The legacy `/minha-facodi` URL redirects to `/my/home`.
+The authenticated learner home is standard Odoo Portal at `/my/home`, extended by `facodi_learning` through `CustomerPortal._prepare_home_portal_values()` and by `theme_facodi` through a scoped Digital Highlighter Campus presentation layer. Native portal authentication, account/security cards, sidebar identity, and module-owned portal entries remain authoritative. FACODI adds only learner-specific course/contribution projections for the signed-in user. Course membership and completion come directly from standard `slide.channel.partner`; no parallel learner-progress model is introduced. The legacy `/minha-facodi` URL redirects to `/my/home`.
 
 ### Standard community foundation
 
