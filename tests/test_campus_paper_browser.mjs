@@ -172,6 +172,19 @@ try {
             }
         }
 
+        const pulse = page.locator('[data-facodi-campus-pulse="1"]').first();
+        const pulsePost = pulse.locator(".facodi-campus-pulse__post").first();
+        if ((await pulsePost.count()) < 1) {
+            throw new Error(
+                `portal ${sizeName}: seeded Campus pulse forum post is missing`
+            );
+        }
+        if (!(await pulsePost.innerText()).includes("FACODI Runtime Campus Pulse Post")) {
+            throw new Error(
+                `portal ${sizeName}: Campus pulse did not render the seeded forum discussion`
+            );
+        }
+
         const bodyText = await page.locator("body").innerText();
         for (const marker of [
             "Your campus",
