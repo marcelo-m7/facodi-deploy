@@ -122,6 +122,18 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
         self.assertIn("facodi-d2-browser-acceptance", workflow)
 
+    def test_theme_permanent_redirect_release_contract(self):
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+        manifest = (theme_root / "__manifest__.py").read_text()
+        self.assertIn('"version": "19.0.10.1.0"', manifest)
+        self.assertTrue((theme_root / "data/website_rewrites.xml").is_file())
+        self.assertTrue(
+            (
+                theme_root
+                / "migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
+            ).is_file()
+        )
+
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
         self.assertIn("FROM odoo:19.0", dockerfile)
