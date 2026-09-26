@@ -142,13 +142,59 @@ class MigrationContractTest(unittest.TestCase):
     def test_navigation_normalization_is_website_scoped_and_runs_after_theme(self):
         text = MIGRATION.read_text()
         self.assertIn('("website_id", "=", facodi_website.id)', text)
-        self.assertIn('("url", "in", ["/roadmap", "/mapa-curricular", "/curriculos"])', text)
-        self.assertIn('canonical.write({"name": "Roadmaps", "url": "/roadmaps"})', text)
-        self.assertIn("(legacy - canonical).unlink()", text)
+        for route in (
+            "/slides",
+            "/roadmaps",
+            "/unidades-curriculares",
+            "/sobre",
+            "/blog",
+            "/contribuir/recurso",
+            "/contactus",
+        ):
+            self.assertIn(route, text)
+        for legacy in (
+            "/roadmap",
+            "/mapa-curricular",
+            "/curriculos",
+            "/manifesto",
+            "/comunidade",
+            "/parceiros",
+            "/como-contribuir",
+            "/contribuir",
+        ):
+            self.assertIn(legacy, text)
+        for label in (
+            '"en_US": "Learn"',
+            '"pt_PT": "Aprender"',
+            '"es_ES": "Aprender"',
+            '"fr_FR": "Apprendre"',
+            '"pt_PT": "Notícias"',
+            '"fr_FR": "Unités d’enseignement"',
+        ):
+            self.assertIn(label, text)
+        self.assertIn("with_context(lang=lang).write", text)
+        self.assertIn("(duplicates - canonical).unlink()", text)
+        self.assertIn('"url": "#"', text)
         self.assertLess(
             text.rindex("apply_theme("),
             text.rindex("normalize_public_navigation("),
         )
+
+    def test_navigation_normalization_payload_is_valid_python(self):
+        migration = load_migration_module()
+        with mock.patch.object(migration, "run_shell") as shell:
+            migration.normalize_public_navigation("/tmp/odoo.conf", "facodi")
+
+        payload = shell.call_args.args[2]
+        compile(
+            migration.textwrap.dedent(payload),
+            "<facodi-navigation-normalization>",
+            "exec",
+        )
+        self.assertIn("canonical_root", payload)
+        self.assertIn("learning_children", payload)
+        self.assertIn("canonical_top_level", payload)
+        self.assertIn("legacy_urls", payload)
 
 
     def test_fresh_or_domainless_single_website_is_an_unambiguous_bootstrap(self):
