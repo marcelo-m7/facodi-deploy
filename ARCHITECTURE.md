@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `3686e8d7d12c1d4b00d8db473a5855942c5e8627` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `85fb49f04bd6ac08d521a21af2ea74575a0acea7` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `8afd6d930fe7c817eb83890594c7690b86852b19` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `54c3129b971c628c72857983ba734b4cd11fe73f` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
