@@ -396,26 +396,197 @@ def normalize_public_navigation(
     config: str, database: str, *, fresh_database: bool = False
 ) -> None:
     payload = _website_selector_payload(fresh_database=fresh_database) + """
-    Menu = env["website.menu"]
-    legacy = Menu.search(
+    Menu = env["website.menu"].with_context(active_test=False)
+    main_menu = facodi_website.menu_id
+
+    labels = {
+        "learn": {
+            "en_US": "Learn",
+            "pt_PT": "Aprender",
+            "es_ES": "Aprender",
+            "fr_FR": "Apprendre",
+        },
+        "courses": {
+            "en_US": "Courses",
+            "pt_PT": "Cursos",
+            "es_ES": "Cursos",
+            "fr_FR": "Cours",
+        },
+        "roadmaps": {
+            "en_US": "Roadmaps",
+            "pt_PT": "Roadmaps",
+            "es_ES": "Rutas",
+            "fr_FR": "Parcours",
+        },
+        "units": {
+            "en_US": "Curricular Units",
+            "pt_PT": "Unidades Curriculares",
+            "es_ES": "Unidades Curriculares",
+            "fr_FR": "Unités d’enseignement",
+        },
+        "about": {
+            "en_US": "About",
+            "pt_PT": "Sobre",
+            "es_ES": "Acerca de",
+            "fr_FR": "À propos",
+        },
+        "news": {
+            "en_US": "News",
+            "pt_PT": "Notícias",
+            "es_ES": "Noticias",
+            "fr_FR": "Actualités",
+        },
+        "contribute": {
+            "en_US": "Contribute",
+            "pt_PT": "Contribuir",
+            "es_ES": "Contribuir",
+            "fr_FR": "Contribuer",
+        },
+        "contact": {
+            "en_US": "Contact",
+            "pt_PT": "Contacto",
+            "es_ES": "Contacto",
+            "fr_FR": "Contact",
+        },
+    }
+
+    def translated_name(menu, key):
+        for lang, value in labels[key].items():
+            menu.with_context(lang=lang).write({"name": value})
+
+    def canonical_root(key, url, sequence, *, aliases=()):
+        candidates = Menu.search(
+            [
+                ("website_id", "=", facodi_website.id),
+                ("parent_id", "=", main_menu.id),
+                ("url", "in", [url, *aliases]),
+            ],
+            order="sequence, id",
+        )
+        canonical = candidates[:1]
+        if not canonical:
+            canonical = Menu.create(
+                {
+                    "name": labels[key]["en_US"],
+                    "url": url,
+                    "parent_id": main_menu.id,
+                    "website_id": facodi_website.id,
+                    "sequence": sequence,
+                }
+            )
+        canonical.write(
+            {
+                "url": url,
+                "parent_id": main_menu.id,
+                "website_id": facodi_website.id,
+                "sequence": sequence,
+            }
+        )
+        translated_name(canonical, key)
+        duplicates = candidates - canonical
+        if duplicates:
+            duplicates.mapped("child_id").write({"parent_id": canonical.id})
+            duplicates.unlink()
+        return canonical
+
+    learning_candidates = Menu.search(
         [
             ("website_id", "=", facodi_website.id),
-            ("url", "in", ["/roadmap", "/mapa-curricular", "/curriculos"]),
+            ("parent_id", "=", main_menu.id),
+            ("url", "in", ["/slides", "/roadmaps", "/unidades-curriculares"]),
         ],
         order="sequence, id",
     )
-    main_menu = facodi_website.menu_id
-    main_candidates = legacy.filtered(lambda menu: menu.parent_id == main_menu)
-    canonical = main_candidates[:1]
-    if canonical:
-        canonical.write({"name": "Roadmaps", "url": "/roadmaps"})
-        (legacy - canonical).unlink()
-    else:
-        legacy.write({"name": "Roadmaps", "url": "/roadmaps"})
+    learn_menu = learning_candidates.filtered(lambda menu: menu.url == "/slides")[:1]
+    if not learn_menu:
+        learn_menu = Menu.create(
+            {
+                "name": labels["learn"]["en_US"],
+                "url": "#",
+                "parent_id": main_menu.id,
+                "website_id": facodi_website.id,
+                "sequence": 10,
+            }
+        )
+    learn_menu.write(
+        {
+            "url": "#",
+            "parent_id": main_menu.id,
+            "website_id": facodi_website.id,
+            "sequence": 10,
+        }
+    )
+    translated_name(learn_menu, "learn")
+
+    learning_children = (
+        ("courses", "/slides", 10, ()),
+        ("roadmaps", "/roadmaps", 20, ("/roadmap", "/mapa-curricular", "/curriculos")),
+        ("units", "/unidades-curriculares", 30, ()),
+    )
+    for key, url, sequence, aliases in learning_children:
+        candidates = Menu.search(
+            [
+                ("website_id", "=", facodi_website.id),
+                ("url", "in", [url, *aliases]),
+            ],
+            order="sequence, id",
+        )
+        canonical = candidates.filtered(lambda menu: menu.id != learn_menu.id)[:1]
+        if not canonical:
+            canonical = Menu.create(
+                {
+                    "name": labels[key]["en_US"],
+                    "url": url,
+                    "parent_id": learn_menu.id,
+                    "website_id": facodi_website.id,
+                    "sequence": sequence,
+                }
+            )
+        canonical.write(
+            {
+                "url": url,
+                "parent_id": learn_menu.id,
+                "website_id": facodi_website.id,
+                "sequence": sequence,
+            }
+        )
+        translated_name(canonical, key)
+        duplicates = candidates - canonical - learn_menu
+        if duplicates:
+            duplicates.mapped("child_id").write({"parent_id": canonical.id})
+            duplicates.unlink()
+
+    canonical_top_level = (
+        ("about", "/sobre", 20, ("/manifesto", "/comunidade", "/parceiros")),
+        ("news", "/blog", 30, ()),
+        ("contribute", "/contribuir/recurso", 40, ("/como-contribuir", "/contribuir")),
+        ("contact", "/contactus", 50, ()),
+    )
+    for key, url, sequence, aliases in canonical_top_level:
+        canonical_root(key, url, sequence, aliases=aliases)
+
+    legacy_urls = (
+        "/roadmap",
+        "/mapa-curricular",
+        "/curriculos",
+        "/manifesto",
+        "/comunidade",
+        "/parceiros",
+        "/como-contribuir",
+        "/contribuir",
+    )
+    leftover_legacy = Menu.search(
+        [
+            ("website_id", "=", facodi_website.id),
+            ("url", "in", list(legacy_urls)),
+        ]
+    )
+    if leftover_legacy:
+        leftover_legacy.unlink()
+
     env.cr.commit()
     """
     run_shell(config, database, payload)
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
