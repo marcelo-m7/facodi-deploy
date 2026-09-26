@@ -172,6 +172,15 @@ try {
             }
         }
 
+        const pulse = page.locator('[data-facodi-campus-pulse="1"]').first();
+        const pulsePost = pulse.locator(".facodi-campus-pulse__post").first();
+        const pulseEmpty = pulse.locator('[data-facodi-empty-state="1"]').first();
+        if ((await pulsePost.count()) < 1 && (await pulseEmpty.count()) < 1) {
+            throw new Error(
+                `portal ${sizeName}: Campus pulse rendered neither a forum post nor its empty state`
+            );
+        }
+
         const bodyText = await page.locator("body").innerText();
         for (const marker of [
             "Your campus",
