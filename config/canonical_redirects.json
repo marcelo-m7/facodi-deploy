@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "redirect_type": "301",
+  "canonical_routes": {
+    "home": "/",
+    "about": "/sobre",
+    "courses": "/slides",
+    "roadmaps": "/roadmaps",
+    "curricular_units": "/unidades-curriculares",
+    "contribute": "/contribuir",
+    "contribute_resource": "/contribuir/recurso",
+    "blog": "/blog",
+    "contact": "/contactus"
+  },
+  "phase_1_safe_aliases": [
+    {
+      "from": "/facodi",
+      "to": "/",
+      "reason": "Remove duplicate homepage URL; canonical homepage is root."
+    },
+    {
+      "from": "/cursos",
+      "to": "/slides",
+      "reason": "Use native Odoo eLearning catalogue as the single course URL."
+    },
+    {
+      "from": "/percursos",
+      "to": "/roadmaps",
+      "reason": "Use the curriculum Roadmaps index as the single pathways URL."
+    },
+    {
+      "from": "/contacto",
+      "to": "/contactus",
+      "reason": "Preserve Portuguese legacy alias while keeping native Odoo Contact canonical."
+    },
+    {
+      "from": "/roadmap",
+      "to": "/roadmaps",
+      "reason": "Reserve Roadmap terminology for the academic Roadmaps feature and remove singular editorial ambiguity."
+    }
+  ],
+  "phase_2_editorial_consolidation": [
+    {
+      "from": "/como-funciona",
+      "to": "/sobre#how-it-works",
+      "reason": "How it works is consolidated into About."
+    },
+    {
+      "from": "/manifesto",
+      "to": "/sobre",
+      "reason": "Manifesto principles are consolidated into About."
+    },
+    {
+      "from": "/parceiros",
+      "to": "/sobre",
+      "reason": "Partners/network context is consolidated into About."
+    },
+    {
+      "from": "/comunidade",
+      "to": "/contribuir",
+      "reason": "Community participation is consolidated into Contribution."
+    }
+  ],
+  "rules": [
+    "All records use Odoo website.rewrite with redirect_type=301.",
+    "Do not activate a 301 while an old website.page still owns the same URL; first remove the old route collision by changing/unpublishing the obsolete page.",
+    "Phase 2 redirects are applied only after the target page exists and its live content has been backed up/recomposed.",
+    "Keep language routing native to Odoo; do not create separate /pt, /es or /fr redirect rows unless live verification proves they are necessary.",
+    "Never redirect canonical learning routes /slides, /roadmaps or /unidades-curriculares away from their native owners."
+  ]
+}
