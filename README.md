@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `52a011045c236e89cb2bb0cc84f3d7ad0653ea93` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `5b01142689a8ee414612043b69b1594f73cdcc9b` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `bfbb51954d3ee9e4ca2e110838303dc4948d03df` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `77490a0c8e3e795ece38feb061d56120bd4e63ba` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explorar`, `/explorar/areas`, `/explorar/conteudos` and the community-submission queue at `/explorar/videos`, while complete courses remain canonical in standard Odoo eLearning under `/slides`. Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -54,6 +54,8 @@ The FACODI learning pin provides the public official-curriculum golden path and 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
 
 The current FACODI theme release also canonicalizes legacy editorial URLs through native Odoo permanent `301` rewrites: `/facodi → /`, `/manifesto → /sobre`, `/comunidade → /sobre`, `/parceiros → /sobre`, `/roadmap → /sobre#how-it-works`, and legacy contribution URLs to `/contribuir/recurso`. The canonical curriculum route `/roadmaps` is never redirected. The footer remains locked to `#0B1325`.
+
+The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. FACODI extends the native portal controller/template with learner-only course and contribution context, while preserving native account/security cards and ownership rules. The legacy `/minha-facodi` route is a transition alias to the standard portal.
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
