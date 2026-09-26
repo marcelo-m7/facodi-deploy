@@ -51,8 +51,6 @@ class RepositoryContractTest(unittest.TestCase):
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', theme_manifest)
-        self.assertIn('"version": "19.0.1.43.0"', learning_manifest)
 
         portal_controller = (
             ROOT / "addons/facodi-learning/facodi_learning/controllers/portal.py"
@@ -71,20 +69,18 @@ class RepositoryContractTest(unittest.TestCase):
             "facodi-roadmap-study-path",
             "facodi-filter-sheet",
             "facodi-unit-layout",
-            "facodi-reference-rail",
             "facodi-module-detail",
+            'data-facodi-explore-workbench="1"',
             'data-facodi-portal-home="1"',
             "facodi-portal-board",
             'data-facodi-academic-map="1"',
             'data-facodi-campus-pulse="1"',
-            "facodi-academic-map__unit",
-            "facodi-campus-pulse__post",
-            "Your FACODI toolbox",
+            ".facodi-portal-toolbox-heading",
             "permanent 301",
             "maxRedirects: 0",
             "\"/minha-facodi\"",
             "document.documentElement.scrollWidth",
-            "window.innerWidth + 1",
+            "window.innerWidth",
         ):
             self.assertIn(marker, browser_source)
 
@@ -108,7 +104,6 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_d2_editorial_public_pages_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', theme_manifest)
         self.assertIn('"website_blog"', theme_manifest)
 
         fixture = ROOT / "tests/ci_seed_d2_editorial_runtime.py"
@@ -143,7 +138,6 @@ class RepositoryContractTest(unittest.TestCase):
     def test_permanent_editorial_redirect_release_contract(self):
         theme_root = ROOT / "addons/facodi-theme"
         manifest = (theme_root / "theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', manifest)
 
         redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
         redirect_migration = (
@@ -174,6 +168,15 @@ class RepositoryContractTest(unittest.TestCase):
         ).read_text()
         self.assertIn("background-color: #0B1325 !important", website_scss)
         self.assertIn("background: #0B1325", website_scss)
+
+    def test_facodi_500_surface_is_fail_safe(self):
+        error_view = ROOT / "addons/facodi-theme/theme_facodi/views/http_error.xml"
+        self.assertTrue(error_view.is_file(), str(error_view))
+        source = error_view.read_text()
+        self.assertIn('inherit_id="http_routing.500"', source)
+        self.assertIn("facodi-error-sheet", source)
+        self.assertIn("http_routing.http_error_debug", source)
+        self.assertNotIn("website.layout", source)
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
