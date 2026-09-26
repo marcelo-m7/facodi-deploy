@@ -51,7 +51,7 @@ class RepositoryContractTest(unittest.TestCase):
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.0.1"', theme_manifest)
+        self.assertIn('"version": "19.0.10.1.0"', theme_manifest)
         self.assertIn('"version": "19.0.1.24.0"', learning_manifest)
 
         browser = ROOT / "tests/test_campus_paper_browser.mjs"
@@ -90,7 +90,7 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_d2_editorial_public_pages_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.0.1"', theme_manifest)
+        self.assertIn('"version": "19.0.10.1.0"', theme_manifest)
         self.assertIn('"website_blog"', theme_manifest)
 
         fixture = ROOT / "tests/ci_seed_d2_editorial_runtime.py"
@@ -121,6 +121,18 @@ class RepositoryContractTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
         self.assertIn("facodi-d2-browser-acceptance", workflow)
+
+    def test_theme_permanent_redirect_release_contract(self):
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+        manifest = (theme_root / "__manifest__.py").read_text()
+        self.assertIn('"version": "19.0.10.1.0"', manifest)
+        self.assertTrue((theme_root / "data/website_rewrites.xml").is_file())
+        self.assertTrue(
+            (
+                theme_root
+                / "migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
+            ).is_file()
+        )
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
