@@ -16,6 +16,6 @@ done
 # The gitlinks recorded by the superproject are the authoritative integration
 # pins. Avoid duplicating mutable SHAs in this shell gate; the repository
 # contract below verifies every checked-out submodule against its exact gitlink.
-python3 -m unittest tests/test_repository_contract.py tests/test_migration_contract.py -v
+python3 -m unittest tests/test_repository_contract.py tests/test_migration_contract.py tests/test_release_classifier.py -v
 bash -n docker/entrypoint.sh scripts/*.sh tests/test_coolify_runtime.sh
 bash tests/test_entrypoint.sh
