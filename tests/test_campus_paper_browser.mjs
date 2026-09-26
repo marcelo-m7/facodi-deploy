@@ -151,7 +151,7 @@ try {
         await page.locator('input[name="password"]').fill("facodi-ci-admin");
         await Promise.all([
             page.waitForURL(/\/my\/home/, { timeout: 30000 }),
-            page.locator('button[type="submit"]').click(),
+            page.locator('form.oe_login_form button[type="submit"]').click(),
         ]);
         await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
 
