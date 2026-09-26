@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `293e5351e3fc0878a780f1dfc0cf0c5f1845c253` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `1329bbf8eb6b65f7bf11f270803b0b65e8f50600` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `d27b9af6d17c1e0e13eed77f046c48ec4ec0736c` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `945463c03cf87d16a73d6f1296389234bd5d80af` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explorar`, `/explorar/areas`, `/explorar/conteudos` and the community-submission queue at `/explorar/videos`, while complete courses remain canonical in standard Odoo eLearning under `/slides`. Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -57,7 +57,7 @@ The current FACODI theme release also canonicalizes legacy editorial URLs throug
 
 The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. Academic Map and Campus Pulse enrich that standard portal with reviewed curriculum-coverage context and recent ACL-visible Odoo Forum activity. Academic Map reports FACODI content coverage only; it does not claim academic completion or equivalence.
 
-The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. FACODI extends the native portal controller/template with learner-only course and contribution context, while preserving native account/security cards and ownership rules. The learning shelf is derived from standard `slide.channel.partner` memberships and their native completion state; FACODI does not maintain a parallel progress tracker. The legacy `/minha-facodi` route is a transition alias to the standard portal.
+The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. FACODI extends the native portal controller/template with learner-only course and contribution context, while preserving native account/security cards and ownership rules. The learning shelf is derived from standard `slide.channel.partner` memberships and their native completion state; FACODI does not maintain a parallel progress tracker. Recent completed learning shown as Latest Wins comes from the learner's own standard `slide.slide.partner.completed` records, filtered back through currently visible Website content. The legacy `/minha-facodi` route is a transition alias to the standard portal.
 
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
