@@ -10,7 +10,7 @@ Business and presentation changes remain in their owning addon repositories:
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
 | `marcelo-m7/facodi-learning` | Curriculum and learning domain | `b4b9b40b1a5aa061e3f633ad5691f1409c997114` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `3bf100cfe0438d9d249f88e5d02a21e7c205a67e` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `c67a5e648fd581de51f2377a2b938c71a0a9147a` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -64,12 +64,14 @@ This is a mix of authorized production observations and checked-in runtime accep
 | Website | ID 1, `Faculdade Comunitária Digital`, domain `https://facodi.com` |
 | Languages | `en_US` default; `pt_PT`, `es_ES`, `fr_FR` available |
 | Website menus | `Explore`, `Community`, `About`; labels translated in all four languages |
-| Menu destinations | `/slides`, `/website/search`, `/contactus`, `/blog`, `/forum`, `/sobre`, `/roadmap` |
-| Public route check | `/slides`, `/blog`, `/forum`, `/contactus`, `/sobre`, and `/roadmap` returned HTTP 200 |
+| Menu destinations | Canonical destinations include `/slides`, `/website/search`, `/contactus`, `/blog`, `/forum`, `/sobre`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
+| Public route check | Canonical `/slides`, `/blog`, `/forum`, `/contactus`, `/sobre`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/sobre#how-it-works` |
 | Learning catalog | 19 active, public, published `slide.channel` training courses; 790 `slide.slide` records |
 | Catalog duplicate check | No duplicate course names or `website_url` values |
 | Curriculum reference | Validated, Website-published UAlg LESTI 2026/27 reference, programme code `1941`, with 43 source units |
 | Public Roadmaps | `/roadmaps`, `/pt/roadmaps` and Roadmap UC detail routes are acceptance-tested public surfaces; legacy `/curriculos` and `/mapa-curricular` URLs permanently redirect |
+| Legacy editorial redirects | Native Odoo `301` rewrites canonicalize `/facodi`, `/manifesto`, `/comunidade`, `/parceiros`, `/roadmap`, `/como-contribuir`, and `/contribuir`; `/roadmaps` and `/contribuir/recurso` remain canonical |
+| Footer | FACODI/Odoo footer presentation remains fixed to `#0B1325` |
 | Probability and Statistics | UC `19411018` has five published reusable modules, 53 existing course-content items and three approved coverage relations; these are reviewed mappings, not newly authored learning content or academic equivalence |
 | Blog | `website_blog` installed; `/blog` is the standard controller route |
 
