@@ -15,8 +15,15 @@ compose=(
 )
 
 cleanup() {
-  "${compose[@]}" logs --no-color >"/tmp/${project}-compose.log" 2>&1 || true
+  status=$?
+  log_path="/tmp/${project}-compose.log"
+  "${compose[@]}" logs --no-color >"$log_path" 2>&1 || true
+  if [[ "$status" -ne 0 ]]; then
+    echo "=== FACODI disposable runtime logs ===" >&2
+    cat "$log_path" >&2 || true
+  fi
   "${compose[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  return "$status"
 }
 trap cleanup EXIT
 
