@@ -275,6 +275,9 @@ for route in (
   "/es/",
   "/fr/",
   "/slides",
+  "/explorar",
+  "/explorar/areas",
+  "/explorar/conteudos",
   "/roadmaps",
   "/pt/roadmaps",
   "/contribuir/recurso",
@@ -283,6 +286,15 @@ for route in (
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
+    if route == "/explorar":
+        for marker in (b"/explorar/areas", b"/explorar/conteudos", b"/explorar/cursos"):
+          if marker not in body:
+            raise RuntimeError(f"Explore landing lost discovery entry point: {marker!r}")
+    if route == "/explorar/conteudos":
+        if b"FACODI Runtime Public Module Item" not in body:
+          raise RuntimeError("Explore content catalogue does not expose governed public learning content")
+        if b"/explorar/cursos" in body:
+          raise RuntimeError("Explore content catalogue unexpectedly duplicates course navigation")
     if route == "/roadmaps":
         curriculum_body = body
         if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
