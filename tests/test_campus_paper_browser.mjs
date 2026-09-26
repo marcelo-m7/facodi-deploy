@@ -234,7 +234,6 @@ try {
         for (const marker of [
             "Your learning shelf",
             "See where FACODI can take you next",
-            "Campus pulse",
             "Latest wins",
             "What you finished lately",
             "Your FACODI toolbox",
@@ -242,6 +241,10 @@ try {
             if (!bodyText.includes(marker)) {
                 throw new Error(`portal ${sizeName}: missing copy marker ${marker}`);
             }
+        }
+        const pulseHeading = (await page.locator('[data-facodi-campus-pulse="1"] .facodi-kicker').first().innerText()).trim();
+        if (!pulseHeading) {
+            throw new Error(`portal ${sizeName}: Campus Pulse heading rendered without accessible copy`);
         }
         if (
             !bodyText.includes("Your campus // your tabs // your pace") &&
