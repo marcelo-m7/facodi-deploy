@@ -52,6 +52,7 @@ jobs:
         env:
           FACODI_BROWSER_ACCEPTANCE: "1"
           FACODI_BROWSER_SCREENSHOT_DIR: ${{ runner.temp }}/facodi-browser
+          FACODI_D2_BROWSER_SCREENSHOT_DIR: ${{ runner.temp }}/facodi-d2-browser
         run: bash tests/test_coolify_runtime.sh
 
       - name: Upload D1 browser acceptance screenshots
@@ -60,5 +61,14 @@ jobs:
         with:
           name: facodi-browser-acceptance
           path: ${{ runner.temp }}/facodi-browser
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload D2 browser acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: facodi-d2-browser-acceptance
+          path: ${{ runner.temp }}/facodi-d2-browser
           if-no-files-found: warn
           retention-days: 7

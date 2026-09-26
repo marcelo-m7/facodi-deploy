@@ -51,7 +51,7 @@ class RepositoryContractTest(unittest.TestCase):
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.8.0.0"', theme_manifest)
+        self.assertIn('"version": "19.0.9.0.0"', theme_manifest)
         self.assertIn('"version": "19.0.1.22.0"', learning_manifest)
 
         browser = ROOT / "tests/test_campus_paper_browser.mjs"
@@ -87,6 +87,40 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("FACODI_BROWSER_ACCEPTANCE", workflow)
         self.assertIn("facodi-browser-acceptance", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
+
+    def test_d2_editorial_public_pages_browser_acceptance_contract(self):
+        theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
+        self.assertIn('"version": "19.0.9.0.0"', theme_manifest)
+        self.assertIn('"website_blog"', theme_manifest)
+
+        fixture = ROOT / "tests/ci_seed_d2_editorial_runtime.py"
+        browser = ROOT / "tests/test_d2_editorial_browser.mjs"
+        runtime_gate = ROOT / "tests/test_d2_editorial_runtime.sh"
+        for path in (fixture, browser, runtime_gate):
+            self.assertTrue(path.is_file(), str(path))
+
+        browser_source = browser.read_text()
+        for marker in (
+            "facodi-project-story",
+            "facodi-principles-ledger",
+            "facodi-contribution-board",
+            "facodi-blog-index",
+            "facodi-bulletin-card",
+            "facodi-blog-article",
+            "facodi-contact-page",
+            "facodi-contact-form-sheet",
+            "facodi-policy-document",
+            "document.documentElement.scrollWidth",
+            "window.innerWidth + 1",
+        ):
+            self.assertIn(marker, browser_source)
+
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        self.assertIn('bash tests/test_d2_editorial_runtime.sh "$project"', runtime)
+
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
+        self.assertIn("facodi-d2-browser-acceptance", workflow)
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
