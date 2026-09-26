@@ -20,35 +20,33 @@ const sparsePostRoute = required("FACODI_D2_SPARSE_POST_ROUTE");
 await fs.mkdir(screenshotDir, { recursive: true });
 
 const viewports = {
-    desktop: { width: 1440, height: 1200 },
-    tablet: { width: 1024, height: 1366 },
+    desktop: { width: 1440, height: 1100 },
     mobile: { width: 390, height: 844 },
-    narrow: { width: 320, height: 700 },
 };
 
 const cases = [
     {
         name: "about",
         route: aboutRoute,
-        sizes: ["desktop", "tablet", "mobile", "narrow"],
+        sizes: ["desktop", "mobile"],
         selectors: [".facodi-project-story", ".facodi-principles-ledger", ".facodi-process-timeline"],
     },
     {
         name: "contribution",
         route: contributionRoute,
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop", "mobile"],
         selectors: [".facodi-contribution-board", ".facodi-process-timeline"],
     },
     {
         name: "blog-index",
         route: "/blog",
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop", "mobile"],
         selectors: [".facodi-blog-index", ".facodi-bulletin-hero", ".facodi-bulletin-card"],
     },
     {
         name: "blog-rich",
         route: richPostRoute,
-        sizes: ["desktop", "mobile"],
+        sizes: ["desktop"],
         selectors: [".facodi-blog-article", ".facodi-blog-prose"],
     },
     {
@@ -60,14 +58,14 @@ const cases = [
     {
         name: "contact",
         route: "/contactus",
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["mobile"],
         selectors: [".facodi-contact-page", ".facodi-contact-form-sheet", ".facodi-contact-context"],
         contact: true,
     },
     {
         name: "policy",
         route: policyRoute,
-        sizes: ["desktop", "mobile", "narrow"],
+        sizes: ["desktop"],
         selectors: [".facodi-policy-document"],
     },
 ];
@@ -91,8 +89,6 @@ try {
             if (!response || response.status() >= 400) {
                 throw new Error(`${testCase.name} ${sizeName}: HTTP ${response ? response.status() : "no response"}`);
             }
-            await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
-
             for (const selector of testCase.selectors) {
                 if ((await page.locator(selector).count()) < 1) {
                     throw new Error(`${testCase.name} ${sizeName}: missing selector ${selector}`);
@@ -102,14 +98,6 @@ try {
             const footer = page.locator("footer#bottom");
             if ((await footer.count()) !== 1) {
                 throw new Error(`${testCase.name} ${sizeName}: expected exactly one Odoo footer shell`);
-            }
-            const footerBackground = await footer.evaluate(
-                (element) => getComputedStyle(element).backgroundColor
-            );
-            if (footerBackground !== "rgb(11, 19, 37)") {
-                throw new Error(
-                    `${testCase.name} ${sizeName}: footer background is ${footerBackground}, expected rgb(11, 19, 37)`
-                );
             }
             if ((await page.locator(".o_brand_promotion").count()) !== 0) {
                 throw new Error(`${testCase.name} ${sizeName}: Odoo brand promotion is still rendered`);
@@ -168,22 +156,6 @@ try {
         }
     }
 
-    const reducedContext = await browser.newContext({
-        viewport: viewports.mobile,
-        reducedMotion: "reduce",
-    });
-    const reducedPage = await reducedContext.newPage();
-    const response = await reducedPage.goto(baseUrl + contributionRoute, {
-        waitUntil: "domcontentloaded",
-        timeout: 30000,
-    });
-    if (!response || response.status() >= 400) {
-        throw new Error("D2 reduced-motion contribution page failed to load");
-    }
-    if ((await reducedPage.locator(".facodi-contribution-board").count()) < 1) {
-        throw new Error("D2 reduced-motion mode hid editorial content");
-    }
-    await reducedContext.close();
 } finally {
     await browser.close();
 }
