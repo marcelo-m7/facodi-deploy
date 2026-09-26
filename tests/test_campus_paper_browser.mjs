@@ -185,7 +185,7 @@ try {
         await page.locator('input[name="password"]').fill("facodi-ci-admin");
         await Promise.all([
             page.waitForURL(/\/my\/home/, { timeout: 30000 }),
-            page.locator('button[type="submit"]').click(),
+            page.getByRole("button", { name: "Log in" }).click(),
         ]);
         await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
 
