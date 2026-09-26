@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c84521b873d4177817d07bef3f40e79e04c6bf53` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `945463c03cf87d16a73d6f1296389234bd5d80af` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `e61b7fd01b8856a4612ade78b174e96a7a4d462d` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `bdc92c2bc95b2b6bf7fc38a59bcc742ecfd2bf9d` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -38,7 +38,7 @@ The runtime requests these modules through `FACODI_MODULES`:
 
 ### Minha FACODI portal
 
-The authenticated learner home is standard Odoo Portal at `/my/home`, extended by `facodi_learning` through `CustomerPortal._prepare_home_portal_values()` and by `theme_facodi` through a scoped Digital Highlighter Campus presentation layer. Native portal authentication, account/security cards, sidebar identity, and module-owned portal entries remain authoritative. FACODI adds only learner-specific course/contribution projections for the signed-in user. Course membership and completion come directly from standard `slide.channel.partner`; no parallel learner-progress model is introduced. The legacy `/minha-facodi` URL redirects to `/my/home`.
+The authenticated learner home is standard Odoo Portal at `/my/home`, extended by `facodi_learning` through `CustomerPortal._prepare_home_portal_values()` and by `theme_facodi` through a scoped Digital Highlighter Campus presentation layer. Native portal authentication, account/security cards, sidebar identity, and module-owned portal entries remain authoritative. FACODI adds only learner-specific course/contribution projections for the signed-in user. Course membership and completion come directly from standard `slide.channel.partner`; no parallel learner-progress model is introduced. The legacy `/minha-facodi` URL permanently redirects with `301` to `/my/home`.
 
 Academic Map is a reviewed public curriculum projection inside `/my/home`: covered/partial/gap come from approved FACODI coverage, while “ON YOUR DESK” only means an enrolled course participates in that reviewed coverage. It is not a transcript, completion record or equivalence claim. Campus Pulse reads active top-level `forum.post` records through the requesting user's normal ACLs and website scope; `website_forum` remains the canonical discussion model.
 
