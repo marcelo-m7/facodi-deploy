@@ -52,7 +52,15 @@ class RepositoryContractTest(unittest.TestCase):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
         self.assertIn('"version": "19.0.10.13.0"', theme_manifest)
-        self.assertIn('"version": "19.0.1.41.0"', learning_manifest)
+        self.assertIn('"version": "19.0.1.43.0"', learning_manifest)
+
+        portal_controller = (
+            ROOT / "addons/facodi-learning/facodi_learning/controllers/portal.py"
+        ).read_text()
+        self.assertIn(
+            'return request.redirect("/my/home", code=301)',
+            portal_controller,
+        )
 
         browser = ROOT / "tests/test_campus_paper_browser.mjs"
         self.assertTrue(browser.is_file(), str(browser))
@@ -72,6 +80,9 @@ class RepositoryContractTest(unittest.TestCase):
             "facodi-academic-map__unit",
             "facodi-campus-pulse__post",
             "Your FACODI toolbox",
+            "permanent 301",
+            "maxRedirects: 0",
+            "\"/minha-facodi\"",
             "document.documentElement.scrollWidth",
             "window.innerWidth + 1",
         ):
