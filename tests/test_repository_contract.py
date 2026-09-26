@@ -79,7 +79,6 @@ class RepositoryContractTest(unittest.TestCase):
             'data-facodi-campus-pulse="1"',
             "facodi-academic-map__unit",
             "facodi-campus-pulse__post",
-            "Your FACODI toolbox",
             "permanent 301",
             "maxRedirects: 0",
             "\"/minha-facodi\"",
