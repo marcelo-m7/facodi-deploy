@@ -85,6 +85,24 @@ if "forum_id" not in env["slide.channel"]._fields:
 print("FACODI_COMMUNITY_MODULES=website_forum,website_slides_forum")
 print("FACODI_COMMUNITY_BRIDGE=slide.channel.forum_id")
 
+runtime_forum = env["forum.forum"].sudo().create(
+  {
+    "name": "FACODI Runtime Community",
+    "website_id": website.id,
+    "privacy": "public",
+    "mode": "discussions",
+  }
+)
+env["forum.post"].sudo().create(
+  {
+    "name": "FACODI Runtime Campus Pulse Post",
+    "forum_id": runtime_forum.id,
+    "content": "<p>Disposable browser-acceptance discussion.</p>",
+    "state": "active",
+  }
+)
+print("FACODI_RUNTIME_FORUM_POST=FACODI Runtime Campus Pulse Post")
+
 curriculum = env["facodi.learning.curriculum.reference"].search(
     [
         ("provider", "=", "ualg"),
