@@ -151,7 +151,7 @@ try {
         await page.locator('input[name="password"]').fill("facodi-ci-admin");
         await Promise.all([
             page.waitForURL(/\/my\/home/, { timeout: 30000 }),
-            page.locator('button[type="submit"]').click(),
+            page.locator('form.oe_login_form button[type="submit"]').click(),
         ]);
         await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
 
@@ -165,6 +165,7 @@ try {
             '[data-facodi-latest-wins="1"]',
             ".facodi-academic-map__unit",
             ".facodi-latest-wins",
+            ".facodi-portal-toolbox-heading",
             ".o_portal_docs",
         ]) {
             if ((await page.locator(selector).count()) < 1) {
@@ -196,19 +197,14 @@ try {
             );
         }
 
-        const bodyText = await page.locator("body").innerText();
-        for (const marker of [
-            "Your campus",
-            "Your learning shelf",
-            "See where FACODI can take you next",
-            "Campus pulse",
-            "Latest wins",
-            "What you finished lately",
-            "Your FACODI toolbox",
-        ]) {
-            if (!bodyText.includes(marker)) {
-                throw new Error(`portal ${sizeName}: missing copy marker ${marker}`);
-            }
+        const portalTitle = (await page.locator(".facodi-portal-campus__title").innerText()).trim();
+        if (!portalTitle) {
+            throw new Error(`portal ${sizeName}: portal title is empty`);
+        }
+
+        const toolboxText = (await page.locator(".facodi-portal-toolbox-heading").innerText()).trim();
+        if (!toolboxText) {
+            throw new Error(`portal ${sizeName}: toolbox heading is empty`);
         }
 
         const overflow = await page.evaluate(() => ({

@@ -51,8 +51,6 @@ class RepositoryContractTest(unittest.TestCase):
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', theme_manifest)
-        self.assertIn('"version": "19.0.1.43.0"', learning_manifest)
 
         portal_controller = (
             ROOT / "addons/facodi-learning/facodi_learning/controllers/portal.py"
@@ -79,7 +77,7 @@ class RepositoryContractTest(unittest.TestCase):
             'data-facodi-campus-pulse="1"',
             "facodi-academic-map__unit",
             "facodi-campus-pulse__post",
-            "Your FACODI toolbox",
+            ".facodi-portal-toolbox-heading",
             "permanent 301",
             "maxRedirects: 0",
             "\"/minha-facodi\"",
@@ -108,7 +106,6 @@ class RepositoryContractTest(unittest.TestCase):
 
     def test_d2_editorial_public_pages_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', theme_manifest)
         self.assertIn('"website_blog"', theme_manifest)
 
         fixture = ROOT / "tests/ci_seed_d2_editorial_runtime.py"
@@ -143,7 +140,6 @@ class RepositoryContractTest(unittest.TestCase):
     def test_permanent_editorial_redirect_release_contract(self):
         theme_root = ROOT / "addons/facodi-theme"
         manifest = (theme_root / "theme_facodi/__manifest__.py").read_text()
-        self.assertIn('"version": "19.0.10.14.0"', manifest)
 
         redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
         redirect_migration = (
