@@ -122,17 +122,40 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
         self.assertIn("facodi-d2-browser-acceptance", workflow)
 
-    def test_theme_permanent_redirect_release_contract(self):
-        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
-        manifest = (theme_root / "__manifest__.py").read_text()
+    def test_permanent_editorial_redirect_release_contract(self):
+        theme_root = ROOT / "addons/facodi-theme"
+        manifest = (theme_root / "theme_facodi/__manifest__.py").read_text()
         self.assertIn('"version": "19.0.10.1.0"', manifest)
-        self.assertTrue((theme_root / "data/website_rewrites.xml").is_file())
-        self.assertTrue(
-            (
-                theme_root
-                / "migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
-            ).is_file()
+
+        redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
+        redirect_migration = (
+            theme_root
+            / "theme_facodi/migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
         )
+        self.assertTrue(redirect_data.is_file(), str(redirect_data))
+        self.assertTrue(redirect_migration.is_file(), str(redirect_migration))
+
+        source = redirect_data.read_text()
+        for old, new in (
+            ("/facodi", "/"),
+            ("/manifesto", "/sobre"),
+            ("/comunidade", "/sobre"),
+            ("/parceiros", "/sobre"),
+            ("/roadmap", "/sobre#how-it-works"),
+            ("/como-contribuir", "/contribuir/recurso"),
+            ("/contribuir", "/contribuir/recurso"),
+        ):
+            self.assertIn(f"<field name=\"url_from\">{old}</field>", source)
+            self.assertIn(f"<field name=\"url_to\">{new}</field>", source)
+        self.assertEqual(source.count('<field name="redirect_type">301</field>'), 7)
+        self.assertNotIn('<field name="url_from">/roadmaps</field>', source)
+        self.assertNotIn('<field name="url_from">/contribuir/recurso</field>', source)
+
+        website_scss = (
+            theme_root / "theme_facodi/static/src/scss/website.scss"
+        ).read_text()
+        self.assertIn("background-color: #0B1325 !important", website_scss)
+        self.assertIn("background: #0B1325", website_scss)
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
