@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import configparser
 import subprocess
@@ -121,6 +122,63 @@ class RepositoryContractTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         self.assertIn("FACODI_D2_BROWSER_SCREENSHOT_DIR", workflow)
         self.assertIn("facodi-d2-browser-acceptance", workflow)
+
+    def test_canonical_redirect_map_is_permanent_and_loop_free(self):
+        redirect_file = ROOT / "config/canonical_redirects.json"
+        self.assertTrue(redirect_file.is_file(), str(redirect_file))
+        payload = json.loads(redirect_file.read_text())
+
+        self.assertEqual(payload["redirect_type"], "301")
+        self.assertEqual(
+            payload["canonical_routes"]["courses"],
+            "/slides",
+        )
+        self.assertEqual(
+            payload["canonical_routes"]["roadmaps"],
+            "/roadmaps",
+        )
+        self.assertEqual(
+            payload["canonical_routes"]["curricular_units"],
+            "/unidades-curriculares",
+        )
+        self.assertEqual(
+            payload["canonical_routes"]["contact"],
+            "/contactus",
+        )
+
+        redirects = (
+            payload["phase_1_safe_aliases"]
+            + payload["phase_2_editorial_consolidation"]
+        )
+        sources = [entry["from"] for entry in redirects]
+        self.assertEqual(len(sources), len(set(sources)), "redirect sources must be unique")
+
+        for entry in redirects:
+            self.assertTrue(entry["from"].startswith("/"))
+            self.assertTrue(entry["to"].startswith("/"))
+            self.assertNotEqual(
+                entry["from"].split("#", 1)[0],
+                entry["to"].split("#", 1)[0],
+                entry,
+            )
+            self.assertTrue(entry["reason"].strip())
+
+        mapping = {entry["from"]: entry["to"].split("#", 1)[0] for entry in redirects}
+        for source in mapping:
+            seen = set()
+            current = source
+            while current in mapping:
+                self.assertNotIn(current, seen, f"redirect loop starting at {source}")
+                seen.add(current)
+                current = mapping[current]
+
+        protected = {"/slides", "/roadmaps", "/unidades-curriculares"}
+        self.assertTrue(protected.isdisjoint(sources))
+
+        operations = (ROOT / "docs/operations/canonical-url-map.md").read_text()
+        self.assertIn("301 Moved Permanently", operations)
+        self.assertIn("footer remains `#0B1325`", operations)
+        self.assertIn("website.rewrite", operations)
 
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
