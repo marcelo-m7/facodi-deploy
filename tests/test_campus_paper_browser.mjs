@@ -172,6 +172,14 @@ try {
             }
         }
 
+        const pulsePosts = page.locator(".facodi-campus-pulse__post");
+        if ((await pulsePosts.count()) > 0) {
+            const pulseText = (await pulsePosts.first().innerText()).trim();
+            if (!pulseText) {
+                throw new Error(`portal ${sizeName}: Campus Pulse post rendered without content`);
+            }
+        }
+
         const bodyText = await page.locator("body").innerText();
         for (const marker of [
             "Your campus",
