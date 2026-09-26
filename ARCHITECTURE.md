@@ -9,7 +9,7 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `3d88fe71f519738f320dad866680440746002e49` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `b4b9b40b1a5aa061e3f633ad5691f1409c997114` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `c1cdba1e6ec7f7263964015e05c7afd75082f630` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
@@ -79,7 +79,7 @@ Curriculum audit models remain private. Public projection may elevate only enoug
 
 Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
 
-Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
+Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. Valid YouTube submissions are projected to `/explorar/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
 
 ## Historical Notes
 
