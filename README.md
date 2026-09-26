@@ -53,6 +53,8 @@ The FACODI learning pin provides the public official-curriculum golden path and 
 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
 
+The current FACODI theme release also canonicalizes legacy editorial URLs through native Odoo permanent `301` rewrites: `/facodi → /`, `/manifesto → /sobre`, `/comunidade → /sobre`, `/parceiros → /sobre`, `/roadmap → /sobre#how-it-works`, and legacy contribution URLs to `/contribuir/recurso`. The canonical curriculum route `/roadmaps` is never redirected. The footer remains locked to `#0B1325`.
+
 The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
 Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.

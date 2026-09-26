@@ -289,6 +289,13 @@ for legacy_route, canonical_route in (
   ("/mapa-curricular", "/roadmaps"),
   ("/curriculos/1", "/roadmaps/1"),
   ("/curriculos/1/unidades/19411017", "/roadmaps/1/units/19411017"),
+  ("/facodi", "/"),
+  ("/manifesto", "/sobre"),
+  ("/comunidade", "/sobre"),
+  ("/parceiros", "/sobre"),
+  ("/roadmap", "/sobre#how-it-works"),
+  ("/como-contribuir", "/contribuir/recurso"),
+  ("/contribuir", "/contribuir/recurso"),
 ):
   try:
     no_redirect.open(base + legacy_route, timeout=15)
