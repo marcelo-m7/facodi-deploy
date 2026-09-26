@@ -33,6 +33,14 @@ The runtime requests these modules through `FACODI_MODULES`:
 - `theme_facodi`
 - `facodi_ai`
 - `facodi_ai_website`
+- `website_forum`
+- `website_slides_forum`
+
+### Standard community foundation
+
+FACODI uses Odoo 19's standard Forum as the canonical community and reputation layer. `website_forum` owns forums, posts, tags, karma, ranks, badges, moderation and the public `/forum` controller. `website_slides_forum` owns the native course/community bridge through `slide.channel.forum_id` and standard eLearning profile integration.
+
+The deployment does not create a parallel community model and does not seed fictional discussions, users, reputation or one forum per course. FACODI-owned addons may add educational context or Campus Paper presentation around these standard records, but the standard Odoo records and access rules remain authoritative.
 
 The image also makes the pinned addon sources available. Retired Monodoo/Monynha modules are explicitly uninstalled by the migration and are not part of the installation contract.
 
