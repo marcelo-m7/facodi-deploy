@@ -169,6 +169,15 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("background-color: #0B1325 !important", website_scss)
         self.assertIn("background: #0B1325", website_scss)
 
+    def test_facodi_500_surface_is_fail_safe(self):
+        error_view = ROOT / "addons/facodi-theme/theme_facodi/views/http_error.xml"
+        self.assertTrue(error_view.is_file(), str(error_view))
+        source = error_view.read_text()
+        self.assertIn('inherit_id="http_routing.500"', source)
+        self.assertIn("facodi-error-sheet", source)
+        self.assertIn("http_routing.http_error_debug", source)
+        self.assertNotIn("website.layout", source)
+
     def test_dockerfile_bakes_only_required_odoo_modules(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
         self.assertIn("FROM odoo:19.0", dockerfile)
