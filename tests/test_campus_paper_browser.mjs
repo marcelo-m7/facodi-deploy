@@ -139,6 +139,64 @@ try {
         }
     }
 
+    for (const sizeName of ["desktop", "mobile"]) {
+        const viewport = viewports[sizeName];
+        const context = await browser.newContext({ viewport });
+        const page = await context.newPage();
+        await page.goto(baseUrl + "/web/login?redirect=/my/home", {
+            waitUntil: "domcontentloaded",
+            timeout: 30000,
+        });
+        await page.locator('input[name="login"]').fill("admin");
+        await page.locator('input[name="password"]').fill("facodi-ci-admin");
+        await Promise.all([
+            page.waitForURL(/\/my\/home/, { timeout: 30000 }),
+            page.locator('button[type="submit"]').click(),
+        ]);
+        await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+
+        for (const selector of [
+            '[data-facodi-portal-home="1"]',
+            '[data-facodi-campus-card="1"]',
+            ".facodi-momentum-strip",
+            ".facodi-portal-board",
+            ".o_portal_docs",
+        ]) {
+            if ((await page.locator(selector).count()) < 1) {
+                throw new Error(`portal ${sizeName}: missing selector ${selector}`);
+            }
+        }
+
+        const bodyText = await page.locator("body").innerText();
+        for (const marker of [
+            "Your campus",
+            "Your learning shelf",
+            "Your FACODI toolbox",
+        ]) {
+            if (!bodyText.includes(marker)) {
+                throw new Error(`portal ${sizeName}: missing copy marker ${marker}`);
+            }
+        }
+
+        const overflow = await page.evaluate(() => ({
+            scrollWidth: document.documentElement.scrollWidth,
+            viewportWidth: window.innerWidth,
+            overflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+        }));
+        if (overflow.overflow) {
+            throw new Error(
+                `portal ${sizeName}: page-level horizontal overflow ${overflow.scrollWidth}px > ${overflow.viewportWidth}px`
+            );
+        }
+
+        await page.screenshot({
+            path: path.join(screenshotDir, `portal-home-${sizeName}.png`),
+            fullPage: true,
+        });
+        console.log(`PASS portal-home ${sizeName} ${viewport.width}x${viewport.height}`);
+        await context.close();
+    }
+
     const reducedContext = await browser.newContext({
         viewport: viewports.mobile,
         reducedMotion: "reduce",
