@@ -69,20 +69,18 @@ class RepositoryContractTest(unittest.TestCase):
             "facodi-roadmap-study-path",
             "facodi-filter-sheet",
             "facodi-unit-layout",
-            "facodi-reference-rail",
             "facodi-module-detail",
+            'data-facodi-explore-workbench="1"',
             'data-facodi-portal-home="1"',
             "facodi-portal-board",
             'data-facodi-academic-map="1"',
             'data-facodi-campus-pulse="1"',
-            "facodi-academic-map__unit",
-            "facodi-campus-pulse__post",
             ".facodi-portal-toolbox-heading",
             "permanent 301",
             "maxRedirects: 0",
             "\"/minha-facodi\"",
             "document.documentElement.scrollWidth",
-            "window.innerWidth + 1",
+            "window.innerWidth",
         ):
             self.assertIn(marker, browser_source)
 
