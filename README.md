@@ -45,11 +45,11 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `f0bd7adeeaf207fc50378f7329565cad5e79a3a9` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `3d88fe71f519738f320dad866680440746002e49` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `c1cdba1e6ec7f7263964015e05c7afd75082f630` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
-The FACODI learning pin provides the public official-curriculum golden path: UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility.
+The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explorar`, `/explorar/areas` and `/explorar/conteudos`, while complete courses remain canonical in standard Odoo eLearning under `/slides`.
 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
 
