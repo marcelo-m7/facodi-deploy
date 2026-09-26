@@ -123,7 +123,10 @@ After `odoo` is healthy, verify at minimum:
 /es/
 /fr/
 /slides
+/forum
 ```
+
+The community acceptance also requires `website_forum` and `website_slides_forum` to be installed, the standard `forum.forum` and `forum.post` models to be available, and `slide.channel.forum_id` to exist. These checks validate the native Odoo Forum/eLearning bridge without creating synthetic production-like community activity.
 
 For the backend, authenticate as an internal user and verify that `/odoo` renders the standard Odoo navigation and applications.
 
