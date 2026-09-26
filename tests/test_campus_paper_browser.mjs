@@ -172,6 +172,30 @@ try {
             }
         }
 
+        const pulsePosts = page.locator(".facodi-campus-pulse__post");
+        if ((await pulsePosts.count()) > 0) {
+            const pulseText = (await pulsePosts.first().innerText()).trim();
+            if (!pulseText) {
+                throw new Error(`portal ${sizeName}: Campus Pulse post rendered without content`);
+            }
+        }
+
+        const legacyPortalResponse = await context.request.get(
+            baseUrl + "/minha-facodi",
+            { maxRedirects: 0 }
+        );
+        if (legacyPortalResponse.status() !== 301) {
+            throw new Error(
+                `portal ${sizeName}: /minha-facodi must return permanent 301, got ${legacyPortalResponse.status()}`
+            );
+        }
+        const legacyLocation = legacyPortalResponse.headers()["location"] || "";
+        if (!legacyLocation.endsWith("/my/home")) {
+            throw new Error(
+                `portal ${sizeName}: /minha-facodi Location must end in /my/home, got ${legacyLocation}`
+            );
+        }
+
         const bodyText = await page.locator("body").innerText();
         for (const marker of [
             "Your campus",
