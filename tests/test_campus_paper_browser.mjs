@@ -48,8 +48,8 @@ const publicCases = [
         sizes: ["desktop", "mobile"],
     },
     {
-        name: "explore",
-        route: "/explorar",
+        name: "explore-content",
+        route: "/explorar/conteudos",
         selectors: ['[data-facodi-explore-workbench="1"]'],
         sizes: ["desktop", "mobile"],
     },
