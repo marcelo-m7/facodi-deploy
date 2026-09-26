@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `b3e2a2eb04a4749c7eb75ddbf5480af6428c5603` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `293e5351e3fc0878a780f1dfc0cf0c5f1845c253` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `1329bbf8eb6b65f7bf11f270803b0b65e8f50600` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -54,6 +54,8 @@ The FACODI learning pin provides the public official-curriculum golden path and 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
 
 The current FACODI theme release also canonicalizes legacy editorial URLs through native Odoo permanent `301` rewrites: `/facodi → /`, `/manifesto → /sobre`, `/comunidade → /sobre`, `/parceiros → /sobre`, `/roadmap → /sobre#how-it-works`, and legacy contribution URLs to `/contribuir/recurso`. The canonical curriculum route `/roadmaps` is never redirected. The footer remains locked to `#0B1325`.
+
+The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. Academic Map and Campus Pulse enrich that standard portal with reviewed curriculum-coverage context and recent ACL-visible Odoo Forum activity. Academic Map reports FACODI content coverage only; it does not claim academic completion or equivalence.
 
 The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. FACODI extends the native portal controller/template with learner-only course and contribution context, while preserving native account/security cards and ownership rules. The learning shelf is derived from standard `slide.channel.partner` memberships and their native completion state; FACODI does not maintain a parallel progress tracker. The legacy `/minha-facodi` route is a transition alias to the standard portal.
 
