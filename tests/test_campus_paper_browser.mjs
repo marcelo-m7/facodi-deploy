@@ -160,6 +160,9 @@ try {
             '[data-facodi-campus-card="1"]',
             ".facodi-momentum-strip",
             ".facodi-portal-board",
+            '[data-facodi-academic-map="1"]',
+            '[data-facodi-campus-pulse="1"]',
+            ".facodi-academic-map__unit",
             ".o_portal_docs",
         ]) {
             if ((await page.locator(selector).count()) < 1) {
@@ -171,6 +174,8 @@ try {
         for (const marker of [
             "Your campus",
             "Your learning shelf",
+            "See where FACODI can take you next",
+            "Campus pulse",
             "Your FACODI toolbox",
         ]) {
             if (!bodyText.includes(marker)) {
