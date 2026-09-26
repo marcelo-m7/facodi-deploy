@@ -52,7 +52,7 @@ class RepositoryContractTest(unittest.TestCase):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
         self.assertIn('"version": "19.0.10.14.0"', theme_manifest)
-        self.assertIn('"version": "19.0.1.43.0"', learning_manifest)
+        self.assertIn('"version": "19.0.1.45.0"', learning_manifest)
 
         portal_controller = (
             ROOT / "addons/facodi-learning/facodi_learning/controllers/portal.py"
