@@ -63,6 +63,21 @@ if not website:
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
+community_modules = env["ir.module.module"].search([
+    ("name", "in", ["website_forum", "website_slides_forum"]),
+])
+community_states = {module.name: module.state for module in community_modules}
+for module_name in ("website_forum", "website_slides_forum"):
+    if community_states.get(module_name) != "installed":
+        raise RuntimeError(f"{module_name} is not installed: {community_states.get(module_name)!r}")
+for model_name in ("forum.forum", "forum.post"):
+    if model_name not in env:
+        raise RuntimeError(f"Standard Odoo community model {model_name} is missing")
+if "forum_id" not in env["slide.channel"]._fields:
+    raise RuntimeError("website_slides_forum did not expose slide.channel.forum_id")
+print("FACODI_COMMUNITY_MODULES=website_forum,website_slides_forum")
+print("FACODI_COMMUNITY_BRIDGE=slide.channel.forum_id")
+
 curriculum = env["facodi.learning.curriculum.reference"].search(
     [
         ("provider", "=", "ualg"),
