@@ -232,7 +232,6 @@ try {
 
         const bodyText = await page.locator("body").innerText();
         for (const marker of [
-            "Your campus",
             "Your learning shelf",
             "See where FACODI can take you next",
             "Campus pulse",
@@ -243,6 +242,14 @@ try {
             if (!bodyText.includes(marker)) {
                 throw new Error(`portal ${sizeName}: missing copy marker ${marker}`);
             }
+        }
+        if (
+            !bodyText.includes("Your campus // your tabs // your pace") &&
+            !bodyText.includes("MINHA FACODI")
+        ) {
+            throw new Error(
+                `portal ${sizeName}: missing portal campus identity copy`
+            );
         }
 
         const overflow = await page.evaluate(() => ({
