@@ -123,10 +123,20 @@ try {
 
             const clippedInteractive = await page.evaluate(() => {
                 const viewportWidth = window.innerWidth;
+                const insideIntentionalHorizontalScroller = (el) => {
+                    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+                        const style = getComputedStyle(parent);
+                        const scrollable = ["auto", "scroll"].includes(style.overflowX)
+                            && parent.scrollWidth > parent.clientWidth + 1;
+                        if (scrollable) return true;
+                    }
+                    return false;
+                };
                 return [...document.querySelectorAll("a, button, input, select, textarea")]
                     .filter((el) => {
                         const style = getComputedStyle(el);
                         if (style.display === "none" || style.visibility === "hidden") return false;
+                        if (insideIntentionalHorizontalScroller(el)) return false;
                         const rect = el.getBoundingClientRect();
                         return rect.width > 0 && (rect.left < -1 || rect.right > viewportWidth + 1);
                     })
