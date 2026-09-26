@@ -65,6 +65,9 @@ class RepositoryContractTest(unittest.TestCase):
             "facodi-unit-layout",
             "facodi-reference-rail",
             "facodi-module-detail",
+            'data-facodi-portal-home="1"',
+            "facodi-portal-board",
+            "Your FACODI toolbox",
             "document.documentElement.scrollWidth",
             "window.innerWidth + 1",
         ):
