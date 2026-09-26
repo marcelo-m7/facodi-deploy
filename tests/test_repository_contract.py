@@ -130,7 +130,7 @@ class RepositoryContractTest(unittest.TestCase):
         redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
         redirect_migration = (
             theme_root
-            / "theme_facodi/migrations/19.0.10.7.0/post-10-permanent-editorial-redirects.py"
+            / "theme_facodi/migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
         )
         self.assertTrue(redirect_data.is_file(), str(redirect_data))
         self.assertTrue(redirect_migration.is_file(), str(redirect_migration))
