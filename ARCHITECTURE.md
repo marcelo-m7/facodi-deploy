@@ -9,7 +9,7 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `a092dfeb3c73ecbd7e0f199d8afbfbabe07e485c` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c84521b873d4177817d07bef3f40e79e04c6bf53` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `945463c03cf87d16a73d6f1296389234bd5d80af` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
@@ -104,3 +104,6 @@ Historical audit material is retained under `audit/`. It describes observations 
 ## Validation Boundary
 
 Run `git submodule update --init --recursive` before validation. The repository contract checks source paths, manifests, and that each checked-out submodule exactly matches the superproject gitlink. Runtime changes additionally require Compose configuration validation and the disposable Coolify acceptance test documented in [README.md](README.md).
+### FACODI multi-website navigation isolation
+
+FACODI discovery navigation is reconciled against the website-specific root for `facodi.com`. The learning addon must not declare generic `website.menu` records that can leak into other websites in the same Odoo database. Explore owns Courses, Areas, Learning resources, Community videos, Roadmaps and Curricular units; legacy Learn is removed only when it contains no custom routes.
