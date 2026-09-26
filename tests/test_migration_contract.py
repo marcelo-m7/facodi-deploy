@@ -91,7 +91,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmuk_web_theme\nonlyoffice_odoo\ntheme_facodi",
+                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmuk_web_theme\nonlyoffice_odoo\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
             ),
             mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "run_module_operation") as operation,
