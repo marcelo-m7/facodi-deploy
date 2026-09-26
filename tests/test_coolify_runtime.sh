@@ -321,7 +321,13 @@ for route in (
   "/es/",
   "/fr/",
   "/slides",
+  "/pt/slides",
+  "/es/slides",
+  "/fr/slides",
   "/explorar",
+  "/pt/explorar",
+  "/es/explorar",
+  "/fr/explorar",
   "/explorar/areas",
   "/explorar/conteudos",
   "/explorar/videos",
@@ -333,6 +339,46 @@ for route in (
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
+    localized_expectations = {
+      "/pt/slides": (b"Aprendizagem", b"Unidades Curriculares", b"Explorar conte"),
+      "/es/slides": (b"Aprendizaje", b"Unidades Curriculares", b"Explorar contenidos"),
+      "/fr/slides": (b"Apprentissage", b"Unit", b"Explorer les contenus"),
+      "/pt/explorar": (b"Explorar aprendizagem aberta", b"Recursos de aprendizagem", b"V"),
+      "/es/explorar": (b"Explorar aprendizaje abierto", b"Recursos de aprendizaje", b"V"),
+      "/fr/explorar": (b"Explorer l", b"Ressources d", b"V"),
+    }
+    if route in localized_expectations:
+      for marker in localized_expectations[route]:
+        if marker not in body:
+          raise RuntimeError(
+            f"{route} lost expected localized public learning copy: {marker!r}"
+          )
+
+    if route in ("/", "/pt/", "/es/", "/fr/"):
+      canonical = re.search(
+        rb'<link\b[^>]*\brel=["\']canonical["\'][^>]*\bhref=["\']([^"\']+)["\']',
+        body,
+        flags=re.IGNORECASE,
+      )
+      if not canonical:
+        raise RuntimeError(f"{route} has no canonical link")
+      canonical_href = canonical.group(1).decode("utf-8").rstrip("/")
+      expected_path = route.rstrip("/")
+      expected_canonical = "http://127.0.0.1:8069" + expected_path
+      if canonical_href != expected_canonical:
+        raise RuntimeError(
+          f"{route} canonical mismatch: {canonical_href!r} != {expected_canonical!r}"
+        )
+      alternates = re.findall(
+        rb'<link\b[^>]*\brel=["\']alternate["\'][^>]*\bhreflang=["\']([^"\']+)["\']',
+        body,
+        flags=re.IGNORECASE,
+      )
+      alternate_langs = {value.decode("utf-8") for value in alternates}
+      for lang in ("en", "pt", "es", "fr"):
+        if lang not in alternate_langs:
+          raise RuntimeError(f"{route} is missing hreflang alternate {lang!r}")
+
     if route == "/explorar":
         for marker in (b"/explorar/areas", b"/explorar/conteudos", b"/explorar/videos", b"/explorar/cursos"):
           if marker not in body:
