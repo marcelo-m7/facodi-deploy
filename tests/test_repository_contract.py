@@ -14,7 +14,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "vendor/odoo-design-themes",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -168,6 +168,10 @@ class RepositoryContractTest(unittest.TestCase):
                 compose.count(f"{variable}: ${{{variable}:-}}"),
                 2,
             )
+
+    def test_standard_forum_modules_are_explicit_runtime_capabilities(self):
+        self.assertIn("website_forum", FACODI_MODULES.split(","))
+        self.assertIn("website_slides_forum", FACODI_MODULES.split(","))
 
     def test_removed_addon_sources_are_not_present_in_runtime_contract(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
