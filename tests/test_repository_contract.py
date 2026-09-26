@@ -128,9 +128,14 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn('"version": "19.0.10.3.0"', manifest)
 
         redirect_data = theme_root / "theme_facodi/data/website_rewrites.xml"
+        # The redirect migration was introduced in 19.0.10.1.0 and remains
+        # authoritative for later theme releases. Odoo runs all migration
+        # directories between the installed and target versions, so advancing
+        # the theme version must not require duplicating an already-shipped
+        # migration under every subsequent release.
         redirect_migration = (
             theme_root
-            / "theme_facodi/migrations/19.0.10.3.0/post-10-permanent-editorial-redirects.py"
+            / "theme_facodi/migrations/19.0.10.1.0/post-10-permanent-editorial-redirects.py"
         )
         self.assertTrue(redirect_data.is_file(), str(redirect_data))
         self.assertTrue(redirect_migration.is_file(), str(redirect_migration))
