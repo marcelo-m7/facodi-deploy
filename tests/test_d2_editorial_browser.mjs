@@ -99,6 +99,25 @@ try {
                 }
             }
 
+            const footer = page.locator("footer#bottom");
+            if ((await footer.count()) !== 1) {
+                throw new Error(`${testCase.name} ${sizeName}: expected exactly one Odoo footer shell`);
+            }
+            const footerBackground = await footer.evaluate(
+                (element) => getComputedStyle(element).backgroundColor
+            );
+            if (footerBackground !== "rgb(11, 19, 37)") {
+                throw new Error(
+                    `${testCase.name} ${sizeName}: footer background is ${footerBackground}, expected rgb(11, 19, 37)`
+                );
+            }
+            if ((await page.locator(".o_brand_promotion").count()) !== 0) {
+                throw new Error(`${testCase.name} ${sizeName}: Odoo brand promotion is still rendered`);
+            }
+            if ((await page.locator('img[src*="odoo_logo_tiny.png"]').count()) !== 0) {
+                throw new Error(`${testCase.name} ${sizeName}: Odoo footer logo is still rendered`);
+            }
+
             const overflow = await page.evaluate(() => ({
                 scrollWidth: document.documentElement.scrollWidth,
                 viewportWidth: window.innerWidth,
