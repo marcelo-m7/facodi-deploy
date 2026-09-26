@@ -403,4 +403,6 @@ if [[ "${FACODI_BROWSER_ACCEPTANCE:-0}" == "1" ]]; then
     node tests/test_campus_paper_browser.mjs
 fi
 
+bash tests/test_d2_editorial_runtime.sh "$project"
+
 echo "PASS: disposable Coolify runtime"
