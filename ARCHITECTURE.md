@@ -9,7 +9,7 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c41ae72264db24120d9d96da2844de568cb061c2` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c4987810bdca979471ba03e9481fb9ad4f16199c` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `612a0ee527f791216b4850ac820a5218f49b5c7b` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
@@ -95,7 +95,7 @@ Curriculum audit models remain private. Public projection may elevate only enoug
 
 Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
 
-Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. Valid YouTube submissions are projected to `/explore/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
+Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use the rich `/submissions/new` intake, while `/contribuir/recurso` remains a compatibility alias to the same controller. Context is persisted only for publicly visible roadmap/course/unit/item records. Valid YouTube submissions are projected to `/explore/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
 
 ## Historical Notes
 

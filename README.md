@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `2d1a984e14ebe73ead308121476ba6ad916a82c2` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `c4987810bdca979471ba03e9481fb9ad4f16199c` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `612a0ee527f791216b4850ac820a5218f49b5c7b` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -67,7 +67,7 @@ The reviewed-submission trace is explicit in Odoo: a submission can be followed 
 
 Failed Supabase analysis calls preserve a safe cross-system correlation boundary: Odoo reads a bounded error body, accepts only the opaque UUID returned as `details.processing_job_id`, revalidates it at the audit boundary, and stores no provider response details or secrets. The Edge Function returns that UUID only after the private Supabase failure row has been durably persisted; otherwise it fails closed without exposing a misleading correlation ID.
 
-Contribution entry points across Roadmaps, curricular units, standard eLearning, Explore and Minha FACODI now converge on the context-aware `/submissions/new` workflow. CTAs preserve their source section and related unit/course context, community-video entry points preselect Video, authenticated users receive safe contact prefill, and metadata discovery may fill resource title/language without overwriting user edits. `/contribuir/recurso` remains a compatibility entry point and `/contactus` remains the separate general-collaboration route.
+Contribution entry points across Roadmaps, curricular units, standard eLearning, Explore and Minha FACODI now converge on one context-aware intake shared by `/submissions/new` and the compatibility URL `/contribuir/recurso`. CTAs preserve their source section and related unit/course context, community-video entry points preselect Video, authenticated users receive safe contact prefill, and metadata discovery may fill resource title/language without overwriting user edits. `/contribuir/recurso` remains a compatibility entry point and `/contactus` remains the separate general-collaboration route.
 
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
 
