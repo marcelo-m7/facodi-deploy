@@ -495,7 +495,7 @@ if b"Contribute to FACODI" not in course_body:
   raise RuntimeError("public course does not expose the guided contribution CTA label")
 if b'href="/submissions/new?' not in course_body:
   raise RuntimeError("public course contribution CTA does not enter the unified intake")
-if b"source=course_detail" not in course_body or b"course_id=" not in course_body:
+if b"source=course_resource_cta" not in course_body or b"course_id=" not in course_body:
   raise RuntimeError("public course contribution CTA does not preserve course context")
 print(f"PASS {runtime_course_route}")
 
