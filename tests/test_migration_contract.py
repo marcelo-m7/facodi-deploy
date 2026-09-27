@@ -173,7 +173,7 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn("legacy_learn_groups", text)
         self.assertIn("legacy_learning_urls", text)
         self.assertIn("duplicates.unlink()", text)
-        self.assertIn('"url": "#"', text)
+        self.assertIn('("url", "=", "#")', text)
         self.assertLess(
             text.rindex("apply_theme("),
             text.rindex("normalize_public_navigation("),
