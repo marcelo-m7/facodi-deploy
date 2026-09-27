@@ -31,9 +31,34 @@ trap cleanup EXIT
 "${compose[@]}" build
 "${compose[@]}" up -d db
 
+if [[ "${FACODI_REQUIRE_EMPTY_DATABASE:-0}" == "1" ]]; then
+  empty_database_count="$(
+    "${compose[@]}" exec -T db psql -U odoo -d postgres -Atc \
+      "SELECT count(*) FROM pg_database WHERE datname = 'facodi';"
+  )"
+  if [[ "$empty_database_count" != "0" ]]; then
+    echo "Clean-install gate expected no pre-existing facodi database" >&2
+    exit 1
+  fi
+  echo "PASS clean-install starts without a facodi database"
+fi
+
 # A clean database must initialize successfully and an immediate second run
 # must be idempotent before the persistent service is allowed to start.
 "${compose[@]}" run --rm migrate
+
+if [[ "${FACODI_REQUIRE_EMPTY_DATABASE:-0}" == "1" ]]; then
+  initialized_database_count="$(
+    "${compose[@]}" exec -T db psql -U odoo -d postgres -Atc \
+      "SELECT count(*) FROM pg_database WHERE datname = 'facodi';"
+  )"
+  if [[ "$initialized_database_count" != "1" ]]; then
+    echo "Clean-install gate did not create the facodi database exactly once" >&2
+    exit 1
+  fi
+  echo "PASS clean-install created facodi database"
+fi
+
 "${compose[@]}" run --rm migrate
 "${compose[@]}" up -d odoo
 
