@@ -170,6 +170,8 @@ class MigrationContractTest(unittest.TestCase):
         ):
             self.assertIn(label, text)
         self.assertIn("with_context(lang=lang).write", text)
+        self.assertIn("legacy_learn_groups", text)
+        self.assertIn("legacy_learning_urls", text)
         self.assertIn("duplicates.unlink()", text)
         self.assertIn('"url": "#"', text)
         self.assertLess(
