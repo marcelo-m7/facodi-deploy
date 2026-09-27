@@ -143,8 +143,10 @@ class MigrationContractTest(unittest.TestCase):
         text = MIGRATION.read_text()
         self.assertIn('("website_id", "=", facodi_website.id)', text)
         for route in (
+            "/courses",
             "/slides",
             "/roadmaps",
+            "/curricular-units",
             "/unidades-curriculares",
             "/sobre",
             "/blog",
@@ -164,12 +166,7 @@ class MigrationContractTest(unittest.TestCase):
         ):
             self.assertIn(legacy, text)
         for label in (
-            '"en_US": "Learn"',
-            '"pt_PT": "Aprender"',
-            '"es_ES": "Aprender"',
-            '"fr_FR": "Apprendre"',
             '"pt_PT": "Notícias"',
-            '"fr_FR": "Unités d’enseignement"',
         ):
             self.assertIn(label, text)
         self.assertIn("with_context(lang=lang).write", text)
@@ -192,7 +189,8 @@ class MigrationContractTest(unittest.TestCase):
             "exec",
         )
         self.assertIn("canonical_root", payload)
-        self.assertIn("learning_children", payload)
+        self.assertIn("legacy_learn_groups", payload)
+        self.assertIn("legacy_learning_urls", payload)
         self.assertIn("canonical_top_level", payload)
         self.assertIn("legacy_urls", payload)
 

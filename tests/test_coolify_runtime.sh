@@ -292,6 +292,11 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 no_redirect = urllib.request.build_opener(NoRedirect)
 
 for legacy_route, canonical_route in (
+  ("/explorar", "/explore"),
+  ("/explorar/areas", "/explore/areas"),
+  ("/explorar/conteudos", "/explore/content"),
+  ("/explorar/videos", "/explore/videos"),
+  ("/unidades-curriculares", "/curricular-units"),
   ("/curriculos", "/roadmaps"),
   ("/mapa-curricular", "/roadmaps"),
   ("/curriculos/1", "/roadmaps/1"),
@@ -320,11 +325,12 @@ for route in (
   "/pt/",
   "/es/",
   "/fr/",
-  "/slides",
-  "/explorar",
-  "/explorar/areas",
-  "/explorar/conteudos",
-  "/explorar/videos",
+  "/courses",
+  "/explore",
+  "/curricular-units",
+  "/explore/areas",
+  "/explore/content",
+  "/explore/videos",
   "/roadmaps",
   "/pt/roadmaps",
   "/contribuir/recurso",
@@ -333,16 +339,16 @@ for route in (
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
-    if route == "/explorar":
-        for marker in (b"/explorar/areas", b"/explorar/conteudos", b"/explorar/videos", b"/explorar/cursos"):
+    if route == "/explore":
+        for marker in (b"/explore/areas", b"/explore/content", b"/explore/videos", b"/explore/courses"):
           if marker not in body:
             raise RuntimeError(f"Explore landing lost discovery entry point: {marker!r}")
-    if route == "/explorar/conteudos":
+    if route == "/explore/content":
         if b"FACODI Runtime Public Module Item" not in body:
           raise RuntimeError("Explore content catalogue does not expose governed public learning content")
-        if b"/explorar/cursos" in body:
+        if b"/explore/courses" in body:
           raise RuntimeError("Explore content catalogue unexpectedly duplicates course navigation")
-    if route == "/explorar/videos":
+    if route == "/explore/videos":
         if b"FACODI Runtime Pending Community Video" not in body:
           raise RuntimeError("pending YouTube submission is missing from the public community queue")
         if b"Awaiting review" not in body:
