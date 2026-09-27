@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `8ab5a4520e242d331a9cb00128b3a30128a2103a` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `0a6c10713b4ca5f22b9f553f85a545b3005416b4` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `c41ae72264db24120d9d96da2844de568cb061c2` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `612a0ee527f791216b4850ac820a5218f49b5c7b` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -67,7 +67,7 @@ The reviewed-submission trace is explicit in Odoo: a submission can be followed 
 
 Failed Supabase analysis calls preserve a safe cross-system correlation boundary: Odoo reads a bounded error body, accepts only the opaque UUID returned as `details.processing_job_id`, revalidates it at the audit boundary, and stores no provider response details or secrets. The Edge Function returns that UUID only after the private Supabase failure row has been durably persisted; otherwise it fails closed without exposing a misleading correlation ID.
 
-This release also connects contribution entry points across Roadmaps, curricular units, standard eLearning surfaces and homepage/community snippets to the Odoo-owned guided resource workflow at `/contribuir/recurso`. Curricular-unit CTAs preserve their unit context; `/contactus` remains the separate general-collaboration route.
+Contribution entry points across Roadmaps, curricular units, standard eLearning, Explore and Minha FACODI now converge on the context-aware `/submissions/new` workflow. CTAs preserve their source section and related unit/course context, community-video entry points preselect Video, authenticated users receive safe contact prefill, and metadata discovery may fill resource title/language without overwriting user edits. `/contribuir/recurso` remains a compatibility entry point and `/contactus` remains the separate general-collaboration route.
 
 Retired Monodoo and Monynha modules are not source dependencies or runtime modules. The migration gate removes known historical registrations through Odoo's standard module API before updating the canonical FACODI module set.
 
