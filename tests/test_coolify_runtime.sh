@@ -411,6 +411,8 @@ for contextual_route, expected_markers in (
       b'href="/roadmaps"',
       b"Back to where I was",
       b"Context pre-filled",
+      b'data-facodi-submission-type-switcher="1"',
+      b'name="facodi_company_website"',
     ),
   ),
   (
@@ -433,6 +435,26 @@ for contextual_route, expected_markers in (
         f"contextual intake lost pre-filled marker {marker!r}: {contextual_route}"
       )
   print(f"PASS contextual intake {contextual_route}")
+
+for localized_submission_route in (
+  "/pt/submissions/new",
+  "/en/submissions/new",
+  "/es/submissions/new",
+  "/fr/submissions/new",
+):
+  localized_submission = urllib.request.urlopen(
+    base + localized_submission_route, timeout=15
+  )
+  localized_body = localized_submission.read()
+  if localized_submission.status != 200:
+    raise RuntimeError(
+      f"{localized_submission_route} returned HTTP {localized_submission.status}"
+    )
+  if b'data-facodi-submission-form="1"' not in localized_body:
+    raise RuntimeError(
+      f"{localized_submission_route} lost the unified contextual intake"
+    )
+  print(f"PASS localized contextual intake {localized_submission_route}")
 
 detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
 if not detail_match:
