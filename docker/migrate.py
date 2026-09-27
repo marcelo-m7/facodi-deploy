@@ -400,30 +400,10 @@ def normalize_public_navigation(
     main_menu = facodi_website.menu_id
 
     labels = {
-        "learn": {
-            "en_US": "Learn",
-            "pt_PT": "Aprender",
-            "es_ES": "Aprender",
-            "fr_FR": "Apprendre",
-        },
-        "courses": {
-            "en_US": "Courses",
-            "pt_PT": "Cursos",
-            "es_ES": "Cursos",
-            "fr_FR": "Cours",
-        },
-        "roadmaps": {
-            "en_US": "Roadmaps",
-            "pt_PT": "Roadmaps",
-            "es_ES": "Rutas",
-            "fr_FR": "Parcours",
-        },
-        "units": {
-            "en_US": "Curricular Units",
-            "pt_PT": "Unidades Curriculares",
-            "es_ES": "Unidades Curriculares",
-            "fr_FR": "Unités d’enseignement",
-        },
+
+
+
+
         "about": {
             "en_US": "About",
             "pt_PT": "Sobre",
