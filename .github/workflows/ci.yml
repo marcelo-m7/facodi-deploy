@@ -31,7 +31,6 @@ jobs:
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 
   validate-coolify-runtime:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -69,8 +68,9 @@ jobs:
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 
-      - name: Exercise disposable Odoo runtime and browser smoke tests
+      - name: Exercise clean-install Odoo runtime and browser smoke tests
         env:
+          FACODI_REQUIRE_EMPTY_DATABASE: "1"
           FACODI_BROWSER_ACCEPTANCE: "1"
           FACODI_BROWSER_SCREENSHOT_DIR: ${{ runner.temp }}/facodi-browser
           FACODI_D2_BROWSER_SCREENSHOT_DIR: ${{ runner.temp }}/facodi-d2-browser
