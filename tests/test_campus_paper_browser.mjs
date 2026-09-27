@@ -29,8 +29,8 @@ const viewports = {
 // render, stay inside the viewport and expose their stable semantic hooks.
 const publicCases = [
     {
-        name: "slides",
-        route: "/slides",
+        name: "courses",
+        route: "/courses",
         selectors: [".facodi-learning-catalogue-hero", ".facodi-index-tabs--courses"],
         sizes: ["desktop", "mobile", "narrow"],
         mobileMenu: true,
@@ -43,13 +43,13 @@ const publicCases = [
     },
     {
         name: "units",
-        route: "/unidades-curriculares",
+        route: "/curricular-units",
         selectors: [".facodi-filter-sheet"],
         sizes: ["desktop", "mobile"],
     },
     {
         name: "explore-content",
-        route: "/explorar/conteudos",
+        route: "/explore/content",
         selectors: ['[data-facodi-explore-workbench="1"]'],
         sizes: ["desktop", "mobile"],
     },
