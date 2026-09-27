@@ -92,6 +92,14 @@ state="$({
 website = env["website"].search([], order="id", limit=1)
 if not website:
     raise RuntimeError("FACODI Website record is missing")
+expected_modules = ("facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_website")
+modules = env["ir.module.module"].search([("name", "in", list(expected_modules))])
+module_states = {module.name: module.state for module in modules}
+if set(module_states) != set(expected_modules):
+    raise RuntimeError("Clean install is missing one or more FACODI modules")
+if any(state != "installed" for state in module_states.values()):
+    raise RuntimeError("One or more FACODI modules are not fully installed")
+print("FACODI_INSTALLED_MODULES=" + ",".join(sorted(expected_modules)))
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
@@ -264,6 +272,7 @@ PY
 } 2>&1)"
 
 echo "$state"
+grep -Fq 'FACODI_INSTALLED_MODULES=facodi_ai,facodi_ai_website,facodi_learning,theme_facodi' <<<"$state"
 grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
 for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
