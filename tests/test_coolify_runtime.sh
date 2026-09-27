@@ -487,8 +487,12 @@ if course.status != 200:
   raise RuntimeError(f"{runtime_course_route} returned HTTP {course.status}")
 if b"Official curriculum alignment" not in course_body:
   raise RuntimeError("public course does not render approved curriculum alignment")
-if b"Contribute to FACODI" not in course_body or b'href="/submissions/new? not in course_body:
-  raise RuntimeError("public course does not expose the guided contribution CTA")
+if b"Contribute to FACODI" not in course_body:
+  raise RuntimeError("public course does not expose the guided contribution CTA label")
+if b'href="/submissions/new?' not in course_body:
+  raise RuntimeError("public course contribution CTA does not enter the unified intake")
+if b"source=course_detail" not in course_body or b"course_id=" not in course_body:
+  raise RuntimeError("public course contribution CTA does not preserve course context")
 print(f"PASS {runtime_course_route}")
 
 module = urllib.request.urlopen(base + runtime_module_route, timeout=15)
