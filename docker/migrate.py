@@ -520,6 +520,16 @@ def normalize_public_navigation(
     for key, url, sequence, aliases in canonical_top_level:
         canonical_root(key, url, sequence, aliases=aliases)
 
+    orphan_roots = Menu.search(
+        [
+            ("website_id", "=", facodi_website.id),
+            ("parent_id", "=", False),
+            ("id", "!=", main_menu.id),
+            ("url", "in", ["/sobre", "/blog", "/contribuir/recurso", "/contactus"]),
+        ]
+    )
+    orphan_roots.filtered(lambda menu: not menu.child_id).unlink()
+
     legacy_urls = (
         "/roadmap",
         "/mapa-curricular",
