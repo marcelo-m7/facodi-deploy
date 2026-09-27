@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `d6d1ee66d90a8d795bac521f299dd28440bbdbc5` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `f937b8c0d98c969ac341262a13369bebc22d25f3` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `d40afb0169d2ddf7aaa7fca096002ff907a0d17c` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `3c27f07f43d37f8f0a784c9b06aa5d1b466680a2` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -78,8 +78,8 @@ This is a mix of authorized production observations and checked-in runtime accep
 | Website | ID 1, `Faculdade Comunitária Digital`, domain `https://facodi.com` |
 | Languages | `en_US` default; `pt_PT`, `es_ES`, `fr_FR` available |
 | Website menus | `Explore`, `Community`, `About`; labels translated in all four languages |
-| Menu destinations | Canonical destinations include `/slides`, `/website/search`, `/contactus`, `/blog`, `/forum`, `/sobre`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
-| Public route check | Canonical `/slides`, `/blog`, `/forum`, `/contactus`, `/sobre`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/sobre#how-it-works` |
+| Menu destinations | Canonical destinations include `/courses`, `/website/search`, `/contactus`, `/blog`, `/forum`, `/sobre`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
+| Public route check | Canonical `/courses`, `/blog`, `/forum`, `/contactus`, `/sobre`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/sobre#how-it-works` |
 | Learning catalog | 19 active, public, published `slide.channel` training courses; 790 `slide.slide` records |
 | Catalog duplicate check | No duplicate course names or `website_url` values |
 | Curriculum reference | Validated, Website-published UAlg LESTI 2026/27 reference, programme code `1941`, with 43 source units |
@@ -95,7 +95,7 @@ Curriculum audit models remain private. Public projection may elevate only enoug
 
 Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
 
-Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. Valid YouTube submissions are projected to `/explorar/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
+Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use `/contribuir/recurso` and carry `curriculum_unit_id` when a curricular-unit context exists. Valid YouTube submissions are projected to `/explore/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
 
 ## Historical Notes
 
