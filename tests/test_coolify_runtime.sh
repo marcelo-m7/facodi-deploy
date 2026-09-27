@@ -31,9 +31,55 @@ trap cleanup EXIT
 "${compose[@]}" build
 "${compose[@]}" up -d db
 
+db_container_id="$("${compose[@]}" ps -q db)"
+if [[ -z "$db_container_id" ]]; then
+  echo "PostgreSQL container was not created" >&2
+  exit 1
+fi
+for _ in {1..60}; do
+  db_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$db_container_id" 2>/dev/null || true)"
+  [[ "$db_health" == "healthy" ]] && break
+  [[ "$db_health" == "unhealthy" || "$db_health" == "exited" || "$db_health" == "dead" ]] && {
+    echo "PostgreSQL failed before clean-install preflight (state: $db_health)" >&2
+    exit 1
+  }
+  sleep 1
+done
+db_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$db_container_id" 2>/dev/null || true)"
+if [[ "$db_health" != "healthy" ]]; then
+  echo "Timed out waiting for PostgreSQL healthcheck (state: $db_health)" >&2
+  exit 1
+fi
+echo "PASS PostgreSQL is healthy before clean-install preflight"
+
+if [[ "${FACODI_REQUIRE_EMPTY_DATABASE:-0}" == "1" ]]; then
+  empty_database_count="$(
+    "${compose[@]}" exec -T db psql -U odoo -d postgres -Atc \
+      "SELECT count(*) FROM pg_database WHERE datname = 'facodi';"
+  )"
+  if [[ "$empty_database_count" != "0" ]]; then
+    echo "Clean-install gate expected no pre-existing facodi database" >&2
+    exit 1
+  fi
+  echo "PASS clean-install starts without a facodi database"
+fi
+
 # A clean database must initialize successfully and an immediate second run
 # must be idempotent before the persistent service is allowed to start.
 "${compose[@]}" run --rm migrate
+
+if [[ "${FACODI_REQUIRE_EMPTY_DATABASE:-0}" == "1" ]]; then
+  initialized_database_count="$(
+    "${compose[@]}" exec -T db psql -U odoo -d postgres -Atc \
+      "SELECT count(*) FROM pg_database WHERE datname = 'facodi';"
+  )"
+  if [[ "$initialized_database_count" != "1" ]]; then
+    echo "Clean-install gate did not create the facodi database exactly once" >&2
+    exit 1
+  fi
+  echo "PASS clean-install created facodi database"
+fi
+
 "${compose[@]}" run --rm migrate
 "${compose[@]}" up -d odoo
 
@@ -67,6 +113,14 @@ state="$({
 website = env["website"].search([], order="id", limit=1)
 if not website:
     raise RuntimeError("FACODI Website record is missing")
+expected_modules = ("facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_website")
+modules = env["ir.module.module"].search([("name", "in", list(expected_modules))])
+module_states = {module.name: module.state for module in modules}
+if set(module_states) != set(expected_modules):
+    raise RuntimeError("Clean install is missing one or more FACODI modules")
+if any(state != "installed" for state in module_states.values()):
+    raise RuntimeError("One or more FACODI modules are not fully installed")
+print("FACODI_INSTALLED_MODULES=" + ",".join(sorted(expected_modules)))
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
@@ -239,6 +293,7 @@ PY
 } 2>&1)"
 
 echo "$state"
+grep -Fq 'FACODI_INSTALLED_MODULES=facodi_ai,facodi_ai_website,facodi_learning,theme_facodi' <<<"$state"
 grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
 for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"

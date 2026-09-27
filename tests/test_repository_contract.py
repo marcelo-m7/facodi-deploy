@@ -312,6 +312,18 @@ class RepositoryContractTest(unittest.TestCase):
             except SyntaxError as exc:
                 self.fail(f"embedded Python block {index} does not compile: {exc}")
 
+    def test_clean_install_preflight_waits_for_database_health(self):
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+        self.assertIn("FACODI_REQUIRE_EMPTY_DATABASE", workflow)
+        self.assertIn("db_container_id=", runtime)
+        self.assertIn(".State.Health.Status", runtime)
+        self.assertIn('db_health" != "healthy"', runtime)
+        self.assertLess(
+            runtime.index("PASS PostgreSQL is healthy before clean-install preflight"),
+            runtime.index("Clean-install gate expected no pre-existing facodi database"),
+        )
+
     def test_ci_validates_the_canonical_coolify_runtime(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
         self.assertIn("submodules: recursive", workflow)
