@@ -31,6 +31,27 @@ trap cleanup EXIT
 "${compose[@]}" build
 "${compose[@]}" up -d db
 
+db_container_id="$("${compose[@]}" ps -q db)"
+if [[ -z "$db_container_id" ]]; then
+  echo "PostgreSQL container was not created" >&2
+  exit 1
+fi
+for _ in {1..60}; do
+  db_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$db_container_id" 2>/dev/null || true)"
+  [[ "$db_health" == "healthy" ]] && break
+  [[ "$db_health" == "unhealthy" || "$db_health" == "exited" || "$db_health" == "dead" ]] && {
+    echo "PostgreSQL failed before clean-install preflight (state: $db_health)" >&2
+    exit 1
+  }
+  sleep 1
+done
+db_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$db_container_id" 2>/dev/null || true)"
+if [[ "$db_health" != "healthy" ]]; then
+  echo "Timed out waiting for PostgreSQL healthcheck (state: $db_health)" >&2
+  exit 1
+fi
+echo "PASS PostgreSQL is healthy before clean-install preflight"
+
 if [[ "${FACODI_REQUIRE_EMPTY_DATABASE:-0}" == "1" ]]; then
   empty_database_count="$(
     "${compose[@]}" exec -T db psql -U odoo -d postgres -Atc \
