@@ -272,6 +272,7 @@ fi
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
   -e "RUNTIME_COMMUNITY_TOKEN=$runtime_community_token" \
   odoo python3 - <<'PY'
+import html
 import os
 import re
 import urllib.request
@@ -462,8 +463,9 @@ if b"View official source" not in unit_body:
 expected_contribution_href = (
     f'/submissions/new?type=resource&unit_id={runtime_gap_unit_id}'
     f'&source=unit_resource_cta&section=resources'
-).encode("utf-8")
-if expected_contribution_href not in unit_body:
+)
+unit_html = html.unescape(unit_body.decode("utf-8"))
+if expected_contribution_href not in unit_html:
     raise RuntimeError("curricular-unit page does not preserve context in its contribution CTA")
 print(f"PASS {unit_route}")
 
