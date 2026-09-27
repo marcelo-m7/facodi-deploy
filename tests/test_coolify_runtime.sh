@@ -365,7 +365,7 @@ for route in (
             raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
-        if b'href="/contribuir/recurso"' not in body:
+        if b'href="/submissions/new? not in body:
           raise RuntimeError("public roadmap index does not expose the guided contribution CTA")
     if route == "/pt/roadmaps" and b"Roadmaps" not in body:
       raise RuntimeError("Portuguese public roadmap is not rendered")
@@ -484,7 +484,7 @@ if course.status != 200:
   raise RuntimeError(f"{runtime_course_route} returned HTTP {course.status}")
 if b"Official curriculum alignment" not in course_body:
   raise RuntimeError("public course does not render approved curriculum alignment")
-if b"Contribute to FACODI" not in course_body or b'href="/contribuir/recurso"' not in course_body:
+if b"Contribute to FACODI" not in course_body or b'href="/submissions/new? not in course_body:
   raise RuntimeError("public course does not expose the guided contribution CTA")
 print(f"PASS {runtime_course_route}")
 
