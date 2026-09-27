@@ -45,13 +45,13 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `7854e7139a3a8e72d3e1c8d9903a5fe4c839275f` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `1cc572562db68b437ae69a6839e7efdc882b9fa6` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `3c27f07f43d37f8f0a784c9b06aa5d1b466680a2` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
 
-The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance.
+The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance. Canonical public learning indexes now expose authored metadata through standard Odoo Website mechanisms, while legacy aliases remain permanent redirects.
 
 The current FACODI theme release also canonicalizes legacy editorial URLs through native Odoo permanent `301` rewrites: `/facodi → /`, `/manifesto → /sobre`, `/comunidade → /sobre`, `/parceiros → /sobre`, `/roadmap → /sobre#how-it-works`, and legacy contribution URLs to `/contribuir/recurso`. The canonical curriculum route `/roadmaps` is never redirected. The footer remains locked to `#0B1325`.
 
