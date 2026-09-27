@@ -11,7 +11,27 @@ permissions:
   contents: read
 
 jobs:
+  quick-contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate repository contract
+        run: bash scripts/validate-repository.sh
+
+      - name: Validate Coolify Compose
+        run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+
   validate-coolify-runtime:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -49,7 +69,7 @@ jobs:
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 
-      - name: Exercise fresh migration, idempotent migration, Odoo HTTP and D1 browser acceptance
+      - name: Exercise disposable Odoo runtime and browser smoke tests
         env:
           FACODI_BROWSER_ACCEPTANCE: "1"
           FACODI_BROWSER_SCREENSHOT_DIR: ${{ runner.temp }}/facodi-browser
