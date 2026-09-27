@@ -122,7 +122,7 @@ After `odoo` is healthy, verify at minimum:
 /pt/
 /es/
 /fr/
-/slides
+/courses
 /forum
 ```
 
@@ -187,7 +187,7 @@ It is **not** a database downgrade mechanism. If a newer deployment has run an i
 3. restore the matching `odoo-data` backup from the same point in time;
 4. deploy the known-good source revision (including `v0.1.0` when that is the intended boundary);
 5. start through the resource's valid lifecycle for that revision;
-6. verify `/web/login`, `/odoo`, `/`, language routes, `/slides`, courses, attachments and media before reopening normal deployment flow.
+6. verify `/web/login`, `/odoo`, `/`, language routes, `/courses`, courses, attachments and media before reopening normal deployment flow.
 
 Never restore only the database or only `odoo-data` when rolling back across migrations that may have changed attachment/filestore references.
 
