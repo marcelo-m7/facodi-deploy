@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `4e7f0358e616eb3fc8fab5059fb6dbc6a3b57c34` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `34b6c80ee81a41827652d3a251a6a8b52991dc39` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `8dfc4ca557dcac911e3dcb731809c2a342c162c3` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `aaad97677da2ca2acc3ced4a6c4354207225c313` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -59,7 +59,7 @@ The canonical authenticated learner home is now the standard Odoo Portal route `
 
 The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. FACODI extends the native portal controller/template with learner-only course and contribution context, while preserving native account/security cards and ownership rules. The learning shelf is derived from standard `slide.channel.partner` memberships and their native completion state; FACODI does not maintain a parallel progress tracker. Recent completed learning shown as Latest Wins comes from the learner's own standard `slide.slide.partner.completed` records, filtered back through currently visible Website content. The legacy `/minha-facodi` route is a permanent `301` alias to the standard portal.
 
-The FACODI theme owns Website presentation and footer navigation. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
+The FACODI theme owns Website presentation and footer navigation. The header renders Odoo's native Website language selector when more than one Website language is active; FACODI does not maintain a parallel language switcher. It must remain presentation-only: business data access belongs in the owning addon, not in theme QWeb templates.
 
 Resource processing has a separate ownership boundary: `marcelo-m7/facodi-supabase` owns Supabase schema, Edge Functions and processing orchestration. It is intentionally not baked into the Odoo image. Odoo owns submissions, canonical eLearning records, immutable analysis evidence and human editorial decisions; Supabase performs network enrichment and analysis.
 
