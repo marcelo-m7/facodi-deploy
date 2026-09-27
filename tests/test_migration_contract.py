@@ -143,8 +143,10 @@ class MigrationContractTest(unittest.TestCase):
         text = MIGRATION.read_text()
         self.assertIn('("website_id", "=", facodi_website.id)', text)
         for route in (
+            "/courses",
             "/slides",
             "/roadmaps",
+            "/curricular-units",
             "/unidades-curriculares",
             "/sobre",
             "/blog",
