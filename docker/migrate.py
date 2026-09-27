@@ -493,11 +493,15 @@ def normalize_public_navigation(
         [
             ("website_id", "=", facodi_website.id),
             ("parent_id", "=", main_menu.id),
-            ("url", "in", ["/slides", "/roadmaps", "/unidades-curriculares"]),
+            "|",
+            ("name", "in", ["Learn", "Learning"]),
+            ("url", "in", ["/courses", "/slides", "/roadmaps", "/curricular-units", "/unidades-curriculares"]),
         ],
         order="sequence, id",
     )
-    learn_menu = learning_candidates.filtered(lambda menu: menu.url == "/slides")[:1]
+    learn_menu = learning_candidates.filtered(
+        lambda menu: menu.url == "#" or menu.name in ("Learn", "Learning")
+    )[:1]
     if not learn_menu:
         learn_menu = Menu.create(
             {
@@ -517,11 +521,17 @@ def normalize_public_navigation(
         }
     )
     translated_name(learn_menu, "learn")
+    duplicate_learning_groups = learning_candidates.filtered(
+        lambda menu: menu.parent_id == main_menu and menu != learn_menu
+    )
+    if duplicate_learning_groups:
+        duplicate_learning_groups.mapped("child_id").write({"parent_id": learn_menu.id})
+        duplicate_learning_groups.unlink()
 
     learning_children = (
-        ("courses", "/slides", 10, ()),
+        ("courses", "/courses", 10, ("/slides",)),
         ("roadmaps", "/roadmaps", 20, ("/roadmap", "/mapa-curricular", "/curriculos")),
-        ("units", "/unidades-curriculares", 30, ()),
+        ("units", "/curricular-units", 30, ("/unidades-curriculares",)),
     )
     for key, url, sequence, aliases in learning_children:
         candidates = Menu.search(
