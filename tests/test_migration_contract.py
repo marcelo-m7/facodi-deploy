@@ -146,6 +146,10 @@ class MigrationContractTest(unittest.TestCase):
         )[0]
         self.assertIn("facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr", configure)
         self.assertIn("facodi_reconcile_navigation", configure)
+        self.assertIn(
+            'env["website.menu"].with_context(website_id=facodi_website.id)',
+            configure,
+        )
         self.assertLess(
             configure.index("facodi_website.language_ids"),
             configure.index("facodi_reconcile_navigation"),
