@@ -460,14 +460,16 @@ if b"No published coverage" not in unit_body:
 if b"View official source" not in unit_body:
     raise RuntimeError("public curricular-unit page lost official-source provenance")
 expected_contribution_href = (
-    f'/contribuir/recurso?curriculum_unit_id={runtime_gap_unit_id}'.encode("utf-8")
-)
+    f'/submissions/new?type=resource&unit_id={runtime_gap_unit_id}'
+    f'&source=unit_resource_cta&section=resources'
+).encode("utf-8")
 if expected_contribution_href not in unit_body:
     raise RuntimeError("curricular-unit page does not preserve context in its contribution CTA")
 print(f"PASS {unit_route}")
 
 contextual_submission_route = (
-    f"/contribuir/recurso?curriculum_unit_id={runtime_gap_unit_id}"
+    f"/submissions/new?type=resource&unit_id={runtime_gap_unit_id}"
+    f"&source=unit_resource_cta&section=resources"
 )
 contextual_submission = urllib.request.urlopen(
     base + contextual_submission_route, timeout=15
