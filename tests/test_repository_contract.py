@@ -1,5 +1,7 @@
 from pathlib import Path
+import ast
 import configparser
+import re
 import subprocess
 import unittest
 
@@ -295,6 +297,20 @@ class RepositoryContractTest(unittest.TestCase):
         ]
         for path in forbidden:
             self.assertFalse(path.exists(), str(path))
+
+    def test_embedded_runtime_python_is_syntactically_valid(self):
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        blocks = re.findall(
+            r"python3\s+-\s+<<'PY'\n(.*?)\nPY(?:\n|$)",
+            runtime,
+            flags=re.DOTALL,
+        )
+        self.assertTrue(blocks, "runtime gate must contain embedded Python acceptance")
+        for index, source in enumerate(blocks, start=1):
+            try:
+                ast.parse(source, filename=f"test_coolify_runtime.sh:python-{index}")
+            except SyntaxError as exc:
+                self.fail(f"embedded Python block {index} does not compile: {exc}")
 
     def test_ci_validates_the_canonical_coolify_runtime(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
