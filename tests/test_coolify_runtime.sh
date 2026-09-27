@@ -401,11 +401,14 @@ for route in (
 
 for contextual_route, expected_markers in (
   (
-    "/submissions/new?type=resource&source=runtime_resource_cta&section=runtime",
+    "/submissions/new?type=resource&source=runtime_resource_cta&section=runtime&source_page_url=/roadmaps",
     (
       b'name="submission_type" value="resource"',
       b'name="source_cta" value="runtime_resource_cta"',
       b'name="source_section" value="runtime"',
+      b'name="source_page_url" value="/roadmaps"',
+      b'href="/roadmaps"',
+      b"Back to where I was",
       b"Context pre-filled",
     ),
   ),
