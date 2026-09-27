@@ -399,6 +399,37 @@ for route in (
         )
     print(f"PASS {route}")
 
+for contextual_route, expected_markers in (
+  (
+    "/submissions/new?type=resource&source=runtime_resource_cta&section=runtime",
+    (
+      b'name="submission_type" value="resource"',
+      b'name="source_cta" value="runtime_resource_cta"',
+      b'name="source_section" value="runtime"',
+      b"Context pre-filled",
+    ),
+  ),
+  (
+    "/submissions/new?type=contact&source=runtime_contact_cta&section=runtime&topic=partnership",
+    (
+      b'name="submission_type" value="contact"',
+      b'name="source_cta" value="runtime_contact_cta"',
+      b'name="source_section" value="runtime"',
+      b'value="partnership" selected',
+    ),
+  ),
+):
+  contextual = urllib.request.urlopen(base + contextual_route, timeout=15)
+  contextual_body = contextual.read()
+  if contextual.status != 200:
+    raise RuntimeError(f"{contextual_route} returned HTTP {contextual.status}")
+  for marker in expected_markers:
+    if marker not in contextual_body:
+      raise RuntimeError(
+        f"contextual intake lost pre-filled marker {marker!r}: {contextual_route}"
+      )
+  print(f"PASS contextual intake {contextual_route}")
+
 detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
 if not detail_match:
   raise RuntimeError("public roadmap index does not link to a roadmap detail page")
