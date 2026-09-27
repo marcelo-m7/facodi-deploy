@@ -139,6 +139,18 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn("monodoo_backend", payload)
         self.assertIn("theme_monynha", payload)
 
+    def test_language_configuration_reconciles_explore_after_activation(self):
+        text = MIGRATION.read_text()
+        configure = text.split("def configure_languages(", 1)[1].split(
+            "def apply_theme(", 1
+        )[0]
+        self.assertIn("facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr", configure)
+        self.assertIn("facodi_reconcile_navigation", configure)
+        self.assertLess(
+            configure.index("facodi_website.language_ids"),
+            configure.index("facodi_reconcile_navigation"),
+        )
+
     def test_navigation_normalization_is_website_scoped_and_runs_after_theme(self):
         text = MIGRATION.read_text()
         self.assertIn('("website_id", "=", facodi_website.id)', text)
