@@ -9,7 +9,7 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `6d8332aab45476497334b2b4563168087fd2d267` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `0dd8af9a509747f7d01d6ea975fc2c97d27da547` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `68edf6f71c68521f76a6e013345ff7f7666dd193` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
@@ -95,7 +95,7 @@ Curriculum audit models remain private. Public projection may elevate only enoug
 
 Public and editorial learning structure is called a **Roadmap**: Roadmap → curricular unit → reusable learning module → existing course or content. `curriculum` remains the technical model namespace and the term for versioned external academic evidence, source provenance and reviewed coverage; it is not a competing public product domain.
 
-Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use the rich `/submissions/new` intake, while `/contribuir/recurso` remains a compatibility alias to the same controller. Context is persisted only for publicly visible roadmap/course/unit/item records. Valid YouTube submissions are projected to `/explore/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
+Resource contribution is Odoo-owned by `facodi_learning`: contextual CTAs use the rich `/submissions/new` intake, while `/contribuir/recurso` remains a compatibility alias to the same controller. Context is persisted only for publicly visible roadmap/unit/reusable-module/course/item records. Valid YouTube submissions are projected to `/explore/videos` immediately, including pending review, through a strict public view that excludes rejected submissions, contributor identity, tracking tokens, submission context and audit records. This community listing is separate from canonical `slide.slide` publication and does not bypass editorial governance. General collaboration continues through `/contactus`. `theme_facodi` may present these routes but does not own the submission model or controller.
 
 ## Historical Notes
 
@@ -111,7 +111,7 @@ FACODI discovery navigation is reconciled against the website-specific root for 
 
 ### Context-aware contribution flow
 
-FACODI keeps one Odoo-owned submission model and one guided public form. `/submissions/new` is the contextual entry point for resource/contact/correction/question workflows; CTA query context is sanitized before it is persisted or rendered. Curricular units, Roadmaps, course pages, Explore/community-video surfaces and Minha FACODI pass only bounded identifiers/slugs/selections. Authenticated contact data is read from the current partner as a convenience, not as a new profile store. `/contribuir/recurso` remains supported for compatibility.
+FACODI keeps one Odoo-owned submission model and one guided public form. `/submissions/new` is the contextual entry point for resource/contact/correction/question workflows; CTA query context is sanitized before it is persisted or rendered. Curricular units, Roadmaps, reusable module pages, course pages, Explore/community-video surfaces and Minha FACODI pass only bounded identifiers/slugs/selections. Authenticated contact data is read from the current partner as a convenience, not as a new profile store. `/contribuir/recurso` remains supported for compatibility.
 
 ### Contextual contact and correction intake
 
