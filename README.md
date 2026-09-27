@@ -46,7 +46,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `bb5ee606d8496957917691465159cf99c32ce9b2` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `89c10d77bdd181890b542567f2d85877ae0ac2eb` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `4d142d93707dc62c85c8eb98516f2f5f36fc914d` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
