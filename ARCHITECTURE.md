@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `8ab5a4520e242d331a9cb00128b3a30128a2103a` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `0a6c10713b4ca5f22b9f553f85a545b3005416b4` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c41ae72264db24120d9d96da2844de568cb061c2` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `612a0ee527f791216b4850ac820a5218f49b5c7b` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -107,3 +107,8 @@ Run `git submodule update --init --recursive` before validation. The repository 
 ### FACODI multi-website navigation isolation
 
 FACODI discovery navigation is reconciled against the website-specific root for `facodi.com`. The learning addon must not declare generic `website.menu` records that can leak into other websites in the same Odoo database. Explore owns Courses, Areas, Learning resources, Community videos, Roadmaps and Curricular units; legacy Learn is removed only when it contains no custom routes.
+
+
+### Context-aware contribution flow
+
+FACODI keeps one Odoo-owned submission model and one guided public form. `/submissions/new` is the contextual entry point for resource/contact/correction/question workflows; CTA query context is sanitized before it is persisted or rendered. Curricular units, Roadmaps, course pages, Explore/community-video surfaces and Minha FACODI pass only bounded identifiers/slugs/selections. Authenticated contact data is read from the current partner as a convenience, not as a new profile store. `/contribuir/recurso` remains supported for compatibility.
