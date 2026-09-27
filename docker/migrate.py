@@ -489,82 +489,27 @@ def normalize_public_navigation(
             duplicates.unlink()
         return canonical
 
-    learning_candidates = Menu.search(
+    # facodi_learning owns the website-specific Explore discovery tree.
+    # Do not recreate a parallel Learn tree here after module update.
+    legacy_learning_urls = {
+        "/courses",
+        "/slides",
+        "/roadmaps",
+        "/curricular-units",
+        "/unidades-curriculares",
+    }
+    legacy_learn_groups = Menu.search(
         [
             ("website_id", "=", facodi_website.id),
             ("parent_id", "=", main_menu.id),
-            "|",
+            ("url", "=", "#"),
             ("name", "in", ["Learn", "Learning"]),
-            ("url", "in", ["/courses", "/slides", "/roadmaps", "/curricular-units", "/unidades-curriculares"]),
-        ],
-        order="sequence, id",
+        ]
     )
-    learn_menu = learning_candidates.filtered(
-        lambda menu: menu.url == "#" or menu.name in ("Learn", "Learning")
-    )[:1]
-    if not learn_menu:
-        learn_menu = Menu.create(
-            {
-                "name": labels["learn"]["en_US"],
-                "url": "#",
-                "parent_id": main_menu.id,
-                "website_id": facodi_website.id,
-                "sequence": 10,
-            }
-        )
-    learn_menu.write(
-        {
-            "url": "#",
-            "parent_id": main_menu.id,
-            "website_id": facodi_website.id,
-            "sequence": 10,
-        }
-    )
-    translated_name(learn_menu, "learn")
-    duplicate_learning_groups = learning_candidates.filtered(
-        lambda menu: menu.parent_id == main_menu and menu != learn_menu
-    )
-    if duplicate_learning_groups:
-        duplicate_learning_groups.mapped("child_id").write({"parent_id": learn_menu.id})
-        duplicate_learning_groups.unlink()
-
-    learning_children = (
-        ("courses", "/courses", 10, ("/slides",)),
-        ("roadmaps", "/roadmaps", 20, ("/roadmap", "/mapa-curricular", "/curriculos")),
-        ("units", "/curricular-units", 30, ("/unidades-curriculares",)),
-    )
-    for key, url, sequence, aliases in learning_children:
-        candidates = Menu.search(
-            [
-                ("website_id", "=", facodi_website.id),
-                ("url", "in", [url, *aliases]),
-            ],
-            order="sequence, id",
-        )
-        canonical = candidates.filtered(lambda menu: menu.id != learn_menu.id)[:1]
-        if not canonical:
-            canonical = Menu.create(
-                {
-                    "name": labels[key]["en_US"],
-                    "url": url,
-                    "parent_id": learn_menu.id,
-                    "website_id": facodi_website.id,
-                    "sequence": sequence,
-                }
-            )
-        canonical.write(
-            {
-                "url": url,
-                "parent_id": learn_menu.id,
-                "website_id": facodi_website.id,
-                "sequence": sequence,
-            }
-        )
-        translated_name(canonical, key)
-        duplicates = candidates - canonical - learn_menu
-        if duplicates:
-            duplicates.mapped("child_id").write({"parent_id": canonical.id})
-            duplicates.unlink()
+    for learn_menu in legacy_learn_groups:
+        children = Menu.search([("parent_id", "=", learn_menu.id)])
+        if not children or set(children.mapped("url")).issubset(legacy_learning_urls):
+            learn_menu.unlink()
 
     canonical_top_level = (
         ("about", "/sobre", 20, ("/manifesto", "/comunidade", "/parceiros")),
