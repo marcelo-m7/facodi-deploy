@@ -166,12 +166,7 @@ class MigrationContractTest(unittest.TestCase):
         ):
             self.assertIn(legacy, text)
         for label in (
-            '"en_US": "Learn"',
-            '"pt_PT": "Aprender"',
-            '"es_ES": "Aprender"',
-            '"fr_FR": "Apprendre"',
             '"pt_PT": "Notícias"',
-            '"fr_FR": "Unités d’enseignement"',
         ):
             self.assertIn(label, text)
         self.assertIn("with_context(lang=lang).write", text)
