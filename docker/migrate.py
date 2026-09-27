@@ -321,7 +321,7 @@ def configure_languages(
     # facodi_learning owns the Explore discovery tree. Reconcile it again only
     # after the Website languages are active so translated menu names are
     # persisted for PT/ES/FR on fresh installs as well as upgrades.
-    Menu = env["website.menu"]
+    Menu = env["website.menu"].with_context(website_id=facodi_website.id)
     if hasattr(Menu, "facodi_reconcile_navigation"):
         if not Menu.facodi_reconcile_navigation():
             raise RuntimeError("FACODI Explore navigation reconciliation failed")
