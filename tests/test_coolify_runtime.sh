@@ -315,7 +315,7 @@ for legacy_route, canonical_route in (
     if error.code != 301 or error.headers.get("Location") != canonical_route:
       raise RuntimeError(
         f"{legacy_route} must permanently redirect to {canonical_route}"
-      )rom error
+      ) from error
   else:
     raise RuntimeError(f"{legacy_route} did not return a permanent redirect")
   print(f"PASS {legacy_route} -> {canonical_route}")
