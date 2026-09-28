@@ -384,6 +384,7 @@ for route in (
   "/courses",
   "/explore",
   "/curricular-units",
+  "/contact",
   "/explore/areas",
   "/explore/content",
   "/explore/videos",

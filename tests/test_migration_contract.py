@@ -167,6 +167,7 @@ class MigrationContractTest(unittest.TestCase):
             "/sobre",
             "/blog",
             "/contribuir/recurso",
+            "/contact",
             "/contactus",
         ):
             self.assertIn(route, text)
