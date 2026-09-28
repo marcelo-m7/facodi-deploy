@@ -89,7 +89,7 @@ For a fresh database, the migration initializes Odoo and the canonical FACODI mo
 After module operations, standard Odoo mechanisms are used to:
 
 - activate English, Portuguese (Portugal), Spanish and French;
-- keep English (`en_US`) as the Website default;
+- keep English (UK) (`en_GB`) as the Website default;
 - expose `pt_PT`, `es_ES` and `fr_FR` on the Website;
 - load theme translations;
 - apply `theme_facodi` through the Odoo theme API.
