@@ -106,7 +106,7 @@ class MigrationContractTest(unittest.TestCase):
         self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo",
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home",
         )
 
     def test_existing_database_does_not_reapply_theme(self):
