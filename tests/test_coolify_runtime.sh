@@ -450,6 +450,16 @@ for route in (
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
+    if route == "/":
+        for marker in (
+          b'data-facodi-dot-grid="1"',
+          b'data-facodi-dither-veil="1"',
+          b'class="facodi-dither-veil__canvas"',
+        ):
+          if marker not in body:
+            raise RuntimeError(
+              f"homepage lost FACODI hero interaction marker: {marker!r}"
+            )
     if route == "/explore":
         for marker in (b"/explore/areas", b"/explore/content", b"/explore/videos", b"/explore/courses"):
           if marker not in body:
