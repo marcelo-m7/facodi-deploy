@@ -405,138 +405,125 @@ def normalize_public_navigation(
     config: str, database: str, *, fresh_database: bool = False
 ) -> None:
     payload = _website_selector_payload(fresh_database=fresh_database) + """
-    Menu = env["website.menu"].with_context(active_test=False)
-    main_menu = facodi_website.menu_id
+    # Navigation ownership lives in facodi_learning. The deployment migration
+    # invokes the module's idempotent reconciler after every module/theme update
+    # so a reset database, an old menu tree, and a normal upgrade converge to
+    # exactly the same public navigation.
+    Menu = env["website.menu"].with_context(
+        website_id=facodi_website.id,
+        active_test=False,
+    )
+    if not hasattr(Menu, "facodi_reconcile_navigation"):
+        raise RuntimeError(
+            "facodi_learning navigation reconciler is unavailable after module update"
+        )
+    if not Menu.facodi_reconcile_navigation():
+        raise RuntimeError("FACODI public navigation reconciliation failed")
 
-    labels = {
+    # English is the canonical public language. The reconciler writes this too,
+    # but assert it here so the migration fails closed instead of deploying a
+    # website with a stale Portuguese/default-language setting.
+    lang_en = env.ref("base.lang_en")
+    if facodi_website.default_lang_id != lang_en:
+        facodi_website.default_lang_id = lang_en
 
-
-
-
-        "about": {
-            "en_US": "About",
-            "pt_PT": "Sobre",
-            "es_ES": "Acerca de",
-            "fr_FR": "À propos",
-        },
-        "news": {
-            "en_US": "News",
-            "pt_PT": "Notícias",
-            "es_ES": "Noticias",
-            "fr_FR": "Actualités",
-        },
-        "contribute": {
-            "en_US": "Contribute",
-            "pt_PT": "Contribuir",
-            "es_ES": "Contribuir",
-            "fr_FR": "Contribuer",
-        },
-        "contact": {
-            "en_US": "Contact",
-            "pt_PT": "Contacto",
-            "es_ES": "Contacto",
-            "fr_FR": "Contact",
-        },
+    expected_roots = {
+        "/": ("Home", 5),
+        "/sobre": ("About", 30),
+        "/contactus": ("Contact", 40),
     }
-
-    def translated_name(menu, key):
-        for lang, value in labels[key].items():
-            menu.with_context(lang=lang).write({"name": value})
-
-    def canonical_root(key, url, sequence, *, aliases=()):
-        candidates = Menu.search(
+    for url, (name, sequence) in expected_roots.items():
+        matches = Menu.search(
             [
                 ("website_id", "=", facodi_website.id),
-                ("parent_id", "=", main_menu.id),
-                ("url", "in", [url, *aliases]),
-            ],
-            order="sequence, id",
+                ("parent_id", "=", facodi_website.menu_id.id),
+                ("url", "=", url),
+            ]
         )
-        canonical = candidates[:1]
-        if not canonical:
-            canonical = Menu.create(
-                {
-                    "name": labels[key]["en_US"],
-                    "url": url,
-                    "parent_id": main_menu.id,
-                    "website_id": facodi_website.id,
-                    "sequence": sequence,
-                }
+        if len(matches) != 1:
+            raise RuntimeError(
+                "FACODI navigation must contain exactly one top-level %s menu" % name
             )
-        canonical.write(
-            {
-                "url": url,
-                "parent_id": main_menu.id,
-                "website_id": facodi_website.id,
-                "sequence": sequence,
-            }
-        )
-        translated_name(canonical, key)
-        duplicates = candidates - canonical
-        if duplicates:
-            duplicates.mapped("child_id").write({"parent_id": canonical.id})
-            duplicates.unlink()
-        return canonical
+        if matches.sequence != sequence:
+            raise RuntimeError("FACODI %s menu has an unexpected sequence" % name)
 
-    # facodi_learning owns the website-specific Explore discovery tree.
-    # Do not recreate a parallel Learn tree here after module update.
-    legacy_learning_urls = {
-        "/courses",
+    group_roots = {}
+    for group_name, sequence in (("Explore", 10), ("Community", 20)):
+        matches = Menu.with_context(lang="en_US").search(
+            [
+                ("website_id", "=", facodi_website.id),
+                ("parent_id", "=", facodi_website.menu_id.id),
+                ("url", "=", "#"),
+                ("name", "=", group_name),
+            ]
+        )
+        if len(matches) != 1:
+            raise RuntimeError(
+                "FACODI navigation must contain exactly one %s group" % group_name
+            )
+        if matches.sequence != sequence:
+            raise RuntimeError(
+                "FACODI %s menu group has an unexpected sequence" % group_name
+            )
+        group_roots[group_name] = matches
+
+    expected_children = {
+        "Explore": {
+            "/courses",
+            "/roadmaps",
+            "/curricular-units",
+            "/explore/areas",
+            "/explore/content",
+            "/explore/videos",
+        },
+        "Community": {
+            "/blog",
+            "/submissions/new?type=resource",
+        },
+    }
+    for group_name, required_urls in expected_children.items():
+        child_urls = set(
+            Menu.search(
+                [
+                    ("website_id", "=", facodi_website.id),
+                    ("parent_id", "=", group_roots[group_name].id),
+                ]
+            ).mapped("url")
+        )
+        missing = required_urls - child_urls
+        if missing:
+            raise RuntimeError(
+                "FACODI %s navigation is missing: %s"
+                % (group_name, ", ".join(sorted(missing)))
+            )
+
+    stale_top_level_urls = {
         "/slides",
+        "/courses",
         "/roadmaps",
         "/curricular-units",
         "/unidades-curriculares",
-    }
-    legacy_learn_groups = Menu.search(
-        [
-            ("website_id", "=", facodi_website.id),
-            ("parent_id", "=", main_menu.id),
-            ("url", "=", "#"),
-            ("name", "in", ["Learn", "Learning"]),
-        ]
-    )
-    for learn_menu in legacy_learn_groups:
-        children = Menu.search([("parent_id", "=", learn_menu.id)])
-        if not children or set(children.mapped("url")).issubset(legacy_learning_urls):
-            learn_menu.unlink()
-
-    canonical_top_level = (
-        ("about", "/sobre", 20, ("/manifesto", "/comunidade", "/parceiros")),
-        ("news", "/blog", 30, ()),
-        ("contribute", "/contribuir/recurso", 40, ("/como-contribuir", "/contribuir")),
-        ("contact", "/contact", 50, ("/contactus",)),
-    )
-    for key, url, sequence, aliases in canonical_top_level:
-        canonical_root(key, url, sequence, aliases=aliases)
-
-    orphan_roots = Menu.search(
-        [
-            ("website_id", "=", facodi_website.id),
-            ("parent_id", "=", False),
-            ("id", "!=", main_menu.id),
-            ("url", "in", ["/sobre", "/blog", "/contribuir/recurso", "/contactus"]),
-        ]
-    )
-    orphan_roots.filtered(lambda menu: not menu.child_id).unlink()
-
-    legacy_urls = (
-        "/roadmap",
-        "/mapa-curricular",
-        "/curriculos",
-        "/manifesto",
-        "/comunidade",
-        "/parceiros",
-        "/como-contribuir",
+        "/explore/areas",
+        "/explore/content",
+        "/explore/videos",
+        "/blog",
+        "/forum",
+        "/contribuir/recurso",
         "/contribuir",
-    )
-    leftover_legacy = Menu.search(
+        "/submissions/new?type=resource",
+    }
+    stale = Menu.search(
         [
             ("website_id", "=", facodi_website.id),
-            ("url", "in", list(legacy_urls)),
+            ("parent_id", "=", facodi_website.menu_id.id),
+            ("url", "in", list(stale_top_level_urls)),
         ]
     )
-    if leftover_legacy:
-        leftover_legacy.unlink()
+    if stale:
+        raise RuntimeError(
+            "FACODI navigation still contains stale top-level entries: %s"
+            % ", ".join(stale.mapped("url"))
+        )
 
     env.cr.commit()
     """
