@@ -76,6 +76,25 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("source=faq_contact_cta", faq)
         self.assertIn("source=forum_postit_contact_cta", forum_postit)
 
+    def test_contextual_forum_and_native_next_tab_contract(self):
+        learning_root = ROOT / "addons/facodi-learning/facodi_learning"
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+
+        manifest = (learning_root / "__manifest__.py").read_text()
+        community = (learning_root / "controllers/community.py").read_text()
+        portal = (learning_root / "controllers/portal.py").read_text()
+        portal_view = (learning_root / "views/portal_home.xml").read_text()
+        portal_styles = (theme_root / "static/src/scss/portal.scss").read_text()
+
+        self.assertIn('"website_forum"', manifest)
+        self.assertIn('"/community/new"', community)
+        self.assertIn('/ask?', community)
+        self.assertIn('{"question", "share"}', community)
+        self.assertIn("next_slide_id", portal)
+        self.assertIn('"continue_url"', portal)
+        self.assertIn('data-facodi-next-tab="1"', portal_view)
+        self.assertIn(".facodi-portal-next-tab", portal_styles)
+
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
