@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `771928a975c7ba07e1034edf84051b4218ddff3c` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `47c7e3258e6c7532bfac53d284ebd8456b79bbb8` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `234228e72675f6c819599ae9bcb01a7dcaf82c89` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
