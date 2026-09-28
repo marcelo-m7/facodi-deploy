@@ -311,6 +311,35 @@ try {
         console.log("PASS portal-home mobile 390x844");
         await context.close();
     }
+
+    // The backend keeps MuK as its theme while Monodoo contributes only the
+    // neutral application Home/launcher.
+    {
+        const context = await browser.newContext({ viewport: viewports.desktop });
+        const page = await context.newPage();
+        await page.goto(baseUrl + "/web/login?redirect=/odoo", {
+            waitUntil: "domcontentloaded",
+            timeout: 30000,
+        });
+        await page.locator('input[name="login"]').fill("admin");
+        await page.locator('input[name="password"]').fill("facodi-ci-admin");
+        await page.locator('form.oe_login_form button[type="submit"]').click();
+        await page.locator(".o_monodoo_home").first().waitFor({
+            state: "visible",
+            timeout: 30000,
+        });
+        await page.locator(".o_monodoo_all_apps").first().waitFor({
+            state: "visible",
+            timeout: 10000,
+        });
+        await assertViewport(page, "Monodoo Home with MuK");
+        await page.screenshot({
+            path: path.join(screenshotDir, "backend-monodoo-home-muk-desktop.png"),
+            fullPage: true,
+        });
+        console.log("PASS backend Monodoo Home with muk_web_theme");
+        await context.close();
+    }
 } finally {
     await browser.close();
 }

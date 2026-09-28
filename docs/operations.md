@@ -87,7 +87,7 @@ Use this sequence for the first production adoption of the new Compose lifecycle
 7. Observe the services in order: `db`, then one-shot `migrate`, then `odoo`.
 8. Require the `migrate` service to exit successfully. If it fails, do not bypass the gate and do not manually start the new `odoo` service against the partially migrated database.
 9. Require the `odoo` service health check for `/web/login` to become healthy.
-10. Verify `facodi.com`, existing courses, Website pages, attachments and media, then authenticate to the backend and verify `/odoo` renders the standard Odoo webclient before re-enabling unattended redeploy behavior.
+10. Verify `facodi.com`, existing courses, Website pages, attachments and media, then authenticate to the backend and verify `/odoo` renders Monodoo Home inside the `muk_web_theme` backend shell before re-enabling unattended redeploy behavior.
 
 The migration service intentionally blocks the persistent Odoo service on non-zero exit.
 

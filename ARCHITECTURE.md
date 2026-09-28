@@ -54,7 +54,7 @@ FACODI uses Odoo 19's standard Forum as the canonical community and reputation l
 
 The deployment does not create a parallel community model and does not seed fictional discussions, users, reputation or one forum per course. FACODI-owned addons may add educational context or Campus Paper presentation around these standard records, but the standard Odoo records and access rules remain authoritative.
 
-The image also makes the pinned addon sources available. Retired Monodoo/Monynha modules are explicitly uninstalled by the migration and are not part of the installation contract.
+The image also makes the pinned addon sources available. `muk_web_theme` remains the backend theme, while only `monodoo_core` and `monodoo_home` are installed from Monodoo to provide the application launcher/Home. Monodoo theme/backend-polish modules, Monynha modules and OnlyOffice are explicitly retired by the migration and are not part of the installation contract.
 
 ### Supabase processing plane
 
