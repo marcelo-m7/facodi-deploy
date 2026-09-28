@@ -102,8 +102,8 @@ For an existing database, the migration first uninstalls retired optional backen
 After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 
 - update the complete canonical module set;
-- activate `en_US`, `pt_PT`, `es_ES` and `fr_FR`;
-- make English the Website default;
+- activate `en_GB`, `pt_PT`, `es_ES` and `fr_FR`;
+- make English (UK) the Website default;
 - expose the four languages on the Website;
 - load theme translations;
 - apply `theme_facodi` through the native theme mechanism;
