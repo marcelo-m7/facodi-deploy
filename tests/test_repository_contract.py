@@ -50,6 +50,22 @@ class RepositoryContractTest(unittest.TestCase):
             ).strip()
             self.assertEqual(actual, expected, path)
 
+    def test_contextual_contribution_safe_projection_contract(self):
+        learning_root = ROOT / "addons/facodi-learning/facodi_learning"
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+
+        controller = (learning_root / "controllers/submission.py").read_text()
+        model = (learning_root / "models/contextual_submission.py").read_text()
+        view = (learning_root / "views/website_submission.xml").read_text()
+        styles = (theme_root / "static/src/scss/enriched_surfaces.scss").read_text()
+
+        self.assertIn("_facodi_contributor_context_rows", controller)
+        self.assertIn("_facodi_contributor_context_rows", model)
+        self.assertGreaterEqual(view.count('data-facodi-captured-context="1"'), 2)
+        self.assertNotIn('t-esc="submission.source_page_url"', view)
+        self.assertIn(".facodi-captured-context", styles)
+        self.assertIn('minmax(#{"min(100%, 12rem)"}, 1fr)', styles)
+
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
