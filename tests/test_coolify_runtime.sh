@@ -138,6 +138,19 @@ print("FACODI_BACKEND_HOME=monodoo_home")
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
+hero_view = env.ref("theme_facodi.s_facodi_hero", raise_if_not_found=False)
+if not hero_view:
+    raise RuntimeError("FACODI hero snippet view is missing")
+hero_arch = str(hero_view.arch_db or "")
+for marker in (
+    'data-facodi-dither-veil="1"',
+    'data-src="/theme_facodi/static/src/img/banner.png"',
+    'facodi-dither-veil__canvas',
+):
+    if marker not in hero_arch:
+        raise RuntimeError(f"FACODI hero Dither Veil contract missing: {marker}")
+print("FACODI_DITHER_VEIL=canvas,source,interaction")
+
 community_modules = env["ir.module.module"].search([
     ("name", "in", ["website_forum", "website_slides_forum"]),
 ])
@@ -366,6 +379,7 @@ require_runtime_state() {
 }
 
 require_runtime_state 'FACODI_DEFAULT_LANG=en_US'
+require_runtime_state 'FACODI_DITHER_VEIL=canvas,source,interaction'
 runtime_languages="$(sed -n 's/^FACODI_LANGS=//p' <<<"$state")"
 if [[ -z "$runtime_languages" ]]; then
   echo "Runtime Website language inventory is missing" >&2
