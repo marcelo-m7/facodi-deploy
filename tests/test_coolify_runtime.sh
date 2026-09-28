@@ -346,7 +346,17 @@ PY
 } 2>&1)"
 
 echo "$state"
-grep -Fq 'FACODI_INSTALLED_MODULES=facodi_ai,facodi_ai_website,facodi_learning,theme_facodi' <<<"$state"
+installed_modules="$(sed -n 's/^FACODI_INSTALLED_MODULES=//p' <<<"$state")"
+if [[ -z "$installed_modules" ]]; then
+  echo "Runtime installed-module inventory is missing" >&2
+  exit 1
+fi
+for module in facodi_ai facodi_ai_website facodi_learning theme_facodi monodoo_core monodoo_home muk_web_theme; do
+  if ! grep -Eq "(^|,)${module}(,|$)" <<<"$installed_modules"; then
+    echo "Runtime installed-module inventory is missing ${module}: ${installed_modules}" >&2
+    exit 1
+  fi
+done
 grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
 for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
