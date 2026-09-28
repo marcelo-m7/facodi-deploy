@@ -383,7 +383,7 @@ for route in (
   "/fr/",
   "/courses",
   "/explore",
-  "/curricular-units",
+  "/curricular-units",\n  "/contact",
   "/explore/areas",
   "/explore/content",
   "/explore/videos",
