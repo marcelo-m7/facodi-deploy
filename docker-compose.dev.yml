@@ -47,7 +47,8 @@ services:
       - ./addons/facodi-learning:/mnt/extra-addons/facodi-learning
       - ./addons/facodi-theme:/mnt/extra-addons/facodi-theme
       - ./addons/muk_web_theme-19.0.1.4.9:/mnt/extra-addons/muk-web-theme
-      - ./addons/monodoo:/mnt/extra-addons/monodoo
+      - ./addons/monodoo/monodoo_core:/mnt/extra-addons/monodoo/monodoo_core
+      - ./addons/monodoo/monodoo_home:/mnt/extra-addons/monodoo/monodoo_home
       - ./vendor/odoo-design-themes:/mnt/extra-addons/odoo-design-themes
       - facodi-dev-odoo:/var/lib/odoo
 
