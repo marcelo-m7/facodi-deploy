@@ -77,6 +77,51 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("source=faq_contact_cta", faq)
         self.assertIn("source=forum_postit_contact_cta", forum_postit)
 
+    def test_public_contextual_ctas_have_human_provenance_labels(self):
+        learning_root = ROOT / "addons/facodi-learning/facodi_learning"
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+
+        model_source = (learning_root / "models/contextual_submission.py").read_text()
+        model_tree = ast.parse(model_source)
+        registry_keys = set()
+        for node in model_tree.body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "_SOURCE_CTA_LABELS"
+                for target in node.targets
+            ):
+                self.assertIsInstance(node.value, ast.Dict)
+                registry_keys = {
+                    key.value
+                    for key in node.value.keys
+                    if isinstance(key, ast.Constant) and isinstance(key.value, str)
+                }
+                break
+        self.assertTrue(registry_keys, "_SOURCE_CTA_LABELS registry is missing")
+
+        public_sources = set()
+        source_in_url = re.compile(r"source=([a-z0-9][a-z0-9_-]{0,63})")
+        source_mapping = re.compile(
+            r"""["']source["']\s*:\s*["']([a-z0-9][a-z0-9_-]{0,63})["']"""
+        )
+        for root in (learning_root / "views", theme_root / "views"):
+            for xml_path in root.rglob("*.xml"):
+                public_sources.update(source_in_url.findall(xml_path.read_text()))
+        for py_path in (
+            learning_root / "controllers",
+            learning_root / "models",
+        ):
+            for source_path in py_path.rglob("*.py"):
+                source = source_path.read_text()
+                public_sources.update(source_in_url.findall(source))
+                public_sources.update(source_mapping.findall(source))
+
+        missing = sorted(public_sources - registry_keys)
+        self.assertFalse(
+            missing,
+            "Public contextual CTA source(s) lack a human provenance label: "
+            + ", ".join(missing),
+        )
+
     def test_contextual_forum_and_native_next_tab_contract(self):
         learning_root = ROOT / "addons/facodi-learning/facodi_learning"
         theme_root = ROOT / "addons/facodi-theme/theme_facodi"
