@@ -12,11 +12,11 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/facodi-learning",
     "addons/facodi-theme",
     "addons/muk_web_theme-19.0.1.4.9",
-    "addons/onlyoffice_odoo",
+    "addons/monodoo",
     "vendor/odoo-design-themes",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -31,7 +31,8 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/muk_web_theme-19.0.1.4.9/muk_web_theme/__manifest__.py").is_file())
-        self.assertTrue((ROOT / "addons/onlyoffice_odoo/onlyoffice_odoo/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_core/__manifest__.py").is_file())
+        self.assertTrue((ROOT / "addons/monodoo/monodoo_home/__manifest__.py").is_file())
         self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
 
     def test_exact_integration_pins_match_superproject_gitlinks(self):
@@ -270,12 +271,38 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("website_forum", FACODI_MODULES.split(","))
         self.assertIn("website_slides_forum", FACODI_MODULES.split(","))
 
+    def test_monodoo_home_coexists_with_muk_without_monodoo_theme(self):
+        modules = FACODI_MODULES.split(",")
+        self.assertIn("muk_web_theme", modules)
+        self.assertIn("monodoo_core", modules)
+        self.assertIn("monodoo_home", modules)
+        for module in (
+            "monodoo_theme",
+            "monodoo_backend",
+            "monodoo_appsbar",
+            "monodoo_views",
+            "monodoo_chatter",
+            "monodoo_dialog",
+            "onlyoffice_odoo",
+        ):
+            self.assertNotIn(module, modules)
+
+        home_manifest = ast.literal_eval(
+            (ROOT / "addons/monodoo/monodoo_home/__manifest__.py").read_text()
+        )
+        self.assertEqual(home_manifest["depends"], ["web", "monodoo_core"])
+        home_style = (
+            ROOT / "addons/monodoo/monodoo_home/static/src/home/home.scss"
+        ).read_text()
+        self.assertIn("var(--monodoo-bg, var(--bs-body-bg, #fff))", home_style)
+
     def test_removed_addon_sources_are_not_present_in_runtime_contract(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
-        for module in ("monodoo", "monynha"):
+        for module in ("onlyoffice_odoo", "monynha", "monodoo_theme"):
             self.assertNotIn(module, compose)
             self.assertNotIn(module, entrypoint)
+        self.assertFalse((ROOT / "addons/onlyoffice_odoo").exists())
 
     def test_generated_local_state_is_ignored(self):
         ignored = (ROOT / ".gitignore").read_text()
