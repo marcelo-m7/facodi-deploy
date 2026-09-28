@@ -157,40 +157,36 @@ class MigrationContractTest(unittest.TestCase):
 
     def test_navigation_normalization_is_website_scoped_and_runs_after_theme(self):
         text = MIGRATION.read_text()
-        self.assertIn('("website_id", "=", facodi_website.id)', text)
+        normalize = text.split("def normalize_public_navigation(", 1)[1].split(
+            "\ndef ", 1
+        )[0]
+        self.assertIn("facodi_reconcile_navigation", normalize)
+        self.assertIn('default_lang_id != lang_en', normalize)
+        self.assertIn('"Explore", 10', normalize)
+        self.assertIn('"Community", 20', normalize)
         for route in (
             "/courses",
-            "/slides",
             "/roadmaps",
             "/curricular-units",
-            "/unidades-curriculares",
-            "/sobre",
+            "/explore/areas",
+            "/explore/content",
+            "/explore/videos",
             "/blog",
-            "/contribuir/recurso",
-            "/contact",
+            "/submissions/new?type=resource",
+            "/sobre",
             "/contactus",
         ):
-            self.assertIn(route, text)
-        for legacy in (
-            "/roadmap",
-            "/mapa-curricular",
-            "/curriculos",
-            "/manifesto",
-            "/comunidade",
-            "/parceiros",
-            "/como-contribuir",
+            self.assertIn(route, normalize)
+        for stale in (
+            "/slides",
+            "/unidades-curriculares",
+            "/contribuir/recurso",
             "/contribuir",
         ):
-            self.assertIn(legacy, text)
-        for label in (
-            '"pt_PT": "Notícias"',
-        ):
-            self.assertIn(label, text)
-        self.assertIn("with_context(lang=lang).write", text)
-        self.assertIn("legacy_learn_groups", text)
-        self.assertIn("legacy_learning_urls", text)
-        self.assertIn("duplicates.unlink()", text)
-        self.assertIn('("url", "=", "#")', text)
+            self.assertIn(stale, normalize)
+        self.assertIn("stale_top_level_urls", normalize)
+        self.assertIn("expected_children", normalize)
+        self.assertIn("exactly one", normalize)
         self.assertLess(
             text.rindex("apply_theme("),
             text.rindex("normalize_public_navigation("),
@@ -207,11 +203,11 @@ class MigrationContractTest(unittest.TestCase):
             "<facodi-navigation-normalization>",
             "exec",
         )
-        self.assertIn("canonical_root", payload)
-        self.assertIn("legacy_learn_groups", payload)
-        self.assertIn("legacy_learning_urls", payload)
-        self.assertIn("canonical_top_level", payload)
-        self.assertIn("legacy_urls", payload)
+        self.assertIn("facodi_reconcile_navigation", payload)
+        self.assertIn("expected_roots", payload)
+        self.assertIn("expected_children", payload)
+        self.assertIn("stale_top_level_urls", payload)
+        self.assertIn("default_lang_id", payload)
 
 
     def test_fresh_or_domainless_single_website_is_an_unambiguous_bootstrap(self):
