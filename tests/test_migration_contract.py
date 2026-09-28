@@ -39,7 +39,6 @@ class MigrationContractTest(unittest.TestCase):
             "configure_languages",
             "apply_theme",
             "configure_processing_plane",
-            "normalize_public_navigation",
         ):
             self.assertIn(f"def {name}", text)
         self.assertNotIn("website.page", text)
@@ -63,7 +62,6 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
             mock.patch.object(migration, "configure_processing_plane"),
-            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -98,7 +96,6 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
             mock.patch.object(migration, "configure_processing_plane"),
-            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -123,7 +120,6 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
             mock.patch.object(migration, "configure_processing_plane"),
-            mock.patch.object(migration, "normalize_public_navigation"),
         ):
             migration.main()
 
@@ -139,76 +135,10 @@ class MigrationContractTest(unittest.TestCase):
         self.assertIn("monodoo_backend", payload)
         self.assertIn("theme_monynha", payload)
 
-    def test_language_configuration_reconciles_explore_after_activation(self):
+    def test_deploy_does_not_reconcile_editor_managed_navigation(self):
         text = MIGRATION.read_text()
-        configure = text.split("def configure_languages(", 1)[1].split(
-            "def apply_theme(", 1
-        )[0]
-        self.assertIn("facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr", configure)
-        self.assertIn("facodi_reconcile_navigation", configure)
-        self.assertIn(
-            'env["website.menu"].with_context(website_id=facodi_website.id)',
-            configure,
-        )
-        self.assertLess(
-            configure.index("facodi_website.language_ids"),
-            configure.index("facodi_reconcile_navigation"),
-        )
-
-    def test_navigation_normalization_is_website_scoped_and_runs_after_theme(self):
-        text = MIGRATION.read_text()
-        normalize = text.split("def normalize_public_navigation(", 1)[1].split(
-            "\ndef ", 1
-        )[0]
-        self.assertIn("facodi_reconcile_navigation", normalize)
-        self.assertIn('default_lang_id != lang_en', normalize)
-        self.assertIn('"Explore", 10', normalize)
-        self.assertIn('"Community", 20', normalize)
-        for route in (
-            "/courses",
-            "/roadmaps",
-            "/curricular-units",
-            "/explore/areas",
-            "/explore/content",
-            "/explore/videos",
-            "/blog",
-            "/submissions/new?type=resource",
-            "/sobre",
-            "/contactus",
-        ):
-            self.assertIn(route, normalize)
-        for stale in (
-            "/slides",
-            "/unidades-curriculares",
-            "/contribuir/recurso",
-            "/contribuir",
-        ):
-            self.assertIn(stale, normalize)
-        self.assertIn("stale_top_level_urls", normalize)
-        self.assertIn("expected_children", normalize)
-        self.assertIn("exactly one", normalize)
-        self.assertLess(
-            text.rindex("apply_theme("),
-            text.rindex("normalize_public_navigation("),
-        )
-
-    def test_navigation_normalization_payload_is_valid_python(self):
-        migration = load_migration_module()
-        with mock.patch.object(migration, "run_shell") as shell:
-            migration.normalize_public_navigation("/tmp/odoo.conf", "facodi")
-
-        payload = shell.call_args.args[2]
-        compile(
-            migration.textwrap.dedent(payload),
-            "<facodi-navigation-normalization>",
-            "exec",
-        )
-        self.assertIn("facodi_reconcile_navigation", payload)
-        self.assertIn("expected_roots", payload)
-        self.assertIn("expected_children", payload)
-        self.assertIn("stale_top_level_urls", payload)
-        self.assertIn("default_lang_id", payload)
-
+        self.assertNotIn("def normalize_public_navigation", text)
+        self.assertNotIn("facodi_reconcile_navigation", text)
 
     def test_fresh_or_domainless_single_website_is_an_unambiguous_bootstrap(self):
         migration = load_migration_module()
@@ -236,7 +166,6 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "configure_languages") as configure,
             mock.patch.object(migration, "apply_theme") as apply_theme,
             mock.patch.object(migration, "configure_processing_plane") as processing,
-            mock.patch.object(migration, "normalize_public_navigation") as normalize,
         ):
             migration.main()
 
@@ -247,9 +176,6 @@ class MigrationContractTest(unittest.TestCase):
             "/tmp/odoo.conf", "facodi", fresh_database=True
         )
         processing.assert_called_once_with("/tmp/odoo.conf", "facodi")
-        normalize.assert_called_once_with(
-            "/tmp/odoo.conf", "facodi", fresh_database=True
-        )
 
     def test_processing_plane_configuration_is_fail_closed_and_selects_supabase(self):
         migration = load_migration_module()
@@ -289,15 +215,11 @@ class MigrationContractTest(unittest.TestCase):
             payload,
         )
 
-    def test_processing_plane_configuration_runs_after_theme_before_navigation(self):
+    def test_processing_plane_configuration_runs_after_theme(self):
         text = MIGRATION.read_text()
         self.assertLess(
             text.rindex("apply_theme("),
             text.rindex("configure_processing_plane("),
-        )
-        self.assertLess(
-            text.rindex("configure_processing_plane("),
-            text.rindex("normalize_public_navigation("),
         )
 
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
