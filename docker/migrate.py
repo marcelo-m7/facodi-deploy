@@ -14,13 +14,13 @@ UPDATE_MODULES = (
     "facodi_ai",
     "facodi_ai_website",
     "muk_web_theme",
-    "onlyoffice_odoo",
+    "monodoo_core",
+    "monodoo_home",
 )
 
 RETIRED_MODULES = (
+    "onlyoffice_odoo",
     "monodoo_backend",
-    "monodoo_core",
-    "monodoo_home",
     "monodoo_theme",
     "monodoo_appsbar",
     "monodoo_views",
