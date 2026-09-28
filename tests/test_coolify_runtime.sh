@@ -357,12 +357,30 @@ for module in facodi_ai facodi_ai_website facodi_learning theme_facodi monodoo_c
     exit 1
   fi
 done
-grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
+require_runtime_state() {
+  local expected="$1"
+  if ! grep -Fq "$expected" <<<"$state"; then
+    echo "Runtime state is missing expected value: $expected" >&2
+    exit 1
+  fi
+}
+
+require_runtime_state 'FACODI_DEFAULT_LANG=en_US'
+runtime_languages="$(sed -n 's/^FACODI_LANGS=//p' <<<"$state")"
+if [[ -z "$runtime_languages" ]]; then
+  echo "Runtime Website language inventory is missing" >&2
+  exit 1
+fi
+runtime_languages_csv=",$runtime_languages,"
 for code in en_US pt_PT es_ES fr_FR; do
-  grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
+  if [[ "$runtime_languages_csv" != *",$code,"* ]]; then
+    echo "Runtime Website language inventory is missing $code: $runtime_languages" >&2
+    exit 1
+  fi
 done
-grep -Fq 'FACODI_LESTI_CURRICULUM=1941:43' <<<"$state"
-grep -Fq 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state' <<<"$state"
+require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
+require_runtime_state 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state'
+echo "PASS runtime state inventory"
 runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
 if [[ -z "$runtime_community_token" ]]; then
   echo "Runtime community submission token is missing" >&2
