@@ -194,6 +194,55 @@ if len(curriculum.unit_ids) != 43:
     raise RuntimeError(f"UAlg LESTI curriculum expected 43 units, got {len(curriculum.unit_ids)}")
 print(f"FACODI_LESTI_CURRICULUM={curriculum.external_programme_code}:{len(curriculum.unit_ids)}")
 
+design_inventory = []
+for programme_code, external_id, expected_units in (
+  ("1930", "ualg-1930-2026-27", 19),
+  ("1454", "ualg-1454-2026-27", 41),
+):
+  reference = env["facodi.learning.curriculum.reference"].search(
+    [
+      ("provider", "=", "ualg"),
+      ("external_id", "=", external_id),
+    ],
+    limit=1,
+  )
+  if not reference:
+    raise RuntimeError(f"UAlg design curriculum {external_id} is missing")
+  if not reference.website_published or not reference.validated_at:
+    raise RuntimeError(f"UAlg design curriculum {external_id} is not publicly validated")
+  if reference.external_programme_code != programme_code:
+    raise RuntimeError(
+      f"UAlg design curriculum {external_id} has unexpected programme code "
+      f"{reference.external_programme_code!r}"
+    )
+  if len(reference.unit_ids) != expected_units:
+    raise RuntimeError(
+      f"UAlg design curriculum {external_id} expected {expected_units} units, "
+      f"got {len(reference.unit_ids)}"
+    )
+  design_inventory.append(f"{programme_code}:{len(reference.unit_ids)}")
+print("FACODI_DESIGN_CURRICULA=" + ",".join(design_inventory))
+
+expected_dtm_support = {"19301001", "19301006", "19301008", "19301009"}
+dtm_reference = env["facodi.learning.curriculum.reference"].search(
+  [("provider", "=", "ualg"), ("external_id", "=", "ualg-1930-2026-27")],
+  limit=1,
+)
+dtm_coverage = env["facodi.learning.curriculum.coverage"].search(
+  [
+    ("curriculum_unit_id.reference_id", "=", dtm_reference.id),
+    ("state", "=", "approved"),
+    ("coverage_type", "=", "supports"),
+  ]
+)
+dtm_codes = set(dtm_coverage.mapped("curriculum_unit_id.external_unit_code"))
+if not expected_dtm_support.issubset(dtm_codes):
+  raise RuntimeError(
+    "DTM approved support coverage is missing expected units: "
+    + ",".join(sorted(expected_dtm_support - dtm_codes))
+  )
+print("FACODI_DTM_SUPPORTS=" + ",".join(sorted(expected_dtm_support)))
+
 unit = curriculum.unit_ids.filtered(
   lambda record: record.external_unit_code == "19411018"
 )
@@ -412,6 +461,8 @@ for code in en_US pt_PT es_ES fr_FR; do
   fi
 done
 require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
+require_runtime_state 'FACODI_DESIGN_CURRICULA=1930:19,1454:41'
+require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301008,19301009'
 require_runtime_state 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state'
 echo "PASS runtime state inventory"
 runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
