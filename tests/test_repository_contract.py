@@ -241,6 +241,8 @@ class RepositoryContractTest(unittest.TestCase):
             dockerfile,
         )
         self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
+        self.assertIn("monodoo_core|monodoo_home", dockerfile)
+        self.assertIn("/opt/facodi-addon-sources/monodoo/*", dockerfile)
 
     def test_dockerfile_installs_facodi_ai_python_runtime(self):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
