@@ -227,6 +227,45 @@ review = env["facodi.learning.content.review"].create(
 review.with_user(admin).action_approve()
 slide.write({"is_published": True, "website_published": True})
 
+# Seed a real native Odoo video slide. This protects the exact fullscreen
+# rendering path used by production FACODI courses without depending on an
+# external metadata request during CI.
+video_slide = env["slide.slide"].with_context(
+  website_slides_skip_fetch_metadata=True
+).create(
+  {
+    "channel_id": course.id,
+    "name": "FACODI Runtime YouTube Video",
+    "slide_category": "video",
+    "source_type": "external",
+    "video_url": "https://www.youtube.com/watch?v=w9gb71ZUJDs",
+    "is_published": False,
+    "website_published": False,
+    "is_preview": True,
+  }
+)
+video_review = env["facodi.learning.content.review"].create(
+  {
+    "slide_id": video_slide.id,
+    "author": "FACODI CI",
+    "rights_mode": "external",
+    "source_url": "https://www.youtube.com/watch?v=w9gb71ZUJDs",
+    "usage_basis": "Public YouTube URL used only to validate native Odoo video embedding.",
+    "purpose": "Protect FACODI fullscreen video rendering in the disposable runtime.",
+  }
+)
+video_review.with_user(admin).action_approve()
+video_slide.write({"is_published": True, "website_published": True})
+if video_slide.slide_category != "video":
+    raise RuntimeError("Runtime YouTube fixture was not preserved as video")
+if video_slide.slide_type != "youtube_video":
+    raise RuntimeError(
+      f"Runtime YouTube fixture expected youtube_video, got {video_slide.slide_type!r}"
+    )
+if not video_slide.youtube_id or "youtube-nocookie.com/embed/" not in str(video_slide.embed_code):
+    raise RuntimeError("Runtime YouTube fixture did not produce the native Odoo embed")
+print("FACODI_RUNTIME_VIDEO=" + video_slide.website_url)
+
 module = env["facodi.learning.curriculum.module"].create(
   {
     "name": "FACODI Runtime Public Module",
@@ -315,8 +354,9 @@ if [[ -z "$runtime_course_route" || -z "$runtime_roadmap_route" || -z "$runtime_
   exit 1
 fi
 runtime_module_route="$(sed -n 's/^FACODI_RUNTIME_MODULE=//p' <<<"$state")"
-if [[ -z "$runtime_module_route" ]]; then
-  echo "Runtime curriculum module route is missing" >&2
+runtime_video_route="$(sed -n 's/^FACODI_RUNTIME_VIDEO=//p' <<<"$state")"
+if [[ -z "$runtime_module_route" || -z "$runtime_video_route" ]]; then
+  echo "Runtime curriculum module/video route is missing" >&2
   exit 1
 fi
 
@@ -595,6 +635,7 @@ if [[ "${FACODI_BROWSER_ACCEPTANCE:-0}" == "1" ]]; then
   FACODI_BROWSER_ROADMAP_ROUTE="$runtime_roadmap_route" \
   FACODI_BROWSER_UNIT_ROUTE="$runtime_unit_route" \
   FACODI_BROWSER_MODULE_ROUTE="$runtime_module_route" \
+  FACODI_BROWSER_VIDEO_ROUTE="$runtime_video_route" \
   FACODI_BROWSER_CHROME_BIN="$FACODI_BROWSER_CHROME_BIN" \
   FACODI_BROWSER_SCREENSHOT_DIR="$FACODI_BROWSER_SCREENSHOT_DIR" \
     node tests/test_campus_paper_browser.mjs

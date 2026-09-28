@@ -15,6 +15,7 @@ const courseRoute = required("FACODI_BROWSER_COURSE_ROUTE");
 const roadmapRoute = required("FACODI_BROWSER_ROADMAP_ROUTE");
 const unitRoute = required("FACODI_BROWSER_UNIT_ROUTE");
 const moduleRoute = required("FACODI_BROWSER_MODULE_ROUTE");
+const videoRoute = required("FACODI_BROWSER_VIDEO_ROUTE");
 
 await fs.mkdir(screenshotDir, { recursive: true });
 
@@ -132,6 +133,51 @@ try {
         await page.locator(testCase.selector).first().waitFor({ state: "visible", timeout: 5000 });
         await assertViewport(page, testCase.name);
         console.log(`PASS ${testCase.name} desktop`);
+        await context.close();
+    }
+
+    // Exercise the same native fullscreen video surface used by production
+    // lessons. The FACODI shell may restyle it, but the Odoo-generated YouTube
+    // iframe must remain mounted, visible and large enough to be usable.
+    {
+        const context = await browser.newContext({ viewport: viewports.desktop });
+        const page = await openPage(
+            context,
+            videoRoute + "?fullscreen=1",
+            "fullscreen native video"
+        );
+        await page.locator(".facodi-study-player").first().waitFor({
+            state: "visible",
+            timeout: 10000,
+        });
+        const iframe = page.locator(
+            '.facodi-study-player__content iframe[src*="youtube-nocookie.com/embed/"]'
+        ).first();
+        await iframe.waitFor({ state: "visible", timeout: 10000 });
+        const box = await iframe.boundingBox();
+        if (!box || box.width < 640 || box.height < 360) {
+            throw new Error(
+                `fullscreen native video: unusable iframe bounds ${JSON.stringify(box)}`
+            );
+        }
+        const category = await page.locator("body").evaluate(() => {
+            const player = document.querySelector(".facodi-study-player__content");
+            return {
+                playerWidth: player?.getBoundingClientRect().width || 0,
+                playerHeight: player?.getBoundingClientRect().height || 0,
+            };
+        });
+        if (category.playerWidth < 640 || category.playerHeight < 360) {
+            throw new Error(
+                `fullscreen native video: content surface collapsed ${JSON.stringify(category)}`
+            );
+        }
+        await assertViewport(page, "fullscreen native video");
+        await page.screenshot({
+            path: path.join(screenshotDir, "fullscreen-native-video-desktop.png"),
+            fullPage: true,
+        });
+        console.log("PASS fullscreen native video desktop");
         await context.close();
     }
 
