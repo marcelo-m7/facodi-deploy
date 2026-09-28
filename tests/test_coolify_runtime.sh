@@ -138,6 +138,19 @@ print("FACODI_BACKEND_HOME=monodoo_home")
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
+hero_view = env.ref("theme_facodi.s_facodi_hero", raise_if_not_found=False)
+if not hero_view:
+    raise RuntimeError("FACODI hero snippet view is missing")
+hero_arch = str(hero_view.arch_db or "")
+for marker in (
+    'data-facodi-dot-grid="1"',
+    'data-facodi-dither-veil="1"',
+    'facodi-dither-veil__canvas',
+):
+    if marker not in hero_arch:
+        raise RuntimeError(f"FACODI hero snippet lost interaction marker: {marker}")
+print("FACODI_HERO_INTERACTIONS=dot-grid,dither-veil")
+
 community_modules = env["ir.module.module"].search([
     ("name", "in", ["website_forum", "website_slides_forum"]),
 ])
@@ -348,6 +361,7 @@ PY
 echo "$state"
 grep -Fq 'FACODI_INSTALLED_MODULES=facodi_ai,facodi_ai_website,facodi_learning,monodoo_core,monodoo_home,muk_web_theme,theme_facodi' <<<"$state"
 grep -Fq 'FACODI_DEFAULT_LANG=en_US' <<<"$state"
+grep -Fq 'FACODI_HERO_INTERACTIONS=dot-grid,dither-veil' <<<"$state"
 for code in en_US pt_PT es_ES fr_FR; do
   grep -Eq "FACODI_LANGS=.*(^|,)${code}(,|$)|FACODI_LANGS=.*${code}" <<<"$state"
 done
@@ -450,16 +464,6 @@ for route in (
     if response.status != 200:
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
-    if route == "/":
-        for marker in (
-          b'data-facodi-dot-grid="1"',
-          b'data-facodi-dither-veil="1"',
-          b'class="facodi-dither-veil__canvas"',
-        ):
-          if marker not in body:
-            raise RuntimeError(
-              f"homepage lost FACODI hero interaction marker: {marker!r}"
-            )
     if route == "/explore":
         for marker in (b"/explore/areas", b"/explore/content", b"/explore/videos", b"/explore/courses"):
           if marker not in body:
