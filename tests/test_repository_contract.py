@@ -376,5 +376,20 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("Cloud Run", readme)
         self.assertNotIn("terraform apply", operations.lower())
 
+    def test_public_contact_ctas_use_canonical_contact_entrypoint(self):
+        learning_slides = (
+            ROOT / "addons/facodi-learning/facodi_learning/views/website_slides.xml"
+        ).read_text()
+        self.assertIn("/contact?course_id=%s", learning_slides)
+        self.assertNotIn("/submissions/new?type=contact", learning_slides)
+
+        snippet_root = ROOT / "addons/facodi-theme/theme_facodi/views/snippets"
+        snippet_sources = "\n".join(
+            path.read_text()
+            for path in snippet_root.rglob("*.xml")
+        )
+        self.assertIn("/contact?source=", snippet_sources)
+        self.assertNotIn("/submissions/new?type=contact", snippet_sources)
+
 if __name__ == "__main__":
     unittest.main()
