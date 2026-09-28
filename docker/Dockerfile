@@ -25,6 +25,10 @@ RUN set -eux; \
       [ -e "$manifest" ] || continue; \
       d="$(dirname "$manifest")"; \
       n="$(basename "$d")"; \
+      case "$d" in \
+        /opt/facodi-addon-sources/monodoo/*) \
+          case "$n" in monodoo_core|monodoo_home) ;; *) continue ;; esac ;; \
+      esac; \
       test ! -e "/mnt/extra-addons/$n"; \
       cp -a "$d" "/mnt/extra-addons/$n"; \
       found=1; \
