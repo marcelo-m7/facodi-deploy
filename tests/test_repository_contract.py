@@ -129,6 +129,8 @@ class RepositoryContractTest(unittest.TestCase):
             "faq_contact_cta",
             "contextual-resource-intake-mobile.png",
             "contextual-faq-contact-mobile.png",
+            "backend-monodoo-home-muk-desktop.png",
+            ".o_monodoo_home",
             ".facodi-portal-toolbox-heading",
             "permanent 301",
             "maxRedirects: 0",
