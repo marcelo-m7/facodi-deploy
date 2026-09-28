@@ -113,7 +113,7 @@ state="$({
 website = env["website"].search([], order="id", limit=1)
 if not website:
     raise RuntimeError("FACODI Website record is missing")
-expected_modules = ("facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_website")
+expected_modules = ("facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_website", "muk_web_theme", "monodoo_core", "monodoo_home")
 modules = env["ir.module.module"].search([("name", "in", list(expected_modules))])
 module_states = {module.name: module.state for module in modules}
 if set(module_states) != set(expected_modules):
@@ -121,6 +121,20 @@ if set(module_states) != set(expected_modules):
 if any(state != "installed" for state in module_states.values()):
     raise RuntimeError("One or more FACODI modules are not fully installed")
 print("FACODI_INSTALLED_MODULES=" + ",".join(sorted(expected_modules)))
+retired_modules = env["ir.module.module"].search([
+    ("name", "in", ["onlyoffice_odoo", "monodoo_theme", "monodoo_backend", "monodoo_appsbar"]),
+    ("state", "=", "installed"),
+])
+if retired_modules:
+    raise RuntimeError(
+        "Retired backend modules remain installed: " + ",".join(retired_modules.mapped("name"))
+    )
+home_action = env.ref("monodoo_home.action_monodoo_home", raise_if_not_found=False)
+home_menu = env.ref("monodoo_home.menu_monodoo_home", raise_if_not_found=False)
+if not home_action or not home_menu:
+    raise RuntimeError("Monodoo Home launcher records are missing")
+print("FACODI_BACKEND_THEME=muk_web_theme")
+print("FACODI_BACKEND_HOME=monodoo_home")
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
