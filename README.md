@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `f24bee1bd86726a651aa37c9e0974b8d909436c6` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `2af48b5f6e5a53d0cb060e76907441d3ab820414` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `657f493b407ca9f552f9b20280c2ac204f07b0c7` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `cca64dd084d563e91c90c0584aec117cebf3dee9` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. The public contribution front door is a single contextual intake; `/contribuir/recurso` remains only a compatibility alias to the same controller, while metadata discovery and tokenized status URLs stay stable. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -167,4 +167,4 @@ The native Odoo Website navigation now groups the main discovery routes under th
 The unified FACODI intake now includes a context-preserving type switcher for learning resources, contacts, corrections and questions. Switching type retains sanitized CTA provenance and public curriculum/course/lesson context; the theme renders the selector in the Digital Highlighter Campus visual language.
 
 
-Contributor review now supports a non-terminal Changes Requested loop: editors leave a contributor-safe reply, the owner revises the same tracked contribution, and resubmission returns it to review without creating a duplicate record. Contributor-facing status and edit surfaces now show a privacy-safe context summary (type, source CTA label, section and still-public academic/learning context) while raw origin URLs, tracking tokens and internal review notes stay hidden.
+Contributor review now supports a non-terminal Changes Requested loop: editors leave a contributor-safe reply, the owner revises the same tracked contribution, and resubmission returns it to review without creating a duplicate record. Contributor-facing status and edit surfaces now show a privacy-safe context summary (type, source CTA label, section and still-public academic/learning context) while raw origin URLs, tracking tokens and internal review notes stay hidden. FAQ and community contact CTAs retain their exact source and preselect the Collaboration topic through the canonical `/contact` intake.
