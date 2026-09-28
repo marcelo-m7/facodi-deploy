@@ -122,6 +122,52 @@ class RepositoryContractTest(unittest.TestCase):
             + ", ".join(missing),
         )
 
+    def test_public_contextual_sections_have_human_labels(self):
+        learning_root = ROOT / "addons/facodi-learning/facodi_learning"
+        theme_root = ROOT / "addons/facodi-theme/theme_facodi"
+
+        controller_source = (
+            learning_root / "controllers/contextual_submission.py"
+        ).read_text()
+        controller_tree = ast.parse(controller_source)
+        section_keys = set()
+        for node in ast.walk(controller_tree):
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "section_labels"
+                for target in node.targets
+            ):
+                self.assertIsInstance(node.value, ast.Dict)
+                section_keys = {
+                    key.value
+                    for key in node.value.keys
+                    if isinstance(key, ast.Constant) and isinstance(key.value, str)
+                }
+                break
+        self.assertTrue(section_keys, "section_labels registry is missing")
+
+        public_sections = set()
+        section_in_url = re.compile(r"section=([a-z0-9][a-z0-9_-]{0,63})")
+        section_mapping = re.compile(
+            r"""["']section["']\s*:\s*["']([a-z0-9][a-z0-9_-]{0,63})["']"""
+        )
+        for root in (learning_root / "views", theme_root / "views"):
+            for xml_path in root.rglob("*.xml"):
+                public_sections.update(section_in_url.findall(xml_path.read_text()))
+        for py_root in (
+            learning_root / "controllers",
+            learning_root / "models",
+        ):
+            for source_path in py_root.rglob("*.py"):
+                source = source_path.read_text()
+                public_sections.update(section_in_url.findall(source))
+                public_sections.update(section_mapping.findall(source))
+
+        missing = sorted(public_sections - section_keys)
+        self.assertFalse(
+            missing,
+            "Public contextual section(s) lack a human label: " + ", ".join(missing),
+        )
+
     def test_contextual_forum_and_native_next_tab_contract(self):
         learning_root = ROOT / "addons/facodi-learning/facodi_learning"
         theme_root = ROOT / "addons/facodi-theme/theme_facodi"
