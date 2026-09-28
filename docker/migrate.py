@@ -318,14 +318,6 @@ def configure_languages(
 
     facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr
 
-    # facodi_learning owns the Explore discovery tree. Reconcile it again only
-    # after the Website languages are active so translated menu names are
-    # persisted for PT/ES/FR on fresh installs as well as upgrades.
-    Menu = env["website.menu"].with_context(website_id=facodi_website.id)
-    if hasattr(Menu, "facodi_reconcile_navigation"):
-        if not Menu.facodi_reconcile_navigation():
-            raise RuntimeError("FACODI Explore navigation reconciliation failed")
-
     env.cr.commit()
     """
     run_shell(config, database, payload)
@@ -401,134 +393,6 @@ def configure_processing_plane(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
-def normalize_public_navigation(
-    config: str, database: str, *, fresh_database: bool = False
-) -> None:
-    payload = _website_selector_payload(fresh_database=fresh_database) + """
-    # Navigation ownership lives in facodi_learning. The deployment migration
-    # invokes the module's idempotent reconciler after every module/theme update
-    # so a reset database, an old menu tree, and a normal upgrade converge to
-    # exactly the same public navigation.
-    Menu = env["website.menu"].with_context(
-        website_id=facodi_website.id,
-        active_test=False,
-    )
-    if not hasattr(Menu, "facodi_reconcile_navigation"):
-        raise RuntimeError(
-            "facodi_learning navigation reconciler is unavailable after module update"
-        )
-    if not Menu.facodi_reconcile_navigation():
-        raise RuntimeError("FACODI public navigation reconciliation failed")
-
-    # English is the canonical public language. The reconciler writes this too,
-    # but assert it here so the migration fails closed instead of deploying a
-    # website with a stale Portuguese/default-language setting.
-    lang_en = env.ref("base.lang_en")
-    if facodi_website.default_lang_id != lang_en:
-        facodi_website.default_lang_id = lang_en
-
-    expected_roots = {
-        "/": ("Home", 5),
-        "/sobre": ("About", 30),
-        "/contactus": ("Contact", 40),
-    }
-    for url, (name, sequence) in expected_roots.items():
-        matches = Menu.search(
-            [
-                ("website_id", "=", facodi_website.id),
-                ("parent_id", "=", facodi_website.menu_id.id),
-                ("url", "=", url),
-            ]
-        )
-        if len(matches) != 1:
-            raise RuntimeError(
-                "FACODI navigation must contain exactly one top-level %s menu" % name
-            )
-        if matches.sequence != sequence:
-            raise RuntimeError("FACODI %s menu has an unexpected sequence" % name)
-
-    group_roots = {}
-    for group_name, sequence in (("Explore", 10), ("Community", 20)):
-        matches = Menu.with_context(lang="en_US").search(
-            [
-                ("website_id", "=", facodi_website.id),
-                ("parent_id", "=", facodi_website.menu_id.id),
-                ("url", "=", "#"),
-                ("name", "=", group_name),
-            ]
-        )
-        if len(matches) != 1:
-            raise RuntimeError(
-                "FACODI navigation must contain exactly one %s group" % group_name
-            )
-        if matches.sequence != sequence:
-            raise RuntimeError(
-                "FACODI %s menu group has an unexpected sequence" % group_name
-            )
-        group_roots[group_name] = matches
-
-    expected_children = {
-        "Explore": {
-            "/courses",
-            "/roadmaps",
-            "/curricular-units",
-            "/explore/areas",
-            "/explore/content",
-            "/explore/videos",
-        },
-        "Community": {
-            "/blog",
-            "/submissions/new?type=resource",
-        },
-    }
-    for group_name, required_urls in expected_children.items():
-        child_urls = set(
-            Menu.search(
-                [
-                    ("website_id", "=", facodi_website.id),
-                    ("parent_id", "=", group_roots[group_name].id),
-                ]
-            ).mapped("url")
-        )
-        missing = required_urls - child_urls
-        if missing:
-            raise RuntimeError(
-                "FACODI %s navigation is missing: %s"
-                % (group_name, ", ".join(sorted(missing)))
-            )
-
-    stale_top_level_urls = {
-        "/slides",
-        "/courses",
-        "/roadmaps",
-        "/curricular-units",
-        "/unidades-curriculares",
-        "/explore/areas",
-        "/explore/content",
-        "/explore/videos",
-        "/blog",
-        "/forum",
-        "/contribuir/recurso",
-        "/contribuir",
-        "/submissions/new?type=resource",
-    }
-    stale = Menu.search(
-        [
-            ("website_id", "=", facodi_website.id),
-            ("parent_id", "=", facodi_website.menu_id.id),
-            ("url", "in", list(stale_top_level_urls)),
-        ]
-    )
-    if stale:
-        raise RuntimeError(
-            "FACODI navigation still contains stale top-level entries: %s"
-            % ", ".join(stale.mapped("url"))
-        )
-
-    env.cr.commit()
-    """
-    run_shell(config, database, payload)
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
@@ -560,9 +424,6 @@ def main() -> None:
         args.config, args.database, fresh_database=initialize
     )
     configure_processing_plane(args.config, args.database)
-    normalize_public_navigation(
-        args.config, args.database, fresh_database=initialize
-    )
 
 
 if __name__ == "__main__":
