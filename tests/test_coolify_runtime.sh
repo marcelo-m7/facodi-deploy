@@ -248,7 +248,8 @@ video_review = env["facodi.learning.content.review"].create(
   {
     "slide_id": video_slide.id,
     "author": "FACODI CI",
-    "rights_mode": "external_open",
+    "rights_mode": "external",
+    "source_url": "https://www.youtube.com/watch?v=w9gb71ZUJDs",
     "usage_basis": "Public YouTube URL used only to validate native Odoo video embedding.",
     "purpose": "Protect FACODI fullscreen video rendering in the disposable runtime.",
   }
