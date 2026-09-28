@@ -135,6 +135,87 @@ try {
         await context.close();
     }
 
+    // Follow a real contextual CTA from a public curricular-unit gap into the
+    // unified intake. This proves the browser experience carries the learning
+    // context rather than merely accepting equivalent query parameters.
+    {
+        const context = await browser.newContext({ viewport: viewports.mobile });
+        const page = await openPage(context, unitRoute, "contextual resource CTA");
+        const contribution = page.locator(
+            'a[href*="/submissions/new?"][href*="type=resource"][href*="source=unit_resource_cta"]'
+        ).first();
+        await contribution.waitFor({ state: "visible", timeout: 5000 });
+        await contribution.click();
+        await page.waitForURL(/\/submissions\/new\?/, { timeout: 30000 });
+
+        for (const selector of [
+            '[data-facodi-submission-form="1"]',
+            '[data-facodi-contribution-brief="1"]',
+            'input[name="submission_type"][value="resource"]',
+            'input[name="source_cta"][value="unit_resource_cta"]',
+            'input[name="source_section"][value="resources"]',
+            'select[name="resource_type"]',
+            'textarea[name="context"]',
+        ]) {
+            await page.locator(selector).first().waitFor({ state: "attached", timeout: 5000 });
+        }
+
+        const carriedUnitId = await page.locator('input[name="curriculum_unit_id"]').inputValue();
+        if (!carriedUnitId) {
+            throw new Error("contextual resource CTA: curricular-unit id was not carried into the intake");
+        }
+        const briefText = await page.locator('[data-facodi-contribution-brief="1"]').innerText();
+        if (!briefText.includes("Curricular unit")) {
+            throw new Error("contextual resource CTA: contribution brief lost curricular-unit context");
+        }
+        await assertViewport(page, "contextual resource intake mobile");
+        await page.screenshot({
+            path: path.join(screenshotDir, "contextual-resource-intake-mobile.png"),
+            fullPage: true,
+        });
+        console.log("PASS contextual resource intake mobile 390x844");
+        await context.close();
+    }
+
+    // The canonical contact route also accepts explicit CTA provenance. The
+    // visible copy must stay human-readable while the hidden source remains
+    // available to editorial routing.
+    {
+        const context = await browser.newContext({ viewport: viewports.mobile });
+        const route = "/contact?source=faq_contact_cta&section=faq&topic=collaboration";
+        const page = await openPage(context, route, "contextual FAQ contact");
+
+        for (const selector of [
+            '[data-facodi-submission-form="1"]',
+            '[data-facodi-contribution-brief="1"]',
+            'input[name="submission_type"][value="contact"]',
+            'input[name="source_cta"][value="faq_contact_cta"]',
+            'input[name="source_section"][value="faq"]',
+            'select[name="contact_topic"]',
+        ]) {
+            await page.locator(selector).first().waitFor({ state: "attached", timeout: 5000 });
+        }
+
+        const topic = await page.locator('select[name="contact_topic"]').inputValue();
+        if (topic !== "collaboration") {
+            throw new Error(`contextual FAQ contact: expected collaboration topic, got ${topic}`);
+        }
+        const bodyText = await page.locator("body").innerText();
+        if (!bodyText.includes("FAQ contact")) {
+            throw new Error("contextual FAQ contact: human-readable CTA origin is missing");
+        }
+        if (bodyText.includes("faq_contact_cta")) {
+            throw new Error("contextual FAQ contact: technical CTA slug leaked into visible copy");
+        }
+        await assertViewport(page, "contextual FAQ contact mobile");
+        await page.screenshot({
+            path: path.join(screenshotDir, "contextual-faq-contact-mobile.png"),
+            fullPage: true,
+        });
+        console.log("PASS contextual FAQ contact mobile 390x844");
+        await context.close();
+    }
+
     // One authenticated mobile smoke proves the canonical portal renders and
     // keeps the native Odoo toolbox. Avoid copy assertions so translations can
     // evolve without breaking the deployment gate.
