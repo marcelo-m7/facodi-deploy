@@ -107,6 +107,7 @@ if [[ "$healthy" -ne 1 ]]; then
   exit 1
 fi
 
+set +e
 state="$({
   "${compose[@]}" exec -T odoo bash -lc \
     'odoo shell --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$DB_USER" --db_password="$DB_PASSWORD" -d "$ODOO_DB"' <<'PY'
@@ -357,6 +358,13 @@ admin.password = "facodi-ci-admin"
 env.cr.commit()
 PY
 } 2>&1)"
+state_status=$?
+set -e
+if [[ "$state_status" -ne 0 ]]; then
+  echo "$state" >&2
+  echo "Runtime fixture shell failed with status $state_status" >&2
+  exit "$state_status"
+fi
 
 echo "$state"
 installed_modules="$(sed -n 's/^FACODI_INSTALLED_MODULES=//p' <<<"$state")"
