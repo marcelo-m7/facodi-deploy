@@ -504,7 +504,7 @@ def normalize_public_navigation(
         ("about", "/sobre", 20, ("/manifesto", "/comunidade", "/parceiros")),
         ("news", "/blog", 30, ()),
         ("contribute", "/contribuir/recurso", 40, ("/como-contribuir", "/contribuir")),
-        ("contact", "/contactus", 50, ()),
+        ("contact", "/contact", 50, ("/contactus",)),
     )
     for key, url, sequence, aliases in canonical_top_level:
         canonical_root(key, url, sequence, aliases=aliases)
