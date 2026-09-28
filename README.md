@@ -2,6 +2,8 @@
 
 `facodi-deploy` is the canonical deployment-composition repository for the FACODI Odoo 19 Community runtime serving `facodi.com` through the existing Coolify resource.
 
+An isolated Compute Engine deployment option lives in [`deploy/gcp/README.md`](deploy/gcp/README.md). It is not connected to the live Coolify volumes or domain.
+
 The repository does not own FACODI business logic. It pins independent addon repositories, builds one reproducible Odoo image, defines the canonical Coolify Compose lifecycle, and provides the migration and acceptance tests that must pass before a revision is deployed.
 
 ## Canonical runtime

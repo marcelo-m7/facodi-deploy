@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - staging
+      - deploy/gcp
 
 permissions:
   contents: read
@@ -29,6 +30,11 @@ jobs:
 
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+
+      - name: Validate GCP deployment contract
+        run: |
+          FACODI_IMAGE=facodi-gcp:ci docker compose --env-file deploy/gcp/.env.example -f deploy/gcp/docker-compose.yml config --quiet
+          python3 -m unittest tests/test_gcp_deploy.py -v
 
   validate-coolify-runtime:
     runs-on: ubuntu-latest
@@ -67,6 +73,11 @@ jobs:
 
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+
+      - name: Validate GCP deployment contract
+        run: |
+          FACODI_IMAGE=facodi-gcp:ci docker compose --env-file deploy/gcp/.env.example -f deploy/gcp/docker-compose.yml config --quiet
+          python3 -m unittest tests/test_gcp_deploy.py -v
 
       - name: Exercise clean-install Odoo runtime and browser smoke tests
         env:

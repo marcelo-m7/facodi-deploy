@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${GCP_DB_PASSWORD:?Set GCP_DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: ${FACODI_IMAGE:?Set FACODI_IMAGE}
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: &odoo_env
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: odoo
+      DB_PASSWORD: ${GCP_DB_PASSWORD:?Set GCP_DB_PASSWORD}
+      ODOO_DB: facodi
+      ODOO_ADMIN_PASSWD: ${GCP_ODOO_ADMIN_PASSWORD:?Set GCP_ODOO_ADMIN_PASSWORD}
+      FACODI_MODULES: facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum
+      FACODI_WEBSITE_DOMAIN: ${FACODI_GCP_DOMAIN:?Set FACODI_GCP_DOMAIN}
+      FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP: ${FACODI_ALLOW_SINGLE_WEBSITE_BOOTSTRAP:-0}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+      SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      PORT: "8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+
+  odoo:
+    image: ${FACODI_IMAGE:?Set FACODI_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *odoo_env
+      ODOO_WORKERS: ${ODOO_WORKERS:-2}
+      ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-1}
+      ODOO_GEVENT_PORT: "8072"
+    volumes:
+      - odoo-data:/var/lib/odoo
+    expose:
+      - "8069"
+      - "8072"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=5).close()\""]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 60s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      odoo:
+        condition: service_healthy
+    environment:
+      FACODI_GCP_DOMAIN: ${FACODI_GCP_DOMAIN:?Set FACODI_GCP_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+  odoo-data:
+  caddy-data:
+  caddy-config:
