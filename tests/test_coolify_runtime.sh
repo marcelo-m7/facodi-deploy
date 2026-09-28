@@ -584,8 +584,15 @@ for route in (
           raise RuntimeError("community queue did not canonicalize the YouTube URL")
     if route == "/roadmaps":
         curriculum_body = body
-        if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
-            raise RuntimeError("public roadmap page does not expose the validated LESTI reference")
+        for marker in (
+          b"Engenharia de Sistemas e Tecnologias Inform",
+          b"Design e Tecnologias Multim",
+          b"Design de Comunica",
+        ):
+          if marker not in body:
+            raise RuntimeError(
+              f"public roadmap page does not expose validated UAlg reference: {marker!r}"
+            )
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
         if b'href="/submissions/new?' not in body:
@@ -658,6 +665,23 @@ for contextual_route, expected_markers in (
         f"contextual intake lost pre-filled marker {marker!r}: {contextual_route}"
       )
   print(f"PASS contextual intake {contextual_route}")
+
+catalogue_roadmaps = urllib.request.urlopen(
+  base + "/facodi/home/catalogue-fragment?type=roadmaps", timeout=15
+)
+catalogue_roadmaps_body = catalogue_roadmaps.read()
+if catalogue_roadmaps.status != 200:
+  raise RuntimeError("homepage Roadmaps catalogue fragment is unavailable")
+for marker in (
+  b"Engenharia de Sistemas e Tecnologias Inform",
+  b"Design e Tecnologias Multim",
+  b"Design de Comunica",
+):
+  if marker not in catalogue_roadmaps_body:
+    raise RuntimeError(
+      f"homepage Roadmaps selector is missing validated UAlg reference: {marker!r}"
+    )
+print("PASS homepage Roadmaps catalogue fragment")
 
 for localized_submission_route in (
   "/pt/submissions/new",
