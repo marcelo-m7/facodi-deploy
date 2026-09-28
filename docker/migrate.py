@@ -8,6 +8,15 @@ import re
 import subprocess
 import textwrap
 
+UPDATE_MODULES = (
+    "facodi_learning",
+    "theme_facodi",
+    "facodi_ai",
+    "facodi_ai_website",
+    "muk_web_theme",
+    "onlyoffice_odoo",
+)
+
 RETIRED_MODULES = (
     "monodoo_backend",
     "monodoo_core",
@@ -21,6 +30,10 @@ RETIRED_MODULES = (
     "monynha_content",
     "monynha_lead_generator",
 )
+
+
+def log_stage(message: str) -> None:
+    print(f"[facodi-migrate] {message}", flush=True)
 
 
 def run(command: list[str], *, input_text: str | None = None) -> None:
@@ -403,27 +416,59 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    requested_modules = parse_modules(args.modules)
+    update_modules = [name for name in UPDATE_MODULES if name in requested_modules]
+    if not update_modules:
+        raise RuntimeError("No FACODI-managed modules are present in FACODI_MODULES")
+
     initialize = not registry_exists(args.database)
+    log_stage(
+        "bootstrap clean database" if initialize else "upgrade persisted database"
+    )
     if initialize:
+        log_stage("install requested module set")
         run_module_operation(args.config, args.database, args.modules, initialize=True)
     else:
+        log_stage("inspect legacy registry state")
         state = inspect_legacy_state()
         if state == "legacy":
+            log_stage("transition legacy website_facodi theme metadata")
             transition_legacy_theme()
 
+        log_stage("uninstall retired FACODI modules")
         uninstall_retired_modules(args.config, args.database)
         to_install = missing_modules(args.database, args.modules)
         if to_install:
+            log_stage(f"install newly required modules: {to_install}")
             run_module_operation(args.config, args.database, to_install, initialize=True)
-        run_module_operation(args.config, args.database, args.modules, initialize=False)
 
+        managed_updates = ",".join(update_modules)
+        log_stage(f"update managed modules: {managed_updates}")
+        run_module_operation(
+            args.config,
+            args.database,
+            managed_updates,
+            initialize=False,
+        )
+
+    log_stage("activate Website languages and translations")
     configure_languages(
         args.config, args.database, fresh_database=initialize
     )
-    apply_theme(
-        args.config, args.database, fresh_database=initialize
-    )
+    if initialize:
+        # button_choose_theme() is a bootstrap action. Reapplying a theme to a
+        # persisted Website can rewrite editor-managed views and is not required
+        # for a normal module upgrade.
+        log_stage("apply FACODI theme to fresh Website")
+        apply_theme(
+            args.config, args.database, fresh_database=True
+        )
+    else:
+        log_stage("preserve already-applied theme on persisted Website")
+
+    log_stage("configure processing plane")
     configure_processing_plane(args.config, args.database)
+    log_stage("migration completed successfully")
 
 
 if __name__ == "__main__":
