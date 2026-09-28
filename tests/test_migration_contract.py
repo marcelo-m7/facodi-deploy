@@ -73,7 +73,10 @@ class MigrationContractTest(unittest.TestCase):
             operation.call_args_list[0].args[2],
             "facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum",
         )
-        self.assertEqual(operation.call_args_list[1].args[2], FACODI_MODULES)
+        self.assertEqual(
+            operation.call_args_list[1].args[2],
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo",
+        )
 
     def test_existing_database_updates_without_reinitializing_installed_modules(self):
         migration = load_migration_module()
@@ -101,7 +104,65 @@ class MigrationContractTest(unittest.TestCase):
 
         self.assertEqual(len(operation.call_args_list), 1)
         self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
-        self.assertEqual(operation.call_args_list[0].args[2], FACODI_MODULES)
+        self.assertEqual(
+            operation.call_args_list[0].args[2],
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo",
+        )
+
+    def test_existing_database_does_not_reapply_theme(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(migration, "missing_modules", return_value=""),
+            mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "run_module_operation"),
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme") as apply_theme,
+            mock.patch.object(migration, "configure_processing_plane"),
+        ):
+            migration.main()
+
+        apply_theme.assert_not_called()
+
+    def test_existing_database_does_not_force_update_standard_community_modules(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(migration, "missing_modules", return_value=""),
+            mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "run_module_operation") as operation,
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
+        ):
+            migration.main()
+
+        updated = operation.call_args.args[2]
+        self.assertNotIn("website_forum", updated)
+        self.assertNotIn("website_slides_forum", updated)
+        self.assertIn("facodi_learning", updated)
+        self.assertIn("theme_facodi", updated)
+
+    def test_migration_emits_named_runtime_stages(self):
+        text = MIGRATION.read_text()
+        self.assertIn("[facodi-migrate]", text)
+        self.assertIn("upgrade persisted database", text)
+        self.assertIn("update managed modules", text)
+        self.assertIn("migration completed successfully", text)
 
     def test_existing_database_uninstalls_retired_modules_before_update(self):
         migration = load_migration_module()
