@@ -139,9 +139,20 @@ print("FACODI_BACKEND_HOME=monodoo_home")
 print("FACODI_DEFAULT_LANG=" + website.default_lang_id.code)
 print("FACODI_LANGS=" + ",".join(sorted(website.language_ids.mapped("code"))))
 
-hero_view = env.ref("theme_facodi.s_facodi_hero", raise_if_not_found=False)
+hero_view = env["ir.ui.view"].search(
+    [
+        ("key", "=", "theme_facodi.s_facodi_hero"),
+        ("website_id", "=", website.id),
+    ],
+    limit=1,
+)
 if not hero_view:
-    raise RuntimeError("FACODI hero snippet view is missing")
+    hero_view = env["ir.ui.view"].search(
+        [("key", "=", "theme_facodi.s_facodi_hero")],
+        limit=1,
+    )
+if not hero_view:
+    raise RuntimeError("FACODI hero snippet Website view is missing")
 hero_arch = str(hero_view.arch_db or "")
 for marker in (
     'data-facodi-dot-grid="1"',
