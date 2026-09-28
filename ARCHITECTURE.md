@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `97504f230d7791294e6d62d4a24eb27e1c15c0a2` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `3a046cde56256eba2980b284bac3d25d988b3290` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `e173ae1c6a41094380492c1ee2061e30a243b5c9` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `6be44418a1fe1b10cb1761313207cd137ce10a71` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -41,6 +41,12 @@ The runtime requests these modules through `FACODI_MODULES`:
 The authenticated learner home is standard Odoo Portal at `/my/home`, extended by `facodi_learning` through `CustomerPortal._prepare_home_portal_values()` and by `theme_facodi` through a scoped Digital Highlighter Campus presentation layer. Native portal authentication, account/security cards, sidebar identity, and module-owned portal entries remain authoritative. FACODI adds only learner-specific course/contribution projections for the signed-in user. Course membership and completion come directly from standard `slide.channel.partner`; no parallel learner-progress model is introduced. The legacy `/minha-facodi` URL permanently redirects with `301` to `/my/home`.
 
 Academic Map is a reviewed public curriculum projection inside `/my/home`: covered/partial/gap come from approved FACODI coverage, while “ON YOUR DESK” only means an enrolled course participates in that reviewed coverage. It is not a transcript, completion record or equivalence claim. Campus Pulse reads active top-level `forum.post` records through the requesting user's normal ACLs and website scope; `website_forum` remains the canonical discussion model.
+
+### Contextual community hand-off
+
+`facodi_learning` may enrich the transition into the standard Odoo Forum composer through `/community/new`. That route validates public curricular-unit/course/lesson context, then redirects to the native `/forum/<forum>/ask` flow with editable title/body suggestions. `forum.post`, moderation, karma, notifications and publication remain owned by `website_forum`; no FACODI discussion model is introduced.
+
+Minha FACODI likewise reuses native learner state. For an active enrollment, `slide.channel.partner.next_slide_id` is the only source for the "Next tab" continuation target; FACODI does not calculate or store a competing next-lesson pointer.
 
 ### Standard community foundation
 
