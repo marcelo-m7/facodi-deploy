@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `eafb938e3b904e8ce86d396549d66d5e90ae9ae2` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `3192ed1cfa4cf61d265c851f856e74cbbda71a6a` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `8f13a5db4e2d8711cffd747b0241aada864a37a1` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `234228e72675f6c819599ae9bcb01a7dcaf82c89` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. Public contact intent is canonicalized through `/contact`, which preserves source/section/topic and learning context while delegating to the unified contextual intake. The public contribution front door is a single contextual intake; `/contribuir/recurso` remains only a compatibility alias to the same controller, while metadata discovery and tokenized status URLs stay stable. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
