@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `169680425fc4c0206baccd49a5d091d63beb793e` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `c6d9bfd887aff86c08e4bcad85db0fa7d350e59c` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `f24bee1bd86726a651aa37c9e0974b8d909436c6` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `2af48b5f6e5a53d0cb060e76907441d3ab820414` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -111,7 +111,7 @@ FACODI discovery navigation is reconciled against the website-specific root for 
 
 ### Context-aware contribution flow
 
-FACODI keeps one Odoo-owned submission model and one guided public form. `/submissions/new` is the contextual entry point for resource/contact/correction/question workflows; CTA query context is sanitized before it is persisted or rendered. Curricular units, Roadmaps, reusable module pages, course pages, Explore/community-video surfaces and Minha FACODI pass only bounded identifiers/slugs/selections. Authenticated contact data is read from the current partner as a convenience, not as a new profile store. `/contribuir/recurso` remains supported for compatibility.
+FACODI keeps one Odoo-owned submission model and one guided public form. `/submissions/new` is the contextual entry point for resource/contact/correction/question workflows; CTA query context is sanitized before it is persisted or rendered. Contributor-visible status/edit views expose only a safe projection of that captured context and never echo raw source-page URLs, tracking tokens or internal editorial notes. Curricular units, Roadmaps, reusable module pages, course pages, Explore/community-video surfaces and Minha FACODI pass only bounded identifiers/slugs/selections. Authenticated contact data is read from the current partner as a convenience, not as a new profile store. `/contribuir/recurso` remains supported for compatibility.
 
 ### Contextual contact and correction intake
 
