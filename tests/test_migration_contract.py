@@ -6,7 +6,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "docker/migrate.py"
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 def load_migration_module():
@@ -71,11 +71,11 @@ class MigrationContractTest(unittest.TestCase):
         )
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo,website_forum,website_slides_forum",
+            "facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum",
         )
         self.assertEqual(
             operation.call_args_list[1].args[2],
-            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,onlyoffice_odoo",
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home",
         )
 
     def test_existing_database_updates_without_reinitializing_installed_modules(self):
@@ -92,7 +92,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmuk_web_theme\nonlyoffice_odoo\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
+                return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmonodoo_core\nmonodoo_home\nmuk_web_theme\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
             ),
             mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "run_module_operation") as operation,
@@ -193,7 +193,10 @@ class MigrationContractTest(unittest.TestCase):
 
         payload = shell.call_args.args[2]
         self.assertIn("button_immediate_uninstall", payload)
+        self.assertIn("onlyoffice_odoo", payload)
         self.assertIn("monodoo_backend", payload)
+        self.assertNotIn('"monodoo_core"', payload)
+        self.assertNotIn('"monodoo_home"', payload)
         self.assertIn("theme_monynha", payload)
 
     def test_deploy_does_not_reconcile_editor_managed_navigation(self):
