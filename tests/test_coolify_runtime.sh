@@ -143,13 +143,14 @@ if not hero_view:
     raise RuntimeError("FACODI hero snippet view is missing")
 hero_arch = str(hero_view.arch_db or "")
 for marker in (
-    'data-facodi-dither-veil="1"',
-    'data-src="/theme_facodi/static/src/img/banner.png"',
-    'facodi-dither-veil__canvas',
+    'data-facodi-dot-grid="1"',
+    'facodi-dot-grid__canvas',
+    'data-base-color="#3979C8"',
+    'data-active-color="#37BED2"',
 ):
     if marker not in hero_arch:
-        raise RuntimeError(f"FACODI hero Dither Veil contract missing: {marker}")
-print("FACODI_DITHER_VEIL=canvas,source,interaction")
+        raise RuntimeError(f"FACODI hero Dot Grid contract missing: {marker}")
+print("FACODI_DOT_GRID=canvas,theme,interaction")
 
 community_modules = env["ir.module.module"].search([
     ("name", "in", ["website_forum", "website_slides_forum"]),
@@ -379,7 +380,7 @@ require_runtime_state() {
 }
 
 require_runtime_state 'FACODI_DEFAULT_LANG=en_US'
-require_runtime_state 'FACODI_DITHER_VEIL=canvas,source,interaction'
+require_runtime_state 'FACODI_DOT_GRID=canvas,theme,interaction'
 runtime_languages="$(sed -n 's/^FACODI_LANGS=//p' <<<"$state")"
 if [[ -z "$runtime_languages" ]]; then
   echo "Runtime Website language inventory is missing" >&2
