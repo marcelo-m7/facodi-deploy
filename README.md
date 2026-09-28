@@ -45,8 +45,8 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `e3e79b77588586341ba97a70f07d6d8625dd25e1` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `97504f230d7791294e6d62d4a24eb27e1c15c0a2` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `3a046cde56256eba2980b284bac3d25d988b3290` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `e173ae1c6a41094380492c1ee2061e30a243b5c9` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `6be44418a1fe1b10cb1761313207cd137ce10a71` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. Public contact intent is canonicalized through `/contact`, which preserves source/section/topic and learning context while delegating to the unified contextual intake. The public contribution front door is a single contextual intake; `/contribuir/recurso` remains only a compatibility alias to the same controller, while metadata discovery and tokenized status URLs stay stable. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
@@ -54,6 +54,8 @@ The FACODI learning pin provides the public official-curriculum golden path and 
 The Coolify acceptance gate follows a real curricular unit from the curriculum index through the matrix to its public unit page, and verifies the explicit gap state plus official-source provenance. Canonical public learning indexes now expose authored metadata through standard Odoo Website mechanisms, while legacy aliases remain permanent redirects. Explore filtering and pagination are executed with bounded Odoo ORM queries instead of Python-side catalogue filtering.
 
 The current FACODI theme release also canonicalizes legacy editorial URLs through native Odoo permanent `301` rewrites: `/facodi → /`, `/manifesto → /sobre`, `/comunidade → /sobre`, `/parceiros → /sobre`, `/roadmap → /sobre#how-it-works`, and legacy contribution URLs to `/contribuir/recurso`. The canonical curriculum route `/roadmaps` is never redirected. The footer remains locked to `#0B1325`.
+
+Contextual community hand-offs now preserve curricular-unit, course and lesson context while delegating publishing to standard Odoo Forum at `/forum/<forum>/ask`; FACODI introduces no parallel discussion model. Minha FACODI also continues active learners directly to Odoo's native `slide.channel.partner.next_slide_id` when available, with theme-only presentation around that authoritative state.
 
 The canonical authenticated learner home is now the standard Odoo Portal route `/my/home`. Academic Map and Campus Pulse enrich that standard portal with reviewed curriculum-coverage context and recent ACL-visible Odoo Forum activity. Academic Map reports FACODI content coverage only; it does not claim academic completion or equivalence.
 
