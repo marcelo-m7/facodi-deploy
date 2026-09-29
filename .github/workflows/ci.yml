@@ -126,3 +126,8 @@ jobs:
           FACODI_RUNTIME_SKIP_BUILD: "1"
           FACODI_REQUIRE_EMPTY_DATABASE: "1"
         run: bash tests/test_coolify_runtime.sh
+
+      - name: Prove failed migration does not promote Odoo
+        env:
+          FACODI_IMAGE: facodi-prebuilt:${{ github.sha }}
+        run: bash tests/test_prebuilt_fail_closed.sh
