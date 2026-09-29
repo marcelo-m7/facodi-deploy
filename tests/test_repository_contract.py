@@ -481,6 +481,17 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("packages: write", workflow)
         self.assertNotIn(":latest", workflow)
 
+    def test_prebuilt_fail_closed_gate_is_wired(self):
+        script = ROOT / "tests/test_prebuilt_fail_closed.sh"
+        self.assertTrue(script.is_file())
+        source = script.read_text()
+        self.assertIn("SUPABASE_URL", source)
+        self.assertIn("SUPABASE_SECRET_KEY", source)
+        self.assertIn("failed migration did not promote", source)
+
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("tests/test_prebuilt_fail_closed.sh", workflow)
+
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
