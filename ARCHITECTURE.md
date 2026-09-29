@@ -9,8 +9,8 @@ Business and presentation changes remain in their owning addon repositories:
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | AI runtime and Website integration | `52012480fd9dfea9cb4e03a7f390086f0f0347b4` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `19dcaf5be761add1135a089812f979b572277003` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `8bd17cdf8fbf9120e9e2bf4738a9a204f325a41e` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `f2c71f956d02228c037666a8ae3902d28fd9fcd3` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `5e7e8fd2995141d46916f87e3d09f95a2de1f79f` |
 
 | `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -82,7 +82,7 @@ This is a mix of authorized production observations and checked-in runtime accep
 | Surface | Observed state |
 | --- | --- |
 | Website | ID 1, `Faculdade Comunitária Digital`, domain `https://facodi.com` |
-| Languages | `en_US` default; `pt_PT`, `es_ES`, `fr_FR` available |
+| Languages | `en_GB` default; `pt_PT`, `es_ES`, `fr_FR` available |
 | Website menus | `Explore`, `Community`, `About`; labels translated in all four languages |
 | Menu destinations | Canonical destinations include `/courses`, `/website/search`, `/contact`, `/blog`, `/forum`, `/sobre`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
 | Public route check | Canonical `/courses`, `/blog`, `/forum`, `/contact`, `/sobre`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/sobre#how-it-works` |
