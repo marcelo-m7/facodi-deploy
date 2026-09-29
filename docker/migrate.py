@@ -257,6 +257,26 @@ def uninstall_retired_modules(config: str, database: str) -> None:
     run_shell(config, database, payload)
 
 
+def activate_required_languages(config: str, database: str) -> None:
+    """Activate FACODI website languages before managed module install/update.
+
+    Some managed modules execute website data functions while the registry is
+    loading. Those functions may write translated fields, so the languages must
+    already be active before Odoo processes the module XML data.
+    """
+    payload = """
+    Lang = env["res.lang"].with_context(active_test=False)
+    for code in ("en_GB", "pt_PT", "es_ES", "fr_FR"):
+        lang = Lang.search([("code", "=", code)], limit=1)
+        if not lang or not lang.active:
+            lang = Lang._activate_lang(code)
+        if not lang or not lang.active:
+            raise RuntimeError("Required FACODI language could not be activated: %s" % code)
+    env.cr.commit()
+    """
+    run_shell(config, database, payload)
+
+
 def _website_selector_payload(*, fresh_database: bool = False) -> str:
     fresh_database_literal = "True" if fresh_database else "False"
     return f"""
@@ -438,6 +458,13 @@ def main() -> None:
 
         log_stage("uninstall retired FACODI modules")
         uninstall_retired_modules(args.config, args.database)
+
+        # Activate languages before installing/updating managed modules. Odoo
+        # evaluates module XML data during these operations, and FACODI website
+        # reconciliation writes translated menu fields at that time.
+        log_stage("pre-activate Website languages for module update")
+        activate_required_languages(args.config, args.database)
+
         to_install = missing_modules(args.database, args.modules)
         if to_install:
             log_stage(f"install newly required modules: {to_install}")
