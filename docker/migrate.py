@@ -314,7 +314,7 @@ def configure_languages(
 ) -> None:
     payload = _website_selector_payload(fresh_database=fresh_database) + """
     Lang = env["res.lang"]
-    lang_en = env.ref("base.lang_en")
+    lang_en = Lang._activate_lang("en_GB")
     lang_pt = Lang._activate_lang("pt_PT")
     lang_es = Lang._activate_lang("es_ES")
     lang_fr = Lang._activate_lang("fr_FR")
@@ -330,6 +330,7 @@ def configure_languages(
     theme._update_translations(["pt_PT", "es_ES", "fr_FR"])
 
     facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr
+    facodi_website.default_lang_id = lang_en
 
     env.cr.commit()
     """
