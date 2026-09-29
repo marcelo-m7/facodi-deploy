@@ -484,7 +484,7 @@ require_runtime_state() {
   fi
 }
 
-require_runtime_state 'FACODI_DEFAULT_LANG=en_US'
+require_runtime_state 'FACODI_DEFAULT_LANG=en_GB'
 require_runtime_state 'FACODI_DOT_GRID=canvas,theme,interaction'
 runtime_languages="$(sed -n 's/^FACODI_LANGS=//p' <<<"$state")"
 if [[ -z "$runtime_languages" ]]; then
@@ -492,7 +492,7 @@ if [[ -z "$runtime_languages" ]]; then
   exit 1
 fi
 runtime_languages_csv=",$runtime_languages,"
-for code in en_US pt_PT es_ES fr_FR; do
+for code in en_GB pt_PT es_ES fr_FR; do
   if [[ "$runtime_languages_csv" != *",$code,"* ]]; then
     echo "Runtime Website language inventory is missing $code: $runtime_languages" >&2
     exit 1
