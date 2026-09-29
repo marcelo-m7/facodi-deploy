@@ -97,9 +97,9 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `onlyoffice_odoo`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `monodoo_core`, `monodoo_home`). Retired modules such as OnlyOffice are removed through Odoo's standard uninstall API before the managed update set runs. Standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
 
-After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
+Before installing or updating managed modules on an existing database, the migration activates `en_GB`, `pt_PT`, `es_ES` and `fr_FR`. This pre-activation is required because Odoo may evaluate translated Website data while module XML is loading. After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 
 - update the complete canonical module set;
 - activate `en_GB`, `pt_PT`, `es_ES` and `fr_FR`;
@@ -143,6 +143,31 @@ Then verify operational persistence using real existing content:
 7. inspect `db`, `migrate` and `odoo` logs for migration, filestore, asset or permission errors.
 
 Do not treat a healthy login route alone as proof that the migration preserved production content or that the backend assets loaded successfully.
+
+## 6.1 Production verification after a successful deployment
+
+After Coolify reports the revision healthy, confirm the deployed database itself rather than relying only on CI:
+
+- the Odoo API is reachable for the production database;
+- `facodi_learning`, `theme_facodi`, `facodi_ai` and `facodi_ai_website` are in `installed` state;
+- `website_forum` and `website_slides_forum` remain installed;
+- `en_GB`, `pt_PT`, `es_ES` and `fr_FR` are active;
+- the FACODI Website domain is `https://facodi.com` and its default language remains `en_GB`;
+- public acceptance routes and the authenticated backend still respond.
+
+For the 2026-09-29 migration recovery, the production verification state after deployment was:
+
+```text
+facodi_learning     19.0.1.129.0
+theme_facodi        19.0.10.66.0
+facodi_ai           19.0.1.1.0
+facodi_ai_website   19.0.1.0.0
+website_forum       19.0.1.2
+website_slides_forum 19.0.1.0
+default language    en_GB
+```
+
+Treat these versions as recovery evidence for that revision, not as permanent version constraints. The superproject gitlinks remain the source-of-truth pins for future deployments.
 
 ## 7. Routine redeploys
 
