@@ -223,7 +223,7 @@ for programme_code, external_id, expected_units in (
   design_inventory.append(f"{programme_code}:{len(reference.unit_ids)}")
 print("FACODI_DESIGN_CURRICULA=" + ",".join(design_inventory))
 
-expected_dtm_support = {"19301001", "19301006", "19301007", "19301008", "19301009"}
+expected_dtm_support = {"19301001", "19301006", "19301008", "19301009"}
 dtm_reference = env["facodi.learning.curriculum.reference"].search(
   [("provider", "=", "ualg"), ("external_id", "=", "ualg-1930-2026-27")],
   limit=1,
@@ -462,7 +462,7 @@ for code in en_US pt_PT es_ES fr_FR; do
 done
 require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
 require_runtime_state 'FACODI_DESIGN_CURRICULA=1930:19,1454:41'
-require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301007,19301008,19301009'
+require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301008,19301009'
 require_runtime_state 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state'
 echo "PASS runtime state inventory"
 runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
