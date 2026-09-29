@@ -223,7 +223,7 @@ for programme_code, external_id, expected_units in (
   design_inventory.append(f"{programme_code}:{len(reference.unit_ids)}")
 print("FACODI_DESIGN_CURRICULA=" + ",".join(design_inventory))
 
-expected_dtm_support = {"19301001", "19301006", "19301008", "19301009"}
+expected_dtm_support = {"19301001", "19301006", "19301007", "19301008", "19301009"}
 dtm_reference = env["facodi.learning.curriculum.reference"].search(
   [("provider", "=", "ualg"), ("external_id", "=", "ualg-1930-2026-27")],
   limit=1,
@@ -462,7 +462,7 @@ for code in en_US pt_PT es_ES fr_FR; do
 done
 require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
 require_runtime_state 'FACODI_DESIGN_CURRICULA=1930:19,1454:41'
-require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301008,19301009'
+require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301007,19301008,19301009'
 require_runtime_state 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state'
 echo "PASS runtime state inventory"
 runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
@@ -488,6 +488,7 @@ fi
 
 "${compose[@]}" exec -T \
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
+  -e "RUNTIME_ROADMAP_ROUTE=$runtime_roadmap_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
@@ -501,6 +502,7 @@ import urllib.error
 
 base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
+runtime_roadmap_route = os.environ["RUNTIME_ROADMAP_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
@@ -707,7 +709,7 @@ detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
 if not detail_match:
   raise RuntimeError("public roadmap index does not link to a roadmap detail page")
 
-detail_route = detail_match.group(1).decode("utf-8")
+detail_route = runtime_roadmap_route
 detail = urllib.request.urlopen(base + detail_route, timeout=15)
 detail_body = detail.read()
 if detail.status != 200:
