@@ -456,6 +456,31 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("5432:5432", compose)
         self.assertNotIn("8069:8069", compose)
 
+    def test_prebuilt_coolify_candidate_uses_one_immutable_app_image(self):
+        compose_path = ROOT / "deploy/coolify/docker-compose.prebuilt.yml"
+        self.assertTrue(compose_path.is_file())
+        compose = compose_path.read_text()
+
+        self.assertNotIn("build:", compose)
+        self.assertEqual(
+            compose.count(
+                "image: ${FACODI_IMAGE:?Set FACODI_IMAGE to an immutable FACODI Odoo image reference}"
+            ),
+            2,
+        )
+        self.assertIn("condition: service_completed_successfully", compose)
+        self.assertGreaterEqual(compose.count("odoo-data:/var/lib/odoo"), 2)
+        self.assertIn("postgres-data:/var/lib/postgresql/data", compose)
+        self.assertNotIn("5432:5432", compose)
+        self.assertNotIn("8069:8069", compose)
+
+        workflow = (ROOT / ".github/workflows/build-release-image.yml").read_text()
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("docker/build-push-action@v6", workflow)
+        self.assertIn("github.sha", workflow)
+        self.assertIn("packages: write", workflow)
+        self.assertNotIn(":latest", workflow)
+
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
