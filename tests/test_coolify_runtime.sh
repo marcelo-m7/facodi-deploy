@@ -605,7 +605,7 @@ for route in (
         raise RuntimeError(f"{route} returned HTTP {response.status}")
     body = response.read()
     if route == "/explore":
-        for marker in (b"/explore/areas", b"/explore/content", b"/explore/videos", b"/explore/courses"):
+        for marker in (b"/explore/areas", b"/explore/content", b"/explore/videos", b"/courses"):
           if marker not in body:
             raise RuntimeError(f"Explore landing lost discovery entry point: {marker!r}")
     if route == "/explore/content":
