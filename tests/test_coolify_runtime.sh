@@ -4,13 +4,14 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
-project="facodi-ci-${GITHUB_RUN_ID:-local}-$$"
+project="facodi-ci-${GITHUB_RUN_ID:-local}-$"
+runtime_compose_file="${FACODI_RUNTIME_COMPOSE_FILE:-deploy/coolify/docker-compose.yml}"
 compose=(
   docker compose
   --project-name "$project"
   --project-directory "$root"
   --env-file .env.ci
-  -f deploy/coolify/docker-compose.yml
+  -f "$runtime_compose_file"
   -f tests/docker-compose.ci.yml
 )
 
@@ -28,7 +29,9 @@ cleanup() {
 trap cleanup EXIT
 
 "${compose[@]}" config --quiet
-"${compose[@]}" build
+if [[ "${FACODI_RUNTIME_SKIP_BUILD:-0}" != "1" ]]; then
+  "${compose[@]}" build
+fi
 "${compose[@]}" up -d db
 
 db_container_id="$("${compose[@]}" ps -q db)"
