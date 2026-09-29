@@ -279,7 +279,7 @@ if len(art_history_published) != 22:
   raise RuntimeError(
     f"Curated Art History recovery expected 22 published resources, got {len(art_history_published)}"
   )
-print("FACODI_DESIGN_RECOVERY=typography:20,art-history:22)
+print("FACODI_DESIGN_RECOVERY=typography:20,art-history:22")
 
 unit = curriculum.unit_ids.filtered(
   lambda record: record.external_unit_code == "19411018"
