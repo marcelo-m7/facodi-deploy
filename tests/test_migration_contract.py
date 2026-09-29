@@ -36,6 +36,7 @@ class MigrationContractTest(unittest.TestCase):
             "inspect_legacy_state",
             "uninstall_retired_modules",
             "run_module_operation",
+            "activate_required_languages",
             "configure_languages",
             "apply_theme",
             "configure_processing_plane",
@@ -43,6 +44,37 @@ class MigrationContractTest(unittest.TestCase):
             self.assertIn(f"def {name}", text)
         self.assertNotIn("website.page", text)
         self.assertNotIn("website_page", text)
+
+    def test_existing_database_activates_languages_before_module_changes(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        events = []
+
+        def record_languages(*_args, **_kwargs):
+            events.append("languages")
+
+        def record_operation(*_args, **_kwargs):
+            events.append("module")
+
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(migration, "missing_modules", return_value=""),
+            mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "activate_required_languages", side_effect=record_languages),
+            mock.patch.object(migration, "run_module_operation", side_effect=record_operation),
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
+        ):
+            migration.main()
+
+        self.assertEqual(events, ["languages", "module"])
 
     def test_existing_database_initializes_required_modules_before_update(self):
         """New FACODI capabilities must install on an already-existing database."""
@@ -58,6 +90,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
             mock.patch.object(migration, "psql_scalar", return_value="facodi_learning\ntheme_facodi"),
             mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "activate_required_languages"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -95,6 +128,7 @@ class MigrationContractTest(unittest.TestCase):
                 return_value="facodi_ai\nfacodi_ai_website\nfacodi_learning\nmonodoo_core\nmonodoo_home\nmuk_web_theme\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
             ),
             mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "activate_required_languages"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -122,6 +156,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
             mock.patch.object(migration, "missing_modules", return_value=""),
             mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "activate_required_languages"),
             mock.patch.object(migration, "run_module_operation"),
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme") as apply_theme,
@@ -144,6 +179,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
             mock.patch.object(migration, "missing_modules", return_value=""),
             mock.patch.object(migration, "uninstall_retired_modules"),
+            mock.patch.object(migration, "activate_required_languages"),
             mock.patch.object(migration, "run_module_operation") as operation,
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),
@@ -177,6 +213,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
             mock.patch.object(migration, "missing_modules", return_value=""),
             mock.patch.object(migration, "uninstall_retired_modules") as uninstall,
+            mock.patch.object(migration, "activate_required_languages"),
             mock.patch.object(migration, "run_module_operation"),
             mock.patch.object(migration, "configure_languages"),
             mock.patch.object(migration, "apply_theme"),

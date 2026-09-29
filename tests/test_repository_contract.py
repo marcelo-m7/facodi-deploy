@@ -25,6 +25,20 @@ class RepositoryContractTest(unittest.TestCase):
         parser.read(ROOT / ".gitmodules")
         paths = {parser[s]["path"] for s in parser.sections()}
         self.assertEqual(paths, EXPECTED_SUBMODULE_PATHS)
+
+        tree = subprocess.check_output(
+            ["git", "-C", str(ROOT), "ls-tree", "-r", "HEAD"], text=True
+        )
+        gitlinks = {
+            line.split("\t", 1)[1]
+            for line in tree.splitlines()
+            if line.startswith("160000 commit ")
+        }
+        self.assertEqual(
+            gitlinks,
+            EXPECTED_SUBMODULE_PATHS,
+            "Every gitlink must be declared by the canonical submodule contract",
+        )
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
