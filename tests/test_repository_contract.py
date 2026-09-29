@@ -30,7 +30,7 @@ class RepositoryContractTest(unittest.TestCase):
             ["git", "-C", str(ROOT), "ls-tree", "-r", "HEAD"], text=True
         )
         gitlinks = {
-            line.split("\\t", 1)[1]
+            line.split("\t", 1)[1]
             for line in tree.splitlines()
             if line.startswith("160000 commit ")
         }
