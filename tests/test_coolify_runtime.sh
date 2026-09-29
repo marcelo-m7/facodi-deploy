@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
-project="facodi-ci-${GITHUB_RUN_ID:-local}-$"
+project="facodi-ci-${GITHUB_RUN_ID:-local}-$$"
 runtime_compose_file="${FACODI_RUNTIME_COMPOSE_FILE:-deploy/coolify/docker-compose.yml}"
 compose=(
   docker compose
