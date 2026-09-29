@@ -74,6 +74,36 @@ The disposable runtime test must prove that a fresh database migrates, an immedi
 
 The runtime test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
 
+## 3.1 Prebuilt-image release candidate
+
+The repository now contains a **non-production candidate** at:
+
+```text
+deploy/coolify/docker-compose.prebuilt.yml
+```
+
+Its purpose is to prove the next deployment model before changing the active Coolify resource. In this candidate, `migrate` and `odoo` use exactly the same `FACODI_IMAGE` reference and contain no local `build:` step. The existing PostgreSQL and `odoo-data` volume contracts remain unchanged.
+
+The image build is isolated in the manual GitHub Actions workflow:
+
+```text
+.github/workflows/build-release-image.yml
+```
+
+That workflow builds the existing `docker/Dockerfile` and may publish a SHA-addressed GHCR image only when explicitly requested. It does not change the production Compose file or trigger Coolify by itself.
+
+Before this candidate can replace the active production Compose:
+
+1. publish one immutable SHA-tagged image from an already-green source revision;
+2. prove that both `migrate` and `odoo` resolve to that same image reference;
+3. test the candidate on a disposable/non-production Coolify resource;
+4. deliberately fail an image build and confirm the currently running application is unaffected;
+5. deliberately fail `migrate` and confirm the new Odoo revision is not promoted;
+6. confirm rollback to the previous image leaves `postgres-data` and `odoo-data` untouched;
+7. only then update the existing production resource to the prebuilt-image Compose path.
+
+Do not switch production to this candidate merely because the file exists in the repository.
+
 ## 4. First Coolify deployment of the canonical runtime
 
 Use this sequence for the first production adoption of the new Compose lifecycle:
@@ -97,7 +127,7 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `onlyoffice_odoo`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
 
 After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 
