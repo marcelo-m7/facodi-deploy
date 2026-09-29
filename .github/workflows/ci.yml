@@ -98,3 +98,31 @@ jobs:
           path: ${{ runner.temp }}/facodi-d2-browser
           if-no-files-found: warn
           retention-days: 7
+
+
+  prebuilt-image-runtime:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate repository contract
+        run: bash scripts/validate-repository.sh
+
+      - name: Build candidate image once
+        run: docker build -f docker/Dockerfile -t facodi-prebuilt:${{ github.sha }} .
+
+      - name: Exercise prebuilt-image migration/runtime
+        env:
+          FACODI_IMAGE: facodi-prebuilt:${{ github.sha }}
+          FACODI_RUNTIME_COMPOSE_FILE: deploy/coolify/docker-compose.prebuilt.yml
+          FACODI_RUNTIME_SKIP_BUILD: "1"
+          FACODI_REQUIRE_EMPTY_DATABASE: "1"
+        run: bash tests/test_coolify_runtime.sh
