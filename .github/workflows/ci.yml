@@ -30,6 +30,11 @@ jobs:
       - name: Validate Coolify Compose
         run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
 
+      - name: Validate prebuilt-image Coolify candidate
+        env:
+          FACODI_IMAGE: ghcr.io/example/facodi-odoo:test
+        run: docker compose --env-file .env.ci -f deploy/coolify/docker-compose.prebuilt.yml config --quiet
+
   validate-coolify-runtime:
     runs-on: ubuntu-latest
     timeout-minutes: 45
