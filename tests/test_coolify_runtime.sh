@@ -223,7 +223,7 @@ for programme_code, external_id, expected_units in (
   design_inventory.append(f"{programme_code}:{len(reference.unit_ids)}")
 print("FACODI_DESIGN_CURRICULA=" + ",".join(design_inventory))
 
-expected_dtm_support = {"19301001", "19301006", "19301008", "19301009"}
+expected_dtm_support = {"19301001", "19301006", "19301007", "19301008", "19301009"}
 dtm_reference = env["facodi.learning.curriculum.reference"].search(
   [("provider", "=", "ualg"), ("external_id", "=", "ualg-1930-2026-27")],
   limit=1,
@@ -242,6 +242,44 @@ if not expected_dtm_support.issubset(dtm_codes):
     + ",".join(sorted(expected_dtm_support - dtm_codes))
   )
 print("FACODI_DTM_SUPPORTS=" + ",".join(sorted(expected_dtm_support)))
+
+ldcom_reference = env["facodi.learning.curriculum.reference"].search(
+  [("provider", "=", "ualg"), ("external_id", "=", "ualg-1454-2026-27")],
+  limit=1,
+)
+expected_ldcom_support = {"14541153", "14541196"}
+ldcom_coverage = env["facodi.learning.curriculum.coverage"].search(
+  [
+    ("curriculum_unit_id.reference_id", "=", ldcom_reference.id),
+    ("state", "=", "approved"),
+    ("coverage_type", "=", "supports"),
+  ]
+)
+ldcom_codes = set(ldcom_coverage.mapped("curriculum_unit_id.external_unit_code"))
+if not expected_ldcom_support.issubset(ldcom_codes):
+  raise RuntimeError(
+    "Design de Comunicação approved support coverage is missing expected units: "
+    + ",".join(sorted(expected_ldcom_support - ldcom_codes))
+  )
+print("FACODI_LDCOM_SUPPORTS=" + ",".join(sorted(expected_ldcom_support)))
+
+typography_channel = env.ref("__import__.facodi_ldcom_14541153")
+art_history_channel = env.ref("__import__.facodi_ldcom_14541196")
+typography_published = typography_channel.slide_ids.filtered(
+  lambda slide: slide.is_published and slide.website_published
+)
+art_history_published = art_history_channel.slide_ids.filtered(
+  lambda slide: slide.is_published and slide.website_published
+)
+if len(typography_published) != 20:
+  raise RuntimeError(
+    f"Curated Typography I recovery expected 20 published resources, got {len(typography_published)}"
+  )
+if len(art_history_published) != 22:
+  raise RuntimeError(
+    f"Curated Art History recovery expected 22 published resources, got {len(art_history_published)}"
+  )
+print("FACODI_DESIGN_RECOVERY=typography:20,art-history:22)
 
 unit = curriculum.unit_ids.filtered(
   lambda record: record.external_unit_code == "19411018"
@@ -462,7 +500,9 @@ for code in en_US pt_PT es_ES fr_FR; do
 done
 require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
 require_runtime_state 'FACODI_DESIGN_CURRICULA=1930:19,1454:41'
-require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301008,19301009'
+require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301007,19301008,19301009'
+require_runtime_state 'FACODI_LDCOM_SUPPORTS=14541153,14541196'
+require_runtime_state 'FACODI_DESIGN_RECOVERY=typography:20,art-history:22'
 require_runtime_state 'FACODI_SUBMISSION_TRACE_FIELDS=analysis_job_id,analysis_result_id,processing_state,slide_id,source_state'
 echo "PASS runtime state inventory"
 runtime_community_token="$(sed -n 's/^FACODI_RUNTIME_COMMUNITY_TOKEN=//p' <<<"$state")"
