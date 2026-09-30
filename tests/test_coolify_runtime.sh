@@ -339,9 +339,11 @@ coverage = env["facodi.learning.curriculum.coverage"].create(
 )
 coverage.action_approve()
 print("FACODI_RUNTIME_COURSE=" + course.website_url)
-print("FACODI_RUNTIME_ROADMAP=/roadmaps/" + str(curriculum.id))
+print("FACODI_RUNTIME_ROADMAP=" + curriculum._facodi_public_path())
+print("FACODI_RUNTIME_UNIT=" + unit._facodi_public_path())
+print("FACODI_RUNTIME_LEGACY_ROADMAP=/curriculos/" + str(curriculum.id))
 print(
-  "FACODI_RUNTIME_UNIT=/roadmaps/%s/units/%s"
+  "FACODI_RUNTIME_LEGACY_UNIT=/curriculos/%s/unidades/%s"
   % (curriculum.id, unit.external_unit_code)
 )
 print("FACODI_RUNTIME_GAP_UNIT_CODE=" + gap_unit.external_unit_code)
@@ -536,9 +538,11 @@ fi
 runtime_course_route="$(sed -n 's/^FACODI_RUNTIME_COURSE=//p' <<<"$state")"
 runtime_roadmap_route="$(sed -n 's/^FACODI_RUNTIME_ROADMAP=//p' <<<"$state")"
 runtime_unit_route="$(sed -n 's/^FACODI_RUNTIME_UNIT=//p' <<<"$state")"
+runtime_legacy_roadmap_route="$(sed -n 's/^FACODI_RUNTIME_LEGACY_ROADMAP=//p' <<<"$state")"
+runtime_legacy_unit_route="$(sed -n 's/^FACODI_RUNTIME_LEGACY_UNIT=//p' <<<"$state")"
 runtime_gap_unit_code="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_CODE=//p' <<<"$state")"
 runtime_gap_unit_id="$(sed -n 's/^FACODI_RUNTIME_GAP_UNIT_ID=//p' <<<"$state")"
-if [[ -z "$runtime_course_route" || -z "$runtime_roadmap_route" || -z "$runtime_unit_route" || -z "$runtime_gap_unit_code" || -z "$runtime_gap_unit_id" ]]; then
+if [[ -z "$runtime_course_route" || -z "$runtime_roadmap_route" || -z "$runtime_unit_route" || -z "$runtime_legacy_roadmap_route" || -z "$runtime_legacy_unit_route" || -z "$runtime_gap_unit_code" || -z "$runtime_gap_unit_id" ]]; then
   echo "Runtime curriculum course/roadmap/unit context is missing" >&2
   exit 1
 fi
@@ -553,6 +557,8 @@ fi
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
   -e "RUNTIME_ROADMAP_ROUTE=$runtime_roadmap_route" \
   -e "RUNTIME_UNIT_ROUTE=$runtime_unit_route" \
+  -e "RUNTIME_LEGACY_ROADMAP_ROUTE=$runtime_legacy_roadmap_route" \
+  -e "RUNTIME_LEGACY_UNIT_ROUTE=$runtime_legacy_unit_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
@@ -568,6 +574,8 @@ base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_roadmap_route = os.environ["RUNTIME_ROADMAP_ROUTE"]
 runtime_unit_route = os.environ["RUNTIME_UNIT_ROUTE"]
+runtime_legacy_roadmap_route = os.environ["RUNTIME_LEGACY_ROADMAP_ROUTE"]
+runtime_legacy_unit_route = os.environ["RUNTIME_LEGACY_UNIT_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
@@ -588,8 +596,8 @@ for legacy_route, canonical_route in (
   ("/unidades-curriculares", "/curricular-units"),
   ("/curriculos", "/roadmaps"),
   ("/mapa-curricular", "/roadmaps"),
-  ("/curriculos/1", runtime_roadmap_route),
-  ("/curriculos/1/unidades/19411017", runtime_unit_route),
+  (runtime_legacy_roadmap_route, runtime_roadmap_route),
+  (runtime_legacy_unit_route, runtime_unit_route),
   ("/facodi", "/"),
   ("/sobre", "/about"),
   ("/manifesto", "/about"),
@@ -771,9 +779,9 @@ for localized_submission_route in (
     )
   print(f"PASS localized contextual intake {localized_submission_route}")
 
-detail_match = re.search(rb'href="(/roadmaps/[0-9]+)"', curriculum_body)
-if not detail_match:
-  raise RuntimeError("public roadmap index does not link to a roadmap detail page")
+expected_roadmap_href = f'href="{runtime_roadmap_route}"'.encode("utf-8")
+if expected_roadmap_href not in curriculum_body:
+  raise RuntimeError("public roadmap index does not link to the canonical versioned roadmap")
 
 detail_route = runtime_roadmap_route
 detail = urllib.request.urlopen(base + detail_route, timeout=15)
@@ -785,8 +793,9 @@ if b"Roadmap" not in detail_body:
 if b"FACODI Runtime Public Module" not in detail_body:
   raise RuntimeError("roadmap detail does not expose published learning modules")
 
-if not re.search(rb'href="/roadmaps/[0-9]+/units/19411017"', detail_body):
-  raise RuntimeError("roadmap detail does not link Base de Dados II to its public unit page")
+expected_unit_href = f'href="{runtime_unit_route}"'.encode("utf-8")
+if expected_unit_href not in detail_body:
+  raise RuntimeError("roadmap detail does not link the runtime curricular unit to its canonical public page")
 
 unit_route = f"{detail_route}/units/{runtime_gap_unit_code}"
 unit = urllib.request.urlopen(base + unit_route, timeout=15)
