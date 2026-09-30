@@ -311,10 +311,11 @@ class RepositoryContractTest(unittest.TestCase):
         source = redirect_data.read_text()
         for old, new in (
             ("/facodi", "/"),
-            ("/manifesto", "/sobre"),
-            ("/comunidade", "/sobre"),
-            ("/parceiros", "/sobre"),
-            ("/roadmap", "/sobre#how-it-works"),
+            ("/sobre", "/about"),
+            ("/manifesto", "/about"),
+            ("/comunidade", "/about"),
+            ("/parceiros", "/about"),
+            ("/roadmap", "/about#how-it-works"),
             ("/como-contribuir", "/contribuir/recurso"),
             ("/contribuir", "/contribuir/recurso"),
         ):
