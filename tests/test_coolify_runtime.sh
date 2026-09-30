@@ -552,6 +552,7 @@ fi
 "${compose[@]}" exec -T \
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
   -e "RUNTIME_ROADMAP_ROUTE=$runtime_roadmap_route" \
+  -e "RUNTIME_UNIT_ROUTE=$runtime_unit_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
@@ -566,6 +567,7 @@ import urllib.error
 base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_roadmap_route = os.environ["RUNTIME_ROADMAP_ROUTE"]
+runtime_unit_route = os.environ["RUNTIME_UNIT_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
@@ -586,8 +588,8 @@ for legacy_route, canonical_route in (
   ("/unidades-curriculares", "/curricular-units"),
   ("/curriculos", "/roadmaps"),
   ("/mapa-curricular", "/roadmaps"),
-  ("/curriculos/1", "/roadmaps/1"),
-  ("/curriculos/1/unidades/19411017", "/roadmaps/1/units/19411017"),
+  ("/curriculos/1", runtime_roadmap_route),
+  ("/curriculos/1/unidades/19411017", runtime_unit_route),
   ("/facodi", "/"),
   ("/sobre", "/about"),
   ("/manifesto", "/about"),
