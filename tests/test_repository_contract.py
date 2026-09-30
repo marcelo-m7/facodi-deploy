@@ -492,6 +492,30 @@ class RepositoryContractTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         self.assertIn("tests/test_prebuilt_fail_closed.sh", workflow)
 
+    def test_prebuilt_release_resilience_gates_are_wired(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        for script_name in (
+            "tests/test_prebuilt_build_failure_isolated.sh",
+            "tests/test_prebuilt_rollback_persistence.sh",
+        ):
+            script = ROOT / script_name
+            self.assertTrue(script.is_file(), script_name)
+            self.assertIn(script_name, workflow)
+
+        build_failure = (
+            ROOT / "tests/test_prebuilt_build_failure_isolated.sh"
+        ).read_text()
+        self.assertIn("Active Odoo container changed", build_failure)
+        self.assertIn("failed image build left the active Odoo service untouched", build_failure)
+
+        rollback = (
+            ROOT / "tests/test_prebuilt_rollback_persistence.sh"
+        ).read_text()
+        self.assertIn("facodi_ci_release_sentinel", rollback)
+        self.assertIn("PostgreSQL volume changed across image rollback", rollback)
+        self.assertIn("Odoo data volume changed across image rollback", rollback)
+        self.assertIn("image rollback preserved PostgreSQL and Odoo persistent volumes", rollback)
+
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
