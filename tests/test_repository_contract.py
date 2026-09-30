@@ -311,16 +311,17 @@ class RepositoryContractTest(unittest.TestCase):
         source = redirect_data.read_text()
         for old, new in (
             ("/facodi", "/"),
-            ("/manifesto", "/sobre"),
-            ("/comunidade", "/sobre"),
-            ("/parceiros", "/sobre"),
-            ("/roadmap", "/sobre#how-it-works"),
+            ("/sobre", "/about"),
+            ("/manifesto", "/about"),
+            ("/comunidade", "/about"),
+            ("/parceiros", "/about"),
+            ("/roadmap", "/about#how-it-works"),
             ("/como-contribuir", "/contribuir/recurso"),
             ("/contribuir", "/contribuir/recurso"),
         ):
             self.assertIn(f"<field name=\"url_from\">{old}</field>", source)
             self.assertIn(f"<field name=\"url_to\">{new}</field>", source)
-        self.assertEqual(source.count('<field name="redirect_type">301</field>'), 7)
+        self.assertEqual(source.count('<field name="redirect_type">301</field>'), 8)
         self.assertNotIn('<field name="url_from">/roadmaps</field>', source)
         self.assertNotIn('<field name="url_from">/contribuir/recurso</field>', source)
 
