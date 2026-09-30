@@ -187,12 +187,48 @@ curriculum = env["facodi.learning.curriculum.reference"].search(
     limit=1,
 )
 if not curriculum:
-    raise RuntimeError("Validated UAlg LESTI curriculum reference is missing")
-if not curriculum.website_published or not curriculum.validated_at:
-    raise RuntimeError("UAlg LESTI curriculum reference is not publicly validated")
+    raise RuntimeError("UAlg LESTI curriculum reference is missing")
+if (
+    curriculum.state != "draft"
+    or curriculum.website_published
+    or curriculum.validated_at
+):
+    raise RuntimeError(
+        "UAlg LESTI must bootstrap as an unreviewed private draft"
+    )
 if len(curriculum.unit_ids) != 43:
     raise RuntimeError(f"UAlg LESTI curriculum expected 43 units, got {len(curriculum.unit_ids)}")
+
+admin = env.ref("base.user_admin")
+manager_group = env.ref("website_slides.group_website_slides_manager")
+if manager_group not in admin.group_ids:
+    admin.write({"group_ids": [(4, manager_group.id)]})
+curriculum.with_user(admin).action_validate()
+curriculum.with_user(admin).action_publish()
+curriculum.invalidate_recordset()
+if (
+    curriculum.state != "validated"
+    or not curriculum.website_published
+    or not curriculum.validated_at
+):
+    raise RuntimeError(
+        "Explicit Manager review did not publish the LESTI curriculum"
+    )
 print(f"FACODI_LESTI_CURRICULUM={curriculum.external_programme_code}:{len(curriculum.unit_ids)}")
+print("FACODI_CURRICULUM_REVIEW_GATE=draft->validated->published")
+
+private_draft = env["facodi.learning.curriculum.reference"].create(
+  {
+    "institution": "FACODI CI",
+    "programme_name": "FACODI Runtime Private Draft Roadmap",
+    "academic_year": "2026/27",
+    "provider": "manual",
+    "external_id": "facodi-runtime-private-draft",
+  }
+)
+if private_draft.state != "draft" or private_draft.website_published:
+    raise RuntimeError("Private curriculum fixture did not remain draft/private")
+print("FACODI_PRIVATE_DRAFT_ROADMAP=" + str(private_draft.id))
 
 design_inventory = []
 for programme_code, external_id, expected_units in (
@@ -499,6 +535,7 @@ for code in en_GB pt_PT es_ES fr_FR; do
   fi
 done
 require_runtime_state 'FACODI_LESTI_CURRICULUM=1941:43'
+require_runtime_state 'FACODI_CURRICULUM_REVIEW_GATE=draft->validated->published'
 require_runtime_state 'FACODI_DESIGN_CURRICULA=1930:19,1454:41'
 require_runtime_state 'FACODI_DTM_SUPPORTS=19301001,19301006,19301007,19301008,19301009'
 require_runtime_state 'FACODI_LDCOM_SUPPORTS=14541153,14541196'
@@ -529,6 +566,7 @@ fi
 "${compose[@]}" exec -T \
   -e "RUNTIME_COURSE_ROUTE=$runtime_course_route" \
   -e "RUNTIME_ROADMAP_ROUTE=$runtime_roadmap_route" \
+  -e "RUNTIME_UNIT_ROUTE=$runtime_unit_route" \
   -e "RUNTIME_MODULE_ROUTE=$runtime_module_route" \
   -e "RUNTIME_GAP_UNIT_CODE=$runtime_gap_unit_code" \
   -e "RUNTIME_GAP_UNIT_ID=$runtime_gap_unit_id" \
@@ -543,6 +581,7 @@ import urllib.error
 base = "http://127.0.0.1:8069"
 runtime_course_route = os.environ["RUNTIME_COURSE_ROUTE"]
 runtime_roadmap_route = os.environ["RUNTIME_ROADMAP_ROUTE"]
+runtime_unit_route = os.environ["RUNTIME_UNIT_ROUTE"]
 runtime_module_route = os.environ["RUNTIME_MODULE_ROUTE"]
 runtime_gap_unit_code = os.environ["RUNTIME_GAP_UNIT_CODE"]
 runtime_gap_unit_id = os.environ["RUNTIME_GAP_UNIT_ID"]
@@ -599,6 +638,8 @@ for route in (
   "/explore/videos",
   "/roadmaps",
   "/pt/roadmaps",
+  "/es/roadmaps",
+  "/fr/roadmaps",
   "/contribuir/recurso",
 ):
     response = urllib.request.urlopen(base + route, timeout=15)
@@ -636,12 +677,15 @@ for route in (
             raise RuntimeError(
               f"public roadmap page does not expose validated UAlg reference: {marker!r}"
             )
+        if b"FACODI Runtime Private Draft Roadmap" in body:
+          raise RuntimeError("private draft curriculum leaked into the public roadmap index")
         if b"Curriculum Map" in body:
           raise RuntimeError("public roadmap navigation retains the legacy curriculum label")
         if b'href="/submissions/new?' not in body:
           raise RuntimeError("public roadmap index does not expose the guided contribution CTA")
-    if route == "/pt/roadmaps" and b"Roadmaps" not in body:
-      raise RuntimeError("Portuguese public roadmap is not rendered")
+    if route in ("/pt/roadmaps", "/es/roadmaps", "/fr/roadmaps"):
+      if b"Engenharia de Sistemas e Tecnologias Inform" not in body:
+        raise RuntimeError(f"{route} lost the published LESTI roadmap")
     if route == "/contribuir/recurso":
       if b"Suggest a learning resource" not in body:
         raise RuntimeError("guided resource submission form is not public")
@@ -809,6 +853,11 @@ if b'href="/submissions/new?' not in course_body:
   raise RuntimeError("public course contribution CTA does not enter the unified intake")
 if b"source=course_resource_cta" not in course_body or b"course_id=" not in course_body:
   raise RuntimeError("public course contribution CTA does not preserve course context")
+if runtime_unit_route.encode("utf-8") not in course_body:
+  raise RuntimeError(
+    "public course does not link back to its reviewed curricular-unit alignment"
+  )
+print("PASS curriculum -> unit -> course -> curriculum product loop")
 print(f"PASS {runtime_course_route}")
 
 module = urllib.request.urlopen(base + runtime_module_route, timeout=15)
