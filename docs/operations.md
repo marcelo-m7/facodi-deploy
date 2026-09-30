@@ -92,9 +92,21 @@ The image build is isolated in the manual GitHub Actions workflow:
 
 That workflow builds the existing `docker/Dockerfile` and may publish a SHA-addressed GHCR image only when explicitly requested. It does not change the production Compose file or trigger Coolify by itself.
 
+For staging/production handoff, the SHA tag is traceability metadata only. The deployable value must be the immutable digest emitted by the workflow, for example:
+
+```text
+FACODI_IMAGE=ghcr.io/<owner>/facodi-odoo@sha256:<digest>
+```
+
+Validate that value before entering it in Coolify:
+
+```bash
+bash scripts/validate-release-image.sh "$FACODI_IMAGE"
+```
+
 Before this candidate can replace the active production Compose:
 
-1. publish one immutable SHA-tagged image from an already-green source revision;
+1. publish one SHA-addressed image from an already-green source revision and promote it by immutable registry digest;
 2. prove that both `migrate` and `odoo` resolve to that same image reference;
 3. test the candidate on a disposable/non-production Coolify resource;
 4. deliberately fail an image build and confirm the currently running application is unaffected;
