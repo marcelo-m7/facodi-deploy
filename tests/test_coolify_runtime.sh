@@ -187,12 +187,35 @@ curriculum = env["facodi.learning.curriculum.reference"].search(
     limit=1,
 )
 if not curriculum:
-    raise RuntimeError("Validated UAlg LESTI curriculum reference is missing")
-if not curriculum.website_published or not curriculum.validated_at:
-    raise RuntimeError("UAlg LESTI curriculum reference is not publicly validated")
+    raise RuntimeError("UAlg LESTI curriculum reference is missing")
+if (
+    curriculum.state != "draft"
+    or curriculum.website_published
+    or curriculum.validated_at
+):
+    raise RuntimeError(
+        "UAlg LESTI must bootstrap as an unreviewed private draft"
+    )
 if len(curriculum.unit_ids) != 43:
     raise RuntimeError(f"UAlg LESTI curriculum expected 43 units, got {len(curriculum.unit_ids)}")
+
+admin = env.ref("base.user_admin")
+manager_group = env.ref("website_slides.group_website_slides_manager")
+if manager_group not in admin.group_ids:
+    admin.write({"group_ids": [(4, manager_group.id)]})
+curriculum.with_user(admin).action_validate()
+curriculum.with_user(admin).action_publish()
+curriculum.invalidate_recordset()
+if (
+    curriculum.state != "validated"
+    or not curriculum.website_published
+    or not curriculum.validated_at
+):
+    raise RuntimeError(
+        "Explicit Manager review did not publish the LESTI curriculum"
+    )
 print(f"FACODI_LESTI_CURRICULUM={curriculum.external_programme_code}:{len(curriculum.unit_ids)}")
+print("FACODI_CURRICULUM_REVIEW_GATE=draft->validated->published")
 
 design_inventory = []
 for programme_code, external_id, expected_units in (
