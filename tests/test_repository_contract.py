@@ -480,6 +480,14 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn("github.sha", workflow)
         self.assertIn("packages: write", workflow)
         self.assertNotIn(":latest", workflow)
+        self.assertIn("id: build", workflow)
+        self.assertIn("steps.build.outputs.digest", workflow)
+        self.assertIn("scripts/validate-release-image.sh", workflow)
+
+        validator = (ROOT / "scripts/validate-release-image.sh").read_text()
+        self.assertIn("@sha256:", validator)
+        self.assertIn("64", validator)
+        self.assertIn("immutable GHCR digest reference", validator)
 
     def test_prebuilt_fail_closed_gate_is_wired(self):
         script = ROOT / "tests/test_prebuilt_fail_closed.sh"
