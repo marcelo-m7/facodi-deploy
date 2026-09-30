@@ -45,7 +45,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `52012480fd9dfea9cb4e03a7f390086f0f0347b4` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `29133a1b2bde810cd49c23df7ef49f809cbe8e7c` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `0a5f78b35d5d70ad589eb75b15c55077baab064c` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `f3132ac50c661149319f902145c7e4feaed6c903` |
 | `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
@@ -141,6 +141,13 @@ bash tests/test_coolify_runtime.sh
 That test builds the canonical image, creates disposable volumes, runs migration twice to prove idempotency, starts Odoo, verifies Website language state, authenticates a disposable admin session in a real Chromium browser, and checks the FACODI Website/eLearning routes. The host port used by Chromium is exposed only through `tests/docker-compose.ci.yml`; the production Coolify Compose file does not publish Odoo directly.
 
 GitHub Actions runs the same canonical Coolify acceptance path on pull requests and on `main`.
+
+The curriculum/product release gate is part of that disposable runtime. It proves that
+LESTI enters a clean install as a private draft, publication requires an explicit
+eLearning Manager review, private drafts stay off the public Roadmap index, PT/ES/FR
+Roadmap routes remain available, and the public journey closes the
+Roadmap → curricular unit → course → reviewed curricular alignment loop. The CI
+fixture is deterministic and does not require OpenAI or Gemini credentials.
 
 ## Architecture inventory
 
