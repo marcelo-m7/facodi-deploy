@@ -1,0 +1,59 @@
+name: Prove FACODI prebuilt image on Coolify
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_uuid:
+        description: Disposable/non-production Coolify application UUID
+        required: true
+        type: string
+      facodi_image:
+        description: Immutable FACODI image (ghcr.io/...@sha256:...)
+        required: true
+        type: string
+      rollback_image:
+        description: Optional previous immutable image for rollback proof
+        required: false
+        type: string
+      confirmation:
+        description: Type NON_PRODUCTION_ONLY
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+      COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+      COOLIFY_APP_UUID: ${{ inputs.application_uuid }}
+      FACODI_IMAGE: ${{ inputs.facodi_image }}
+      COOLIFY_ROLLBACK_IMAGE: ${{ inputs.rollback_image }}
+      COOLIFY_PROOF_ACK: ${{ inputs.confirmation }}
+      COOLIFY_ROLLBACK_ACK: ROLLBACK_NON_PRODUCTION
+      COOLIFY_PROOF_DIR: artifacts/coolify-proof
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Require Coolify secrets
+        run: |
+          test -n "$COOLIFY_API_URL"
+          test -n "$COOLIFY_API_TOKEN"
+
+      - name: Run non-production Coolify proof
+        run: bash scripts/prove-coolify-prebuilt.sh
+
+      - name: Upload proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coolify-prebuilt-proof
+          path: artifacts/coolify-proof
+          if-no-files-found: warn
+          retention-days: 14
