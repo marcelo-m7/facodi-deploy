@@ -201,6 +201,47 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertIn('data-facodi-next-tab="1"', portal_view)
         self.assertIn(".facodi-portal-next-tab", portal_styles)
 
+    def test_curriculum_product_release_gate_contract(self):
+        learning_root = ROOT / "addons/facodi-learning/facodi_learning"
+        manifest = ast.literal_eval(
+            (learning_root / "__manifest__.py").read_text(encoding="utf-8")
+        )
+        version = tuple(int(part) for part in manifest["version"].split("."))
+        self.assertGreaterEqual(version, (19, 0, 1, 137, 0))
+
+        source_model = (
+            learning_root / "models/curriculum_source.py"
+        ).read_text(encoding="utf-8")
+        for marker in (
+            "verification_enabled = fields.Boolean",
+            "def action_verify_now",
+            "def _cron_verify_enabled_sources",
+            "fetch_official_curriculum(source.source_url)",
+            "Review changed FACODI curriculum source",
+        ):
+            self.assertIn(marker, source_model)
+
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text(
+            encoding="utf-8"
+        )
+        for marker in (
+            "FACODI_CURRICULUM_REVIEW_GATE=draft->validated->published",
+            "FACODI Runtime Private Draft Roadmap",
+            '"/pt/roadmaps"',
+            '"/es/roadmaps"',
+            '"/fr/roadmaps"',
+            "PASS curriculum -> unit -> course -> curriculum product loop",
+            "RUNTIME_UNIT_ROUTE",
+        ):
+            self.assertIn(marker, runtime)
+
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("bash tests/test_coolify_runtime.sh", workflow)
+        self.assertNotIn("OPENAI_API_KEY", workflow)
+        self.assertNotIn("GEMINI_API_KEY", workflow)
+
     def test_d1_learning_interfaces_browser_acceptance_contract(self):
         theme_manifest = (ROOT / "addons/facodi-theme/theme_facodi/__manifest__.py").read_text()
         learning_manifest = (ROOT / "addons/facodi-learning/facodi_learning/__manifest__.py").read_text()
