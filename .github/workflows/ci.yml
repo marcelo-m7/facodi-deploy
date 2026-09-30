@@ -131,3 +131,13 @@ jobs:
         env:
           FACODI_IMAGE: facodi-prebuilt:${{ github.sha }}
         run: bash tests/test_prebuilt_fail_closed.sh
+
+      - name: Prove failed build leaves active Odoo untouched
+        env:
+          FACODI_IMAGE: facodi-prebuilt:${{ github.sha }}
+        run: bash tests/test_prebuilt_build_failure_isolated.sh
+
+      - name: Prove image rollback preserves persistent state
+        env:
+          FACODI_IMAGE: facodi-prebuilt:${{ github.sha }}
+        run: bash tests/test_prebuilt_rollback_persistence.sh
