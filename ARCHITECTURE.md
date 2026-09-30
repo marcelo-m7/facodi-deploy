@@ -84,8 +84,8 @@ This is a mix of authorized production observations and checked-in runtime accep
 | Website | ID 1, `Faculdade Comunitária Digital`, domain `https://facodi.com` |
 | Languages | `en_GB` default; `pt_PT`, `es_ES`, `fr_FR` available |
 | Website menus | `Explore`, `Community`, `About`; labels translated in all four languages |
-| Menu destinations | Canonical destinations include `/courses`, `/website/search`, `/contact`, `/blog`, `/forum`, `/sobre`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
-| Public route check | Canonical `/courses`, `/blog`, `/forum`, `/contact`, `/sobre`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/sobre#how-it-works` |
+| Menu destinations | Canonical destinations include `/courses`, `/website/search`, `/contact`, `/blog`, `/forum`, `/about`, `/roadmaps`, and `/contribuir/recurso`; legacy editorial menu targets are reconciled to canonical URLs during theme upgrade |
+| Public route check | Canonical `/courses`, `/blog`, `/forum`, `/contact`, `/about`, `/roadmaps`, and `/contribuir/recurso` are public; legacy `/roadmap` is a permanent `301` to `/about#how-it-works` |
 | Learning catalog | 19 active, public, published `slide.channel` training courses; 790 `slide.slide` records |
 | Catalog duplicate check | No duplicate course names or `website_url` values |
 | Curriculum reference | Validated, Website-published UAlg LESTI 2026/27 reference, programme code `1941`, with 43 source units |
