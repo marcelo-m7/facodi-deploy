@@ -616,8 +616,8 @@ for route in (
     if route == "/explore/videos":
         if b"FACODI Runtime Pending Community Video" not in body:
           raise RuntimeError("pending YouTube submission is missing from the public community queue")
-        if b"Awaiting review" not in body:
-          raise RuntimeError("pending community video lost its pre-review status")
+        if b"Shared by community" not in body:
+          raise RuntimeError("submitted community video lost its immediate-sharing status")
         if runtime_community_token.encode("utf-8") in body:
           raise RuntimeError("private community submission token leaked into the public page")
         if b"FACODI_RUNTIME_PRIVATE_CONTEXT_MUST_NOT_LEAK" in body:
