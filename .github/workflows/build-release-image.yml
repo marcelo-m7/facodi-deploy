@@ -43,6 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and optionally publish immutable image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -55,6 +56,18 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Release reference
+        if: inputs.publish
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
-          echo "FACODI_IMAGE=${REGISTRY}/${IMAGE_NAME}:${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Use the SHA tag only after this workflow succeeds." >> "$GITHUB_STEP_SUMMARY"
+          test -n "$IMAGE_DIGEST"
+          release_ref="${REGISTRY}/${IMAGE_NAME}@${IMAGE_DIGEST}"
+          bash scripts/validate-release-image.sh "$release_ref"
+          echo "FACODI_IMAGE=$release_ref" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release only this digest-pinned reference to Coolify." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Non-published build notice
+        if: ${{ !inputs.publish }}
+        run: |
+          echo "Image was validated but not published." >> "$GITHUB_STEP_SUMMARY"
+          echo "No deployable FACODI_IMAGE reference was produced." >> "$GITHUB_STEP_SUMMARY"
