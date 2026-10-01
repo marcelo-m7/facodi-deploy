@@ -13,7 +13,6 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/facodi-theme",
     "addons/muk_web_theme-19.0.1.4.9",
     "addons/monodoo",
-    "vendor/odoo-design-themes",
 }
 
 FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
@@ -47,7 +46,22 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/muk_web_theme-19.0.1.4.9/muk_web_theme/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_core/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_home/__manifest__.py").is_file())
-        self.assertTrue((ROOT / "vendor/odoo-design-themes/theme_common/__manifest__.py").is_file())
+
+    def test_design_themes_vendor_is_fully_absent(self):
+        self.assertFalse((ROOT / "vendor/odoo-design-themes").exists())
+
+        gitmodules = (ROOT / ".gitmodules").read_text()
+        self.assertNotIn("odoo-design-themes", gitmodules)
+        self.assertNotIn("odoo/design-themes", gitmodules)
+
+        dockerfile = (ROOT / "docker/Dockerfile").read_text()
+        dev_compose = (ROOT / "docker-compose.dev.yml").read_text()
+        validator = (ROOT / "scripts/validate-repository.sh").read_text()
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        for source in (dockerfile, dev_compose, validator, runtime):
+            self.assertNotIn("vendor/odoo-design-themes", source)
+            self.assertNotIn("/opt/theme-common", source)
+            self.assertNotIn("/mnt/extra-addons/theme_common", source)
 
     def test_exact_integration_pins_match_superproject_gitlinks(self):
         """The superproject gitlink is the single source of truth for every pin."""
@@ -344,11 +358,9 @@ class RepositoryContractTest(unittest.TestCase):
         dockerfile = (ROOT / "docker/Dockerfile").read_text()
         self.assertIn("FROM odoo:19.0", dockerfile)
         self.assertIn("COPY addons/ /opt/facodi-addon-sources/", dockerfile)
-        self.assertIn(
-            "COPY vendor/odoo-design-themes/theme_common/ /opt/theme-common/theme_common/",
-            dockerfile,
-        )
-        self.assertNotIn("COPY vendor/odoo-design-themes/ /", dockerfile)
+        self.assertNotIn("odoo-design-themes", dockerfile)
+        self.assertNotIn("/opt/theme-common", dockerfile)
+        self.assertNotIn("/mnt/extra-addons/theme_common", dockerfile)
         self.assertIn("monodoo_core|monodoo_home", dockerfile)
         self.assertIn("/opt/facodi-addon-sources/monodoo/*", dockerfile)
 
