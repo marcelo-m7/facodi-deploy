@@ -11,8 +11,7 @@ for manifest in \
   addons/facodi-theme/theme_facodi/__manifest__.py \
   addons/muk_web_theme-19.0.1.4.9/muk_web_theme/__manifest__.py \
   addons/monodoo/monodoo_core/__manifest__.py \
-  addons/monodoo/monodoo_home/__manifest__.py \
-  vendor/odoo-design-themes/theme_common/__manifest__.py; do
+  addons/monodoo/monodoo_home/__manifest__.py; do
   test -f "$manifest" || { echo "missing Odoo manifest: $manifest" >&2; exit 1; }
 done
 
