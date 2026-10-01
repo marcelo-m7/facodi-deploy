@@ -512,6 +512,28 @@ class RepositoryContractTest(unittest.TestCase):
             runtime.index("Clean-install gate expected no pre-existing facodi database"),
         )
 
+    def test_paired_backup_restore_gate_is_wired(self):
+        proof = ROOT / "tests/test_paired_backup_restore.sh"
+        self.assertTrue(proof.is_file(), str(proof))
+        source = proof.read_text()
+        for marker in (
+            "pg_dump -U odoo -d facodi -Fc",
+            "pg_restore -U odoo -d facodi",
+            "odoo-data.tgz",
+            "FACODI_BACKUP_RESTORE_SENTINEL",
+            "slide.slide.partner",
+            "facodi.learning.curriculum.reference",
+            "run --rm migrate",
+            "PASS matched PostgreSQL + odoo-data backup/restore round-trip",
+        ):
+            self.assertIn(marker, source)
+
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        self.assertIn(
+            'bash tests/test_paired_backup_restore.sh "$project"',
+            runtime,
+        )
+
     def test_ci_validates_the_canonical_coolify_runtime(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
         self.assertIn("submodules: recursive", workflow)

@@ -870,4 +870,6 @@ fi
 
 bash tests/test_d2_editorial_runtime.sh "$project"
 
+bash tests/test_paired_backup_restore.sh "$project"
+
 echo "PASS: disposable Coolify runtime"
