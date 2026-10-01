@@ -82,50 +82,6 @@ fi
 
 "${compose[@]}" run --rm migrate
 
-# Transitional proof for removing odoo/design-themes safely from persisted
-# databases. Install theme_common once while its source is still present in
-# this transition image, then prove the second migration upgrades theme_facodi
-# first and uninstalls theme_common through the standard Odoo module API.
-if [[ -f vendor/odoo-design-themes/theme_common/__manifest__.py ]]; then
-  echo "[runtime] seed installed theme_common transition fixture"
-  "${compose[@]}" run --rm --entrypoint bash migrate -lc '
-    exec odoo server \
-      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons \
-      --db_host="$DB_HOST" \
-      --db_port="$DB_PORT" \
-      --db_user="$DB_USER" \
-      --db_password="$DB_PASSWORD" \
-      --database="$ODOO_DB" \
-      --workers=0 \
-      --without-demo=True \
-      --stop-after-init \
-      --init=theme_common
-  '
-  theme_common_state="$(
-    "${compose[@]}" exec -T db psql -U odoo -d facodi -Atc \
-      "SELECT state FROM ir_module_module WHERE name='theme_common' LIMIT 1;"
-  )"
-  [[ "$theme_common_state" == "installed" ]] || {
-    echo "Transition fixture failed to install theme_common: $theme_common_state" >&2
-    exit 1
-  }
-  echo "PASS transition fixture installed theme_common"
-fi
-
-"${compose[@]}" run --rm migrate
-
-if [[ -f vendor/odoo-design-themes/theme_common/__manifest__.py ]]; then
-  theme_common_state="$(
-    "${compose[@]}" exec -T db psql -U odoo -d facodi -Atc \
-      "SELECT state FROM ir_module_module WHERE name='theme_common' LIMIT 1;"
-  )"
-  if [[ "$theme_common_state" == "installed" || "$theme_common_state" == "to remove" ]]; then
-    echo "theme_common remained active after post-update retirement: $theme_common_state" >&2
-    exit 1
-  fi
-  echo "PASS second migration retired theme_common after theme_facodi update"
-fi
-
 "${compose[@]}" up -d odoo
 
 healthy=0
