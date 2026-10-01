@@ -31,6 +31,13 @@ RETIRED_MODULES = (
     "monynha_lead_generator",
 )
 
+# theme_common must be retired only after theme_facodi has been upgraded to a
+# manifest that no longer depends on it. Keeping this separate from the normal
+# pre-update retirement list makes the transition safe on persisted databases.
+POST_UPDATE_RETIRED_MODULES = (
+    "theme_common",
+)
+
 
 def log_stage(message: str) -> None:
     print(f"[facodi-migrate] {message}", flush=True)
@@ -244,11 +251,14 @@ def run_shell(config: str, database: str, payload: str) -> None:
     )
 
 
-def uninstall_retired_modules(config: str, database: str) -> None:
-    module_names = ", ".join(repr(module) for module in RETIRED_MODULES)
+def uninstall_retired_modules(
+    config: str, database: str, *, post_update: bool = False
+) -> None:
+    modules = POST_UPDATE_RETIRED_MODULES if post_update else RETIRED_MODULES
+    module_names = repr(tuple(modules))
     payload = f"""
     retired_modules = env["ir.module.module"].search([
-        ("name", "in", ({module_names},)),
+        ("name", "in", {module_names}),
         ("state", "=", "installed"),
     ])
     if retired_modules:
@@ -477,6 +487,17 @@ def main() -> None:
             args.database,
             managed_updates,
             initialize=False,
+        )
+
+        # theme_common historically came from odoo/design-themes. It can only
+        # be uninstalled after theme_facodi has loaded its vendor-independent
+        # manifest; uninstalling it before the managed update would remove a
+        # dependency still recorded by the persisted database.
+        log_stage("uninstall post-update retired theme modules")
+        uninstall_retired_modules(
+            args.config,
+            args.database,
+            post_update=True,
         )
 
     log_stage("activate Website languages and translations")
