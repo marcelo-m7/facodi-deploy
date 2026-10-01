@@ -68,7 +68,8 @@ The repository contract pins the expected revisions for:
 
 - `facodi-learning` / `facodi_learning`;
 - `facodi-theme` / `theme_facodi`;
-- `odoo/design-themes`, exposing only `theme_common`.
+
+No `odoo/design-themes` checkout is required by the canonical runtime.
 
 Before deployment, require:
 
@@ -105,7 +106,7 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `onlyoffice_odoo`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_website`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
 
 After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 
