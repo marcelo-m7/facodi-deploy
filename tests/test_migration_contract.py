@@ -221,7 +221,67 @@ class MigrationContractTest(unittest.TestCase):
         ):
             migration.main()
 
-        uninstall.assert_called_once_with("/tmp/odoo.conf", "facodi")
+        self.assertEqual(
+            uninstall.call_args_list,
+            [
+                mock.call("/tmp/odoo.conf", "facodi"),
+                mock.call("/tmp/odoo.conf", "facodi", post_update=True),
+            ],
+        )
+
+    def test_theme_common_is_retired_only_after_managed_theme_update(self):
+        migration = load_migration_module()
+        args = argparse.Namespace(
+            config="/tmp/odoo.conf",
+            database="facodi",
+            modules=FACODI_MODULES,
+        )
+        events = []
+
+        def record_uninstall(*_args, **kwargs):
+            events.append("retire-post" if kwargs.get("post_update") else "retire-pre")
+
+        def record_update(*_args, **_kwargs):
+            events.append("update")
+
+        with (
+            mock.patch.object(migration, "parse_args", return_value=args),
+            mock.patch.object(migration, "registry_exists", return_value=True),
+            mock.patch.object(migration, "inspect_legacy_state", return_value="current"),
+            mock.patch.object(migration, "missing_modules", return_value=""),
+            mock.patch.object(
+                migration,
+                "uninstall_retired_modules",
+                side_effect=record_uninstall,
+            ),
+            mock.patch.object(migration, "activate_required_languages"),
+            mock.patch.object(
+                migration,
+                "run_module_operation",
+                side_effect=record_update,
+            ),
+            mock.patch.object(migration, "configure_languages"),
+            mock.patch.object(migration, "apply_theme"),
+            mock.patch.object(migration, "configure_processing_plane"),
+        ):
+            migration.main()
+
+        self.assertEqual(events, ["retire-pre", "update", "retire-post"])
+
+    def test_post_update_retirement_targets_only_theme_common(self):
+        migration = load_migration_module()
+        with mock.patch.object(migration, "run_shell") as shell:
+            migration.uninstall_retired_modules(
+                "/tmp/odoo.conf",
+                "facodi",
+                post_update=True,
+            )
+
+        payload = shell.call_args.args[2]
+        self.assertIn("button_immediate_uninstall", payload)
+        self.assertIn("theme_common", payload)
+        self.assertNotIn("onlyoffice_odoo", payload)
+        self.assertNotIn("theme_monynha", payload)
 
     def test_retired_modules_use_standard_odoo_uninstall_api(self):
         migration = load_migration_module()
