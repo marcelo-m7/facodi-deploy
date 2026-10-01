@@ -47,7 +47,6 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_website` | `52012480fd9dfea9cb4e03a7f390086f0f0347b4` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `620e19fef10d584b477f7105b905a5414ec7d408` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `a0a053efcbc6b06164d7d652b70be3569f4f26d2` |
-| `odoo/design-themes` | only `theme_common` | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
 
 The consolidated release currently pairs `facodi_learning 19.0.1.141.0` with `theme_facodi 19.0.10.79.0`. The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. Public contact intent is canonicalized through `/contact`, which preserves source/section/topic and learning context while delegating to the unified contextual intake. The public contribution front door is a single contextual intake; `/contribuir/recurso` remains only a compatibility alias to the same controller, while metadata discovery and tokenized status URLs stay stable. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
 
@@ -96,7 +95,7 @@ After module operations, standard Odoo mechanisms are used to:
 
 The migration does not rewrite arbitrary Website pages, courses, contacts or Website Builder content directly.
 
-The current transition release also removes the historical runtime dependency from `theme_facodi` before retiring `theme_common`. Because persisted databases may still have `theme_common` installed, this transition intentionally keeps the pinned `odoo/design-themes` source for one release, updates `theme_facodi` first, and only then uninstalls `theme_common` through Odoo's standard module API. The following release removes the vendor source and gitlink entirely.
+The FACODI theme no longer depends on `theme_common`. The deployment source tree and runtime image do not include `odoo/design-themes`; the preceding transition release upgraded `theme_facodi` first and retired any installed `theme_common` registration through Odoo's standard module API.
 
 ## Coolify environment contract
 
