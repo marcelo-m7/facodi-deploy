@@ -5,6 +5,17 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
 project="${1:?Pass the existing disposable Compose project name}"
+
+# This proof deliberately drops the test database and rewrites the Odoo data
+# volume. Refuse to run outside the disposable namespace created by CI.
+case "$project" in
+  facodi-ci-*) ;;
+  *)
+    echo "Refusing destructive restore proof for non-CI project: $project" >&2
+    exit 64
+    ;;
+esac
+
 compose=(
   docker compose
   --project-name "$project"
@@ -41,12 +52,26 @@ db_id="$("${compose[@]}" ps -q db)"
   exit 1
 }
 
+odoo_project_label="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$odoo_id")"
+db_project_label="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$db_id")"
+[[ "$odoo_project_label" == "$project" && "$db_project_label" == "$project" ]] || {
+  echo "Compose project labels do not match disposable project $project" >&2
+  exit 64
+}
+
 odoo_volume="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/odoo"}}{{.Name}}{{end}}{{end}}' "$odoo_id")"
 odoo_image="$(docker inspect -f '{{.Config.Image}}' "$odoo_id")"
 [[ -n "$odoo_volume" && -n "$odoo_image" ]] || {
   echo "Could not resolve Odoo image/volume for backup proof" >&2
   exit 1
 }
+case "$odoo_volume" in
+  "${project}"_*) ;;
+  *)
+    echo "Refusing to modify volume outside disposable project: $odoo_volume" >&2
+    exit 64
+    ;;
+esac
 
 echo "[backup-restore] seed representative persistent records"
 "${compose[@]}" exec -T odoo bash -lc \
@@ -259,8 +284,26 @@ curriculum = env["facodi.learning.curriculum.reference"].search(
     ],
     limit=1,
 )
-if not curriculum or curriculum.state != "validated" or not curriculum.website_published:
-    raise RuntimeError("Curriculum review history was not restored")
+if (
+    not curriculum
+    or curriculum.state != "validated"
+    or not curriculum.website_published
+    or not curriculum.validated_at
+):
+    raise RuntimeError("Curriculum validation/publication history was not restored")
+
+coverage = env["facodi.learning.curriculum.coverage"].search(
+    [
+        ("curriculum_unit_id.reference_id", "=", curriculum.id),
+        ("channel_id", "=", course.id),
+        ("state", "=", "approved"),
+    ],
+    limit=1,
+)
+if not coverage:
+    raise RuntimeError("Approved curriculum coverage review was not restored")
+if "reviewed_at" in coverage._fields and not coverage.reviewed_at:
+    raise RuntimeError("Curriculum coverage review timestamp was not restored")
 
 print("PASS paired restore preserved Website page")
 print("PASS paired restore preserved course and learner progress")
