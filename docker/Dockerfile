@@ -5,7 +5,6 @@ LABEL org.opencontainers.image.title="FACODI Odoo"
 
 USER root
 COPY addons/ /opt/facodi-addon-sources/
-COPY vendor/odoo-design-themes/theme_common/ /opt/theme-common/theme_common/
 COPY docker/entrypoint.sh /usr/local/bin/facodi-entrypoint
 COPY docker/migrate.py /usr/local/lib/facodi/migrate.py
 RUN set -eux; \
@@ -34,8 +33,6 @@ RUN set -eux; \
       found=1; \
     done; \
     test "$found" -eq 1; \
-    test ! -e /mnt/extra-addons/theme_common; \
-    cp -a /opt/theme-common/theme_common /mnt/extra-addons/theme_common; \
     chown -R odoo:odoo /mnt/extra-addons
 USER odoo
 ENTRYPOINT ["/usr/local/bin/facodi-entrypoint"]
