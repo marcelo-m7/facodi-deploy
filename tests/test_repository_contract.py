@@ -525,6 +525,11 @@ class RepositoryContractTest(unittest.TestCase):
             "facodi.learning.curriculum.reference",
             "run --rm migrate",
             "PASS matched PostgreSQL + odoo-data backup/restore round-trip",
+            "Refusing destructive restore proof for non-CI project",
+            "com.docker.compose.project",
+            "Approved curriculum coverage review was not restored",
+            "Refusing to modify volume outside disposable project",
+            '"${project}"_*) ;;',
         ):
             self.assertIn(marker, source)
 
