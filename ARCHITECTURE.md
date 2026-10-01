@@ -12,9 +12,9 @@ Business and presentation changes remain in their owning addon repositories:
 | `marcelo-m7/facodi-learning` | Curriculum and learning domain | `f2c71f956d02228c037666a8ae3902d28fd9fcd3` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `5e7e8fd2995141d46916f87e3d09f95a2de1f79f` |
 
-| `odoo/design-themes` | `theme_common` dependency | `a1818df4ade65406c0cacae8b1ea676e6f70095f` |
-
 The gitlinks are the authoritative pins. The values above are verified from the superproject for this release.
+
+No external Odoo design-theme vendor is part of the runtime source composition. `theme_facodi` depends only on standard Odoo Community Website modules.
 
 ## Runtime
 
