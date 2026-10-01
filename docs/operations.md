@@ -48,6 +48,14 @@ Before the first deployment of this runtime design, and before later revisions t
 
 Database and filestore backups are a pair. A rollback across an Odoo migration must restore them together.
 
+The disposable CI runtime proves this contract with `tests/test_paired_backup_restore.sh`.
+The proof quiesces Odoo, captures PostgreSQL and `odoo-data` from the same
+application state, deliberately mutates database and filestore data, restores the
+matched pair, reruns the idempotent migration gate, and verifies representative
+Website, course, learner-progress, curriculum-review and attachment/filestore
+sentinels. This test is disposable evidence only; it never targets production
+volumes.
+
 ## 3. Source and image preflight
 
 The deployment commit must resolve all submodules recursively:
