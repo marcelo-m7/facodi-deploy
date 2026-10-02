@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_SUBMODULE_PATHS = {
+    "addons/facodi-api",
     "addons/facodi-ai",
     "addons/facodi-learning",
     "addons/facodi-theme",
@@ -38,6 +39,7 @@ class RepositoryContractTest(unittest.TestCase):
             EXPECTED_SUBMODULE_PATHS,
             "Every gitlink must be declared by the canonical submodule contract",
         )
+        self.assertTrue((ROOT / "addons/facodi-api/facodi_api/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/facodi-ai/requirements.txt").is_file())
