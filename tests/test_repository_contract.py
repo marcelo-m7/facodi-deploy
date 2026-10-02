@@ -15,7 +15,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/monodoo",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_website,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -46,6 +46,21 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertTrue((ROOT / "addons/muk_web_theme-19.0.1.4.9/muk_web_theme/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_core/__manifest__.py").is_file())
         self.assertTrue((ROOT / "addons/monodoo/monodoo_home/__manifest__.py").is_file())
+
+    def test_website_translation_addon_is_retired(self):
+        manifest_path = ROOT / "addons/facodi-ai/facodi_ai_website/__manifest__.py"
+        self.assertTrue(manifest_path.is_file())
+        manifest = ast.literal_eval(manifest_path.read_text())
+        self.assertFalse(manifest.get("installable", True))
+        self.assertEqual(manifest.get("depends", ["website"]), [])
+        self.assertEqual(manifest.get("data", ["unexpected"]), [])
+        self.assertEqual(manifest.get("assets", {}), {})
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/controllers").exists())
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/services").exists())
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/static").exists())
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/models").exists())
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/views").exists())
+        self.assertFalse((ROOT / "addons/facodi-ai/facodi_ai_website/data").exists())
 
     def test_design_themes_vendor_is_fully_absent(self):
         self.assertFalse((ROOT / "vendor/odoo-design-themes").exists())

@@ -45,7 +45,7 @@ or manifests, run a normal Odoo module update before exercising the change:
 
 ```bash
 bash scripts/dev.sh update facodi_learning
-bash scripts/dev.sh update facodi_ai,facodi_ai_website
+bash scripts/dev.sh update facodi_ai
 ```
 
 Use an Odoo shell in the same source and addon context when inspecting local data:
