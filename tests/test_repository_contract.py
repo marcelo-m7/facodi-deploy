@@ -16,7 +16,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/monodoo",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
@@ -409,6 +409,10 @@ class RepositoryContractTest(unittest.TestCase):
     def test_standard_forum_modules_are_explicit_runtime_capabilities(self):
         self.assertIn("website_forum", FACODI_MODULES.split(","))
         self.assertIn("website_slides_forum", FACODI_MODULES.split(","))
+        self.assertIn("facodi_ai_learning", FACODI_MODULES.split(","))
+        self.assertTrue(
+            (ROOT / "addons/facodi-ai/facodi_ai_learning/__manifest__.py").is_file()
+        )
 
     def test_monodoo_home_coexists_with_muk_without_monodoo_theme(self):
         modules = FACODI_MODULES.split(",")

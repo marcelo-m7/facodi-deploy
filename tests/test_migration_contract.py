@@ -6,7 +6,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "docker/migrate.py"
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 def load_migration_module():
@@ -104,7 +104,7 @@ class MigrationContractTest(unittest.TestCase):
         )
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "facodi_ai,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum",
+            "facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum",
         )
         self.assertEqual(
             operation.call_args_list[1].args[2],
@@ -125,7 +125,7 @@ class MigrationContractTest(unittest.TestCase):
             mock.patch.object(
                 migration,
                 "psql_scalar",
-                return_value="facodi_ai\nfacodi_learning\nmonodoo_core\nmonodoo_home\nmuk_web_theme\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
+                return_value="facodi_ai\nfacodi_ai_learning\nfacodi_learning\nmonodoo_core\nmonodoo_home\nmuk_web_theme\ntheme_facodi\nwebsite_forum\nwebsite_slides_forum",
             ),
             mock.patch.object(migration, "uninstall_retired_modules"),
             mock.patch.object(migration, "activate_required_languages"),
