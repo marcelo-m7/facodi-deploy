@@ -8,7 +8,21 @@ COPY addons/ /opt/facodi-addon-sources/
 COPY docker/entrypoint.sh /usr/local/bin/facodi-entrypoint
 COPY docker/migrate.py /usr/local/lib/facodi/migrate.py
 RUN set -eux; \
-    apt-get update; \
+    for attempt in 1 2 3 4 5; do \
+      if apt-get \
+        -o Acquire::Retries=3 \
+        -o Acquire::http::No-Cache=true \
+        -o Acquire::http::Pipeline-Depth=0 \
+        update; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 5 ]; then \
+        echo "apt-get update failed after $attempt attempts" >&2; \
+        exit 1; \
+      fi; \
+      rm -rf /var/lib/apt/lists/partial/*; \
+      sleep "$attempt"; \
+    done; \
     apt-get install -y --no-install-recommends python3-venv; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m venv --system-site-packages /opt/facodi-venv; \
