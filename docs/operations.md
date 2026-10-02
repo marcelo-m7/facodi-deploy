@@ -83,6 +83,48 @@ The disposable runtime test must prove that a fresh database migrates, an immedi
 
 The runtime test uses `tests/docker-compose.ci.yml` only for a loopback host-port binding. Do not copy that port publication into the production Coolify Compose file.
 
+## 3.1 Prebuilt-image release candidate
+
+The repository now contains a **non-production candidate** at:
+
+```text
+deploy/coolify/docker-compose.prebuilt.yml
+```
+
+Its purpose is to prove the next deployment model before changing the active Coolify resource. In this candidate, `migrate` and `odoo` use exactly the same `FACODI_IMAGE` reference and contain no local `build:` step. The existing PostgreSQL and `odoo-data` volume contracts remain unchanged.
+
+The image build is isolated in the manual GitHub Actions workflow:
+
+```text
+.github/workflows/build-release-image.yml
+```
+
+That workflow builds the existing `docker/Dockerfile` and may publish a SHA-addressed GHCR image only when explicitly requested. It does not change the production Compose file or trigger Coolify by itself.
+
+For staging/production handoff, the SHA tag is traceability metadata only. The deployable value must be the immutable digest emitted by the workflow, for example:
+
+```text
+FACODI_IMAGE=ghcr.io/<owner>/facodi-odoo@sha256:<digest>
+```
+
+Validate that value before entering it in Coolify:
+
+```bash
+bash scripts/validate-release-image.sh "$FACODI_IMAGE"
+```
+
+Before this candidate can replace the active production Compose:
+
+1. publish one SHA-addressed image from an already-green source revision and promote it by immutable registry digest;
+2. prove that both `migrate` and `odoo` resolve to that same image reference;
+3. test the candidate on a disposable/non-production Coolify resource;
+4. deliberately fail an image build and confirm the currently running application is unaffected;
+5. deliberately fail `migrate` and confirm the new Odoo revision is not promoted;
+6. confirm rollback to the previous image leaves `postgres-data` and `odoo-data` untouched;
+7. only then update the existing production resource to the prebuilt-image Compose path.
+
+Do not switch production to this candidate merely because the file exists in the repository.
+
 ## 4. First Coolify deployment of the canonical runtime
 
 Use this sequence for the first production adoption of the new Compose lifecycle:

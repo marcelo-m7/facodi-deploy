@@ -469,6 +469,74 @@ class RepositoryContractTest(unittest.TestCase):
         self.assertNotIn("5432:5432", compose)
         self.assertNotIn("8069:8069", compose)
 
+    def test_prebuilt_coolify_candidate_uses_one_immutable_app_image(self):
+        compose_path = ROOT / "deploy/coolify/docker-compose.prebuilt.yml"
+        self.assertTrue(compose_path.is_file())
+        compose = compose_path.read_text()
+
+        self.assertNotIn("build:", compose)
+        self.assertEqual(
+            compose.count(
+                "image: ${FACODI_IMAGE:?Set FACODI_IMAGE to an immutable FACODI Odoo image reference}"
+            ),
+            2,
+        )
+        self.assertIn("condition: service_completed_successfully", compose)
+        self.assertGreaterEqual(compose.count("odoo-data:/var/lib/odoo"), 2)
+        self.assertIn("postgres-data:/var/lib/postgresql/data", compose)
+        self.assertNotIn("5432:5432", compose)
+        self.assertNotIn("8069:8069", compose)
+
+        workflow = (ROOT / ".github/workflows/build-release-image.yml").read_text()
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("docker/build-push-action@v6", workflow)
+        self.assertIn("github.sha", workflow)
+        self.assertIn("packages: write", workflow)
+        self.assertNotIn(":latest", workflow)
+        self.assertIn("id: build", workflow)
+        self.assertIn("steps.build.outputs.digest", workflow)
+        self.assertIn("scripts/validate-release-image.sh", workflow)
+
+        validator = (ROOT / "scripts/validate-release-image.sh").read_text()
+        self.assertIn("@sha256:", validator)
+        self.assertIn("64", validator)
+        self.assertIn("immutable GHCR digest reference", validator)
+
+    def test_prebuilt_fail_closed_gate_is_wired(self):
+        script = ROOT / "tests/test_prebuilt_fail_closed.sh"
+        self.assertTrue(script.is_file())
+        source = script.read_text()
+        self.assertIn("SUPABASE_URL", source)
+        self.assertIn("SUPABASE_SECRET_KEY", source)
+        self.assertIn("failed migration did not promote", source)
+
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        self.assertIn("tests/test_prebuilt_fail_closed.sh", workflow)
+
+    def test_prebuilt_release_resilience_gates_are_wired(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        for script_name in (
+            "tests/test_prebuilt_build_failure_isolated.sh",
+            "tests/test_prebuilt_rollback_persistence.sh",
+        ):
+            script = ROOT / script_name
+            self.assertTrue(script.is_file(), script_name)
+            self.assertIn(script_name, workflow)
+
+        build_failure = (
+            ROOT / "tests/test_prebuilt_build_failure_isolated.sh"
+        ).read_text()
+        self.assertIn("Active Odoo container changed", build_failure)
+        self.assertIn("failed image build left the active Odoo service untouched", build_failure)
+
+        rollback = (
+            ROOT / "tests/test_prebuilt_rollback_persistence.sh"
+        ).read_text()
+        self.assertIn("facodi_ci_release_sentinel", rollback)
+        self.assertIn("PostgreSQL volume changed across image rollback", rollback)
+        self.assertIn("Odoo data volume changed across image rollback", rollback)
+        self.assertIn("image rollback preserved PostgreSQL and Odoo persistent volumes", rollback)
+
     def test_coolify_compose_checks_odoo_http_health(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         self.assertIn("http://127.0.0.1:$${PORT}/web/login", compose)
