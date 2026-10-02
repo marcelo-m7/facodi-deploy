@@ -6,6 +6,14 @@
 - It owns the Docker image, Coolify Compose lifecycle, migration gate, source pins and deployment contracts. Business logic belongs in the addon submodules.
 - Before editing an addon, identify its owning repository. Changes under `addons/facodi-ai`, `addons/facodi-learning` or `addons/facodi-theme` must be made in that repository, then consumed here by updating the submodule gitlink.
 - Initialize source pins before validation with `git submodule update --init --recursive`. Do not replace a gitlink with copied addon code or mutable branch contents.
+- For theme and public-page work, the proven flow is: fix the owning theme module, validate it locally with the contract tests and browser calls, then push the theme repository, update the pin in this deploy repo, and let Coolify rebuild the runtime.
+
+## Approved live-validation pattern
+
+- The supported FACODI instance check is the project helper `codoo facodi-connect` (or `codoo facodi-connect --json`). Use it to confirm host, database, user and version before doing any targeted live inspection.
+- Keep the check read-only and guarded: target must be `https://facodi.com`, database `facodi`, and the change must be scoped to the exact route or record being validated.
+- After a deployment, do a browser smoke check on the affected route; do not treat the code diff alone as proof that the public UI is healthy.
+- Keep secrets out of logs and chat output. Never print environment values or paste credentials into source, local evidence, or issue notes.
 
 ## Domain and implementation boundaries
 
