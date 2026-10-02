@@ -6,6 +6,7 @@ cd "$root"
 test -f .gitmodules
 for manifest in \
   addons/facodi-ai/facodi_ai/__manifest__.py \
+  addons/facodi-ai/facodi_ai_learning/__manifest__.py \
   addons/facodi-ai/facodi_ai_website/__manifest__.py \
   addons/facodi-learning/facodi_learning/__manifest__.py \
   addons/facodi-theme/theme_facodi/__manifest__.py \

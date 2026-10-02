@@ -108,7 +108,7 @@ class MigrationContractTest(unittest.TestCase):
         )
         self.assertEqual(
             operation.call_args_list[1].args[2],
-            "facodi_learning,theme_facodi,facodi_ai,muk_web_theme,monodoo_core,monodoo_home",
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home",
         )
 
     def test_existing_database_updates_without_reinitializing_installed_modules(self):
@@ -140,7 +140,7 @@ class MigrationContractTest(unittest.TestCase):
         self.assertFalse(operation.call_args_list[0].kwargs["initialize"])
         self.assertEqual(
             operation.call_args_list[0].args[2],
-            "facodi_learning,theme_facodi,facodi_ai,muk_web_theme,monodoo_core,monodoo_home",
+            "facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home",
         )
 
     def test_existing_database_does_not_reapply_theme(self):

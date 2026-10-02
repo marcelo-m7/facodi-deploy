@@ -12,6 +12,7 @@ UPDATE_MODULES = (
     "facodi_learning",
     "theme_facodi",
     "facodi_ai",
+    "facodi_ai_learning",
     "muk_web_theme",
     "monodoo_core",
     "monodoo_home",

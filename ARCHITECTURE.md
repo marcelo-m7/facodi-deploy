@@ -32,6 +32,7 @@ The runtime requests these modules through `FACODI_MODULES`:
 - `facodi_learning`
 - `theme_facodi`
 - `facodi_ai`
+- `facodi_ai_learning`
 - `website_forum`
 - `website_slides_forum`
 
