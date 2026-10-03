@@ -353,12 +353,13 @@ def configure_languages(
     if not all(required):
         raise RuntimeError("FACODI Website languages are not available")
 
-    theme = env["ir.module.module"].search(
-        [("name", "=", "theme_facodi"), ("state", "=", "installed")], limit=1
-    )
-    if not theme:
-        raise RuntimeError("theme_facodi must be installed before translations are loaded")
-    theme._update_translations(["pt_PT", "es_ES", "fr_FR"])
+    for module_name in ("theme_facodi", "facodi_learning"):
+        module = env["ir.module.module"].search(
+            [("name", "=", module_name), ("state", "=", "installed")], limit=1
+        )
+        if not module:
+            raise RuntimeError(f"{module_name} must be installed before translations are loaded")
+        module._update_translations(["pt_PT", "es_ES", "fr_FR"])
 
     facodi_website.language_ids = lang_en + lang_pt + lang_es + lang_fr
     facodi_website.default_lang_id = lang_en

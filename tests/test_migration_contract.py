@@ -338,6 +338,16 @@ class MigrationContractTest(unittest.TestCase):
         )
         processing.assert_called_once_with("/tmp/odoo.conf", "facodi")
 
+    def test_configure_languages_refreshes_both_public_modules(self):
+        migration = load_migration_module()
+        with mock.patch.object(migration, "run_shell") as shell:
+            migration.configure_languages("/tmp/odoo.conf", "facodi")
+
+        payload = shell.call_args.args[2]
+        compile(migration.textwrap.dedent(payload), "<facodi-languages>", "exec")
+        self.assertIn('for module_name in ("theme_facodi", "facodi_learning")', payload)
+        self.assertIn('module._update_translations(["pt_PT", "es_ES", "fr_FR"])', payload)
+
     def test_processing_plane_configuration_is_fail_closed_and_selects_supabase(self):
         migration = load_migration_module()
         with mock.patch.object(migration, "run_shell") as shell:
