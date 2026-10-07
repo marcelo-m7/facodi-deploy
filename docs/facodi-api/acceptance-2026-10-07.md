@@ -42,6 +42,36 @@
 	snapshots privados e volumes produtivos; nao fechar criterios de backlog
 	que continuam sem implementacao ou prova.
 
+## Confirmação produtiva pós-deploy — 2026-10-07 22:29 UTC
+
+A composição integrada em `facodi-deploy` foi observada em produção através do
+Odoo MCP após o rebuild:
+
+- `facodi_api` instalado em `19.0.3.3.0`;
+- `facodi_learning` instalado em `19.0.2.2.0`;
+- `facodi_api.pipeline_enabled=false` permaneceu inalterado;
+- provider Learning continua `supabase_edge` e processing plane `supabase`.
+
+Foi executado um canary controlado criando o job de análise Odoo **#3** sobre o
+slide privado/não publicado **#1035**. O job terminou `completed` na primeira
+tentativa, com resultado **#3**, provider `supabase_edge` e modelo
+`gemini-3.8-flash`. Nenhuma publicação foi ativada no slide.
+
+No Supabase FACODI, o canary criou
+`public.facodi_processing_jobs.id=fdaaf3bb-efa2-4a2c-a7b1-3f62e5beb9d7`,
+idempotency key `odoo-analysis-job-3`, estado terminal `needs_review`, sem
+`error_code` ou `error_message`. Os logs Edge registraram
+`POST /functions/v1/v3_analyze_learning_resource` HTTP **200**, versão **9**,
+com aproximadamente **11.1 s** de execução, usando a credencial server-side do
+projeto FACODI.
+
+Isto comprova, no runtime produtivo atual, o caminho
+Odoo → FACODI API/Learning → Supabase Edge v3 → persistência da evidência →
+resultado Odoo. Não comprova ainda uma invocação produtiva separada de
+`v3_ingest_youtube_video`; esse endpoint permanece ativo e coberto pelos
+contratos/CI, mas o hook automático de create/write continua intencionalmente
+opt-in.
+
 ## Supabase FACODI — mecanismos mínimos atuais
 
 Após a separação definitiva do Open2, o projeto Supabase FACODI
