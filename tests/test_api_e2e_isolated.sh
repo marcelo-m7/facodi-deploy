@@ -93,6 +93,7 @@ odoo_args=(
   --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
   --database="$FACODI_E2E_DATABASE"
   --without-demo=true
+  --no-http
   --workers=0
   --max-cron-threads=0
   --http-interface=0.0.0.0

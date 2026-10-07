@@ -51,7 +51,7 @@ def odoo_shell(source):
             "--db_host=db", f"--db_user={DB_USER}", f"--db_password={DB_PASSWORD}",
             f"--database={DATABASE}",
         ],
-        input=source,
+        input=source + "\nenv.registry.signal_changes()\n",
         text=True,
         capture_output=True,
         check=False,
