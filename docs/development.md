@@ -58,6 +58,33 @@ bash scripts/dev.sh shell
 volumes. Delete `facodi-dev-postgres` and `facodi-dev-odoo` explicitly only when
 you intentionally want a fresh local database and filestore.
 
+## Isolated API and Learning acceptance
+
+The API harness accepts any clean Git checkout or worktree containing the tracked
+`facodi_api` addon; it no longer requires a historical `/tmp` directory name.
+It prints the API and Learning source commits before creating disposable services.
+Use `--check-source` for an API-only preflight without fetching or starting Docker:
+
+```bash
+FACODI_API_SOURCE="$PWD/addons/facodi-api/facodi_api" bash tests/test_api_e2e_isolated.sh --check-source
+FACODI_API_SOURCE="$PWD/addons/facodi-api/facodi_api" bash tests/test_api_e2e_isolated.sh
+python3 tests/test_repository_contract.py ApiSourcePreflightTest NativeTestVerdictTest -v
+```
+
+The full harness validates installation, upgrades, HTTP, the actual scheduler and
+restart. When the selected Learning checkout depends on `facodi_api`, it also
+installs Learning in a separate disposable database and runs
+`facodi_api_consumers`. A legacy Learning pin without that dependency reports
+`NOT_EXECUTED`, not a consumer-integration pass. Native acceptance requires a
+nonzero test count and a zero-failure/error summary, independently of Odoo's
+process exit status.
+
+Both addon sources are read-only mounts. Databases, volumes, network and loopback
+ports belong to the uniquely named test project; cleanup checks ownership labels.
+This validates the selected source composition only. It does not change deployment
+gitlinks, activate production processing or replace the full Coolify/browser and
+paired-backup acceptance gates.
+
 ## Boundaries
 
 Develop business logic in its owning addon repository, not in this deployment

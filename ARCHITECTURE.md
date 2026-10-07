@@ -8,12 +8,12 @@ Business and presentation changes remain in their owning addon repositories:
 
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | Isolated v2 content pipeline | `3f2683bf0dff7c7975e0037db776f4227dede796` |
+| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `6481a80b7cec311b978fe4625bd839633a8184f7` |
 | `marcelo-m7/facodi-ai` | AI runtime | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c85d2ea04ae593b0167a0e00d8f92ebe107aee51` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `ee411d74effcd2450f2854336ab19582d47c5d38` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `61680b23817207d8d70970fa1600d0829a1ba45f` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
-The gitlinks are the authoritative pins. The values above are verified from the superproject for this release.
+The gitlinks are the authoritative pins. The values above identify the locally validated candidate, not the production image. Before commit, the exact-pin contract checks staged gitlinks; CI checks the same index supplied by its commit. Learning's opt-in adapter delegates processing internally to the shared API facade, while historical providers and human review remain intact. Production default/gate activation requires a separate operational gate.
 
 No external Odoo design-theme vendor is part of the runtime source composition. `theme_facodi` depends only on standard Odoo Community Website modules.
 

@@ -8,12 +8,33 @@ if [[ -z "$api_source" || ! -f "$api_source/__manifest__.py" ]]; then
   exit 2
 fi
 api_source="$(realpath "$api_source")"
-if [[ "$api_source" != /tmp/facodi-api-e2e-*/facodi_api ]]; then
-  echo "Refusing API source outside /tmp/facodi-api-e2e-*" >&2
+api_repository="$(git -C "$api_source" rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "Refusing API source without a Git repository" >&2
   exit 2
+}
+if [[ "$api_source" != "$api_repository/facodi_api" ]] ||
+   ! git -C "$api_repository" ls-files --error-unmatch facodi_api/__manifest__.py >/dev/null 2>&1; then
+  echo "Refusing API source outside the tracked facodi_api addon" >&2
+  exit 2
+fi
+printf 'API source commit: %s\n' "$(git -C "$api_repository" rev-parse HEAD)"
+if [[ -n "$(git -C "$api_repository" status --porcelain -- facodi_api)" ]]; then
+  echo "Refusing modified API source: use a clean commit for release acceptance" >&2
+  exit 2
+fi
+if [[ "${1:-}" == --check-source ]]; then
+  exit 0
 fi
 
 cd "$root"
+export FACODI_LEARNING_SOURCE="$root/addons/facodi-learning/facodi_learning"
+learning_repository="$root/addons/facodi-learning"
+if ! git -C "$learning_repository" ls-files --error-unmatch facodi_learning/__manifest__.py >/dev/null 2>&1 ||
+   [[ -n "$(git -C "$learning_repository" status --porcelain -- facodi_learning)" ]]; then
+  echo "Refusing untracked or modified Learning source" >&2
+  exit 2
+fi
+printf 'Learning source commit: %s\n' "$(git -C "$learning_repository" rev-parse HEAD)"
 legacy_source="/tmp/facodi-api-e2e-legacy-$$"
 mkdir -p "$legacy_source"
 # The exact installed-module baseline reviewed in this delivery, never a mutable branch.
@@ -98,7 +119,20 @@ odoo_args=(
   --max-cron-threads=0
   --http-interface=0.0.0.0
 )
-"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --init=facodi_api --test-enable --test-tags=/facodi_api --stop-after-init
+run_native_tests() {
+  local native_log
+  native_log="$(mktemp "${TMPDIR:-/tmp}/facodi-native-tests-XXXXXX.log")"
+  if ! "${compose[@]}" run --rm -T odoo "${odoo_args[@]}" "$@" --test-enable --stop-after-init 2>&1 | tee "$native_log"; then
+    echo "Native Odoo process failed; log: $native_log" >&2
+    return 1
+  fi
+  if ! grep -Eq 'odoo.tests.result: 0 failed, 0 error\(s\) of [1-9][0-9]* tests' "$native_log"; then
+    echo "Native Odoo tests failed or did not execute; log: $native_log" >&2
+    return 1
+  fi
+  rm -f "$native_log"
+}
+run_native_tests --init=facodi_api --test-tags=/facodi_api
 echo "PASS clean install and native ORM security tests"
 "${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --update=facodi_api --stop-after-init
 echo "PASS first upgrade"
@@ -158,4 +192,20 @@ PY
 
 python3 tests/api_http_e2e.py
 
-echo "PASS isolated Odoo HTTP health at http://127.0.0.1:$("${compose[@]}" port odoo 8069)"
+learning_manifest="$FACODI_LEARNING_SOURCE/__manifest__.py"
+if python3 - "$learning_manifest" <<'PY'
+import ast
+import sys
+from pathlib import Path
+
+manifest = ast.literal_eval(Path(sys.argv[1]).read_text())
+sys.exit(0 if 'facodi_api' in manifest.get('depends', []) else 1)
+PY
+then
+  run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags=facodi_api_consumers
+  echo "PASS native Learning consumer delegation, receipts and reviewed publication"
+else
+  echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
+fi
+
+echo "PASS isolated Odoo HTTP health at http://$("${compose[@]}" port odoo 8069)"

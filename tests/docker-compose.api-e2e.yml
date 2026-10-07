@@ -30,6 +30,7 @@ services:
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
     volumes:
       - ${FACODI_API_SOURCE:?}:/mnt/extra-addons/facodi_api:ro
+      - ${FACODI_LEARNING_SOURCE:?}:/mnt/extra-addons/facodi_learning:ro
       - ${FACODI_LEGACY_SOURCE:?}:/mnt/legacy-addons/facodi_api:ro
       - api-e2e-odoo:/var/lib/odoo
     ports:

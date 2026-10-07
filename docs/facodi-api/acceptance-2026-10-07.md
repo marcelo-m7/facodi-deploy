@@ -93,3 +93,111 @@ Issues API #1–13 e deploy #255–258 permanecem abertas pelos critérios ainda
 ## Entrega ao agente local
 
 Use o [prompt integral da próxima fase](prompt-platform-integration.md). Ele exige isolamento, implementação completa, testes nativos, preservação dos dados, revisão editorial, rollback e atualização de evidências. O novo agente deve começar pelo bloqueio YouTube e completar a integração antes de ampliar o cutover.
+
+## Seguimento local: composição candidata de integração
+
+Esta seção registra uma validação local posterior, não uma nova promoção ou
+inspeção da instância. Os gitlinks da release acima permanecem inalterados.
+
+O inventário encontrou a API local em
+`798c8930fb7b1f9b5092545575f73a007eaa34a0`, dez commits atrás de seu
+`origin/main`, enquanto Learning já tinha o adapter ativo. Os contratos ausentes
+nesse checkout (`submit`, retry/cancel, revisão e tentativas) existem na API
+posterior. A validação usou um worktree limpo, sem substituir esse checkout ou
+recriar o adapter existente.
+
+| Fonte efetivamente testada | SHA completo |
+| --- | --- |
+| API, após PRs #17/#18 | `6481a80b7cec311b978fe4625bd839633a8184f7` |
+| Learning | `61680b23817207d8d70970fa1600d0829a1ba45f` |
+| Deploy de partida, com alterações locais no harness | `4f22c3d75ccd85a0199f1bba84a267765964d097` |
+
+| Verificação local | Resultado |
+| --- | --- |
+| API: `python -m pytest -q` no worktree | PASS: 103 passed, 1 skipped (suíte Odoo nativa) |
+| Odoo API descartável | PASS: 26 testes, zero falhas/erros no resumo nativo |
+| Learning descartável: `facodi_api_consumers` | PASS: 13 testes, zero falhas/erros no resumo nativo |
+| HTTP, instalação, upgrades, scheduler e restart | PASS na composição candidata |
+| Guardas de fonte e resultado nativo | PASS: 8 testes de regressão |
+| Compose produtivo: `config --quiet` | PASS; nenhum serviço produtivo iniciado |
+| Contratos deploy/migração | FAIL: checkout da API diverge do gitlink da release; demais testes passaram |
+| Identidade/backup produtivos, MCP descartável, YouTube/LLM externos e benchmark | NOT_EXECUTED nesta rodada |
+
+O handoff nativo comprova um run por job, exclusão do scheduler legado,
+resultado/tentativa únicos, aprovação com reutilização do slide canônico,
+provider/origem congelados, invalidação de entrada alterada, rollback da projeção
+editorial e cancelamento sem tentativa fictícia. Isso não comprova crash recovery
+completo, aquisição YouTube externa ou LLM real.
+
+O harness agora aceita fontes Git limpas rastreadas, registra seus SHAs e exige
+um resumo Odoo sem falhas e com testes efetivamente executados. CI usa o checkout
+do submodule diretamente, evitando uma cópia cuja referência `.git` poderia
+apontar para outro diretório. Learning executa em uma segunda base descartável;
+uma release sem dependência da API é marcada `NOT_EXECUTED` nesse cenário.
+
+Os logs Odoo incluem mensagens `cursor already closed` durante o encerramento de
+threads de assets, posteriores aos resumos nativos verdes. Elas não foram
+confundidas com falhas dos testes nem corrigidas nos mirrors vendor.
+
+Para reproduzir, seguir [a seção de aceite local](../development.md#isolated-api-and-learning-acceptance)
+com os SHAs acima. Antes de promoção, reconciliar os gitlinks de todos os addons,
+validar a composição exata final com o gate Coolify/browser/restore, confirmar
+imagem e backup produtivos e obter autorização operacional. Default, gate e cron
+produtivos não foram alterados por esta validação.
+
+## Gate local seguinte: pins e imagem completa
+
+Os gitlinks candidatos foram agora preparados no index, sem commit, push,
+deploy ou alteração operacional. A API passou para o SHA testado em um checkout
+detached; Learning e theme conservaram as revisões preexistentes. O contrato
+compara o checkout com o gitlink staged, permitindo validar a candidata antes
+do commit. Mantém igualdade exata de SHA, modo `160000`, stage `0` e caminho,
+com regressões que recusam drift e entradas unmerged.
+
+| Fonte | Gitlink candidato |
+| --- | --- |
+| API 19.0.3.0.0 | `6481a80b7cec311b978fe4625bd839633a8184f7` |
+| Learning 19.0.2.0.0 | `61680b23817207d8d70970fa1600d0829a1ba45f` |
+| Theme 19.0.10.89.0 | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
+| AI, preservado | `c9cf01739180b12a758b3f61082a38179e1e475b` |
+| Monodoo, preservado | `2f9fb6bdad212442a3e16f5c3740ae11a7fb0923` |
+| MuK, preservado | `b8d5a31039d8a23aa7383c4f9f069dc5f9af7727` |
+
+Comandos executados na raiz do deploy:
+
+```bash
+bash scripts/validate-repository.sh
+docker compose --env-file .env.ci -f deploy/coolify/docker-compose.yml config --quiet
+FACODI_REQUIRE_EMPTY_DATABASE=1 bash tests/test_coolify_runtime.sh
+FACODI_REQUIRE_EMPTY_DATABASE=1 FACODI_BROWSER_ACCEPTANCE=1 \
+	FACODI_BROWSER_CHROME_BIN=<Chromium local> \
+	FACODI_BROWSER_SCREENSHOT_DIR=<diretorio temporario D1> \
+	FACODI_D2_BROWSER_SCREENSHOT_DIR=<diretorio temporario D2> \
+	bash tests/test_coolify_runtime.sh
+```
+
+Ambos os gates completos saíram com código `0`. O primeiro validou HTTP/ORM e
+restore, mas não habilitou Chromium. O segundo habilitou explicitamente os
+browsers: catálogo em 1440, 390 e 320 px; Roadmaps, UCs, Explore e detalhes;
+vídeo nativo fullscreen; intake contextual; Portal e backend Monodoo/MuK;
+páginas D2 About, contribuição, blog, contato e política. As asserções verificam
+hooks, interações e ausência de overflow, além das capturas de tela.
+
+A instalação começou sem base `facodi`, inicializou os módulos e repetiu a
+migração. O restore quiesceu Odoo, capturou PostgreSQL e filestore juntos,
+alterou ambos, restaurou o par e confirmou Website, curso, progresso,
+histórico curricular e attachment/filestore. Toda essa evidência é descartável.
+
+Identidade local da segunda execução, arquitetura `arm64`:
+
+- Imagem Odoo: `sha256:b5fcf3a36629fabfb43a1923a24fbfeb5a58ea70debd66277425b9045b0d45e4`.
+- Imagem migrate: `sha256:56126a4f429617e90eaa8252160c93bca17f7ebec3f789d50a3fe7c686112bfa`.
+- Base Odoo continua no digest documentado no aceite inicial. Os IDs acima
+	identificam imagens locais, não digests publicados em registry ou produção.
+- Playwright `1.55.0`, Chromium `140.0.7339.16`, instalados temporariamente.
+
+Logs completos e screenshots ficaram em diretórios temporários locais; nenhuma
+credencial produtiva foi usada. Os containers/volumes de CI foram removidos pelo
+harness. Permanecem pendentes o commit/CI dessa candidata, identidade e backup
+produtivos, autorização de promoção, MCP descartável, benchmark e provas
+externas YouTube/LLM. Este gate não ativa processamento como default.

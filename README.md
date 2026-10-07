@@ -44,10 +44,12 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (isolated v2, default disabled) | `3f2683bf0dff7c7975e0037db776f4227dede796` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled) | `6481a80b7cec311b978fe4625bd839633a8184f7` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `c85d2ea04ae593b0167a0e00d8f92ebe107aee51` |
-| `marcelo-m7/facodi-theme` | `theme_facodi` | `ee411d74effcd2450f2854336ab19582d47c5d38` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `61680b23817207d8d70970fa1600d0829a1ba45f` |
+| `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
+
+The candidate composition uses `facodi_api 19.0.3.0.0`, `facodi_learning 19.0.2.0.0` and `theme_facodi 19.0.10.89.0`. Its pins passed local clean installation, repeated migration, Chromium desktop/mobile checks and paired backup/restore. They do not identify the currently deployed production image. Before committing a candidate, the repository contract compares checkouts with staged gitlinks; CI validates that same index from the submitted commit. The release descriptions below retain historical context; see the [current candidate evidence](docs/facodi-api/acceptance-2026-10-07.md#gate-local-seguinte-pins-e-imagem-completa).
 
 The consolidated release currently pairs `facodi_learning 19.0.1.146.0` with `theme_facodi 19.0.10.87.0`. The FACODI learning pin provides the public official-curriculum golden path and the public Explore discovery hub. Public contact intent is canonicalized through `/contact`, which preserves source/section/topic and learning context while delegating to the unified contextual intake. The public contribution front door is a single contextual intake; `/contribuir/recurso` remains only a compatibility alias to the same controller, while metadata discovery and tokenized status URLs stay stable. UAlg LESTI 2026/27 is reconciled idempotently from a curated official-source fixture, remains separate from canonical `slide.channel` courses, exposes curricular-unit detail pages and a covered/partial/gap matrix, and renders only Manager-reviewed coverage that still passes native Odoo learner visibility. Public discovery is exposed through `/explore`, `/explore/areas`, `/explore/content` and the community-submission queue at `/explore/videos`, while complete courses remain canonical in standard Odoo eLearning through `/courses` (which delegates to Odoo-native `/slides`). Valid YouTube submissions may appear in the community queue before editorial review, but rejected submissions, contributor identity, private tracking tokens, submission context and audit records are excluded from the public projection.
 
