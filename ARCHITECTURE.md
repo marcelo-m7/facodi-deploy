@@ -8,9 +8,9 @@ Business and presentation changes remain in their owning addon repositories:
 
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `3fd9ac88990b1cfc6523fcfcfcfed5d5f549fb43` |
+| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `4671ceeab158b9a54f359196156d43372ed146a1` |
 | `marcelo-m7/facodi-ai` | AI runtime | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `0476d073ef56aa04ca4e49bfeb4de073f20dcf0c` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `2a3a83cf1f518bee1edff7bf4de15ed423255117` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
 The gitlinks are the authoritative pins. The values above identify the locally validated candidate, not the production image. Before commit, the exact-pin contract checks staged gitlinks; CI checks the same index supplied by its commit. Learning's opt-in adapter delegates processing internally to the shared API facade, while historical providers and human review remain intact. Production default/gate activation requires a separate operational gate.
