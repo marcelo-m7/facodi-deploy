@@ -42,6 +42,38 @@
 	snapshots privados e volumes produtivos; nao fechar criterios de backlog
 	que continuam sem implementacao ou prova.
 
+## Supabase FACODI — mecanismos mínimos atuais
+
+Após a separação definitiva do Open2, o projeto Supabase FACODI
+`bhfywztfyidvrlarebmg` possui uma superfície Edge mínima e explícita:
+
+- `v3_analyze_learning_resource`: análise educacional idempotente com revisão
+  humana posterior no Odoo;
+- `v3_discover_resource_metadata`: descoberta de metadata sem publicação;
+- `v3_ingest_youtube_video`: ingestão canônica de identidade/metadata do
+  YouTube, persistindo evidência em `public.facodi_processing_jobs`;
+- `v2_ingest_youtube_video`: alias temporário de compatibilidade que executa
+  o mesmo handler FACODI v3, sem depender de schema ou RPC do Open2.
+
+As funções Open2 `v2_process_video_pipeline`,
+`v2_sync_object_to_odoo`, `v2_push_odoo_learning_object` e a restante
+topologia v2 histórica não fazem parte do runtime FACODI. Os antigos helpers de
+fila/RPC/pipeline foram removidos da árvore deployável do repositório
+`facodi-supabase`; as evidências Open2 permanecem apenas no histórico Git.
+
+A fonte Supabase consolidada está em
+`c63f94ac2f11394d35343324bceb05a7b5edf30f`. O código Odoo candidato usa API
+`b830811cb2d4bd408e1811d5d5de3ab9d181b82c` (`19.0.3.3.0`) e Learning
+`1a4bb096dbc96f800732d50f1892dfa69f3f74ed` (`19.0.2.2.0`). A API resolve
+`video.ingest` para `v3_ingest_youtube_video` por padrão; o override
+`FACODI_SUPABASE_VIDEO_INGEST_FUNCTION` fica reservado à compatibilidade
+explícita. O hook automático de create/write do Learning continua desligado sem
+esse override, portanto esta mudança não reativa silenciosamente o export legado.
+
+No Supabase, as quatro funções foram recompiladas/deployadas contra os helpers
+atuais: analysis v9, metadata v7, ingest v3 e alias v2 v3. Não houve mudança de
+schema nesta etapa. A publicação editorial continua exclusivamente no Odoo.
+
 ## Auditoria inicial: estado observado e candidata local
 
 Esta seção registra a descoberta inicial; o estado pos-merge acima prevalece.
