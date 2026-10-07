@@ -67,10 +67,36 @@ projeto FACODI.
 
 Isto comprova, no runtime produtivo atual, o caminho
 Odoo → FACODI API/Learning → Supabase Edge v3 → persistência da evidência →
-resultado Odoo. Não comprova ainda uma invocação produtiva separada de
-`v3_ingest_youtube_video`; esse endpoint permanece ativo e coberto pelos
-contratos/CI, mas o hook automático de create/write continua intencionalmente
-opt-in.
+resultado Odoo.
+
+Na sequência foi executado um segundo canary ponta a ponta através do fluxo
+editorial normal de contribuição, sem publicar conteúdo:
+
+1. submission **#847** criada para o YouTube `4GVbqYFmGBw`;
+2. aceite editorial e handoff para candidate **#3**;
+3. candidate avaliado, associado explicitamente ao curso privado de teste
+   **#43** e resolvido como curso existente;
+4. ingestão criou source **#2**, slide canônico **#1063** e analysis job **#4**;
+5. job **#4** terminou `completed` na primeira tentativa;
+6. resultado Odoo **#4** identificou corretamente o vídeo público
+   **“HACCP In an Hour”**, provider `youtube`, metadata source
+   `youtube_public`, análise Gemini e nenhum erro;
+7. Supabase criou processing job
+   `7463c9df-295c-4b51-8d04-4e0ad2c6959a`, idempotency
+   `odoo-analysis-job-4`, estado `needs_review`, sem erro;
+8. Edge v3 analysis respondeu HTTP **200** em aproximadamente **6.8 s**.
+
+O slide **#1063** permaneceu `is_published=false` e
+`website_published=false`, confirmando que ingestão/análise não contornam a
+revisão humana.
+
+Ainda não se afirma uma invocação produtiva independente de
+`v3_ingest_youtube_video`: o fluxo canônico atual de submission → source →
+analysis usa `v3_analyze_learning_resource`, que já executa aquisição de
+metadata YouTube e análise. O endpoint `v3_ingest_youtube_video` permanece
+disponível como mecanismo mínimo/compatibilidade para consumidores que precisem
+de ingestão metadata-only, sem ser necessário duplicar esse estágio no caminho
+editorial normal.
 
 ## Supabase FACODI — mecanismos mínimos atuais
 
