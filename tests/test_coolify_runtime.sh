@@ -479,6 +479,57 @@ community_submission = env["facodi.learning.submission"].create(
 )
 print("FACODI_RUNTIME_COMMUNITY_TOKEN=" + community_submission.access_token)
 
+# Exercise the actual API + learning ORM chain. Only the external legacy
+# transport boundary is controlled; engine, review, receipt and ORM stay real.
+from unittest.mock import patch
+from odoo.fields import Command
+params = env["ir.config_parameter"].sudo()
+previous_gate = params.get_param("facodi_api.pipeline_enabled", "false")
+previous_groups = admin.group_ids.ids
+admin.write({"group_ids": [Command.link(env.ref("facodi_api.group_pipeline_reviewer").id)]})
+params.set_param("facodi_api.pipeline_enabled", "true")
+try:
+    api_course = env["slide.channel"].create({
+        "name": "FACODI Runtime Private API Course",
+        "user_id": admin.id, "website_id": website.id,
+        "visibility": "members", "website_published": False,
+    })
+    before_jobs = env["facodi.learning.analysis.job"].search_count([])
+    with patch.object(type(env["slide.slide"]), "_facodi_sync_supabase_video", return_value=True) as legacy_transport:
+        api_run = env["facodi.pipeline.run"].with_user(admin).create({
+            "source_type": "youtube",
+            "source_url": "https://www.youtube.com/watch?v=w9gb71ZUJDs",
+            "title": "FACODI Runtime Private API Video",
+            "language": "en", "target_channel_id": api_course.id,
+            "idempotency_key": "platform-private-video",
+            "is_manual_transcript": True,
+            "raw_content": "Explicit manual transcript. Safety and audit evidence.",
+        })
+        api_run.action_execute_pipeline()
+        assert api_run.status == "waiting_review", api_run.status
+        assert not api_run.published_slide_id
+        api_run.action_approve_and_publish()
+        api_run.action_approve_and_publish()
+        slide = api_run.published_slide_id
+        assert api_run.status == "published" and slide.slide_category == "video"
+        assert slide.channel_id == api_course and slide.is_published
+        assert not api_course.website_published and api_course.visibility == "members"
+        assert slide.video_url == api_run.source_url
+        legacy_transport.assert_not_called()
+        assert env["facodi.learning.analysis.job"].search_count([]) == before_jobs
+        # Ordinary legacy creations still invoke their existing export hook.
+        env["slide.slide"].create({
+            "name": "FACODI Runtime Legacy Hook Control",
+            "channel_id": api_course.id, "slide_category": "video",
+            "source_type": "external", "video_url": api_run.source_url,
+            "is_published": False, "website_published": False,
+        })
+        legacy_transport.assert_called_once()
+    print("FACODI_API_PRIVATE_VIDEO_NO_LEGACY_SYNC=passed")
+finally:
+    params.set_param("facodi_api.pipeline_enabled", previous_gate)
+    admin.write({"group_ids": [Command.set(previous_groups)]})
+
 admin.password = "facodi-ci-admin"
 env.cr.commit()
 PY
@@ -496,7 +547,7 @@ if [[ -z "$installed_modules" ]]; then
   echo "Runtime installed-module inventory is missing" >&2
   exit 1
 fi
-for module in facodi_ai facodi_ai_learning facodi_learning theme_facodi monodoo_core monodoo_home muk_web_theme; do
+for module in facodi_api facodi_ai facodi_ai_learning facodi_learning theme_facodi monodoo_core monodoo_home muk_web_theme; do
   if ! grep -Eq "(^|,)${module}(,|$)" <<<"$installed_modules"; then
     echo "Runtime installed-module inventory is missing ${module}: ${installed_modules}" >&2
     exit 1
@@ -511,6 +562,7 @@ require_runtime_state() {
 }
 
 require_runtime_state 'FACODI_DEFAULT_LANG=en_GB'
+require_runtime_state 'FACODI_API_PRIVATE_VIDEO_NO_LEGACY_SYNC=passed'
 require_runtime_state 'FACODI_DOT_GRID=canvas,theme,interaction'
 runtime_languages="$(sed -n 's/^FACODI_LANGS=//p' <<<"$state")"
 if [[ -z "$runtime_languages" ]]; then
