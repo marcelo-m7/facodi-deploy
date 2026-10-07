@@ -1,9 +1,12 @@
 from pathlib import Path
 import ast
 import configparser
+import os
 import re
 import subprocess
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -81,20 +84,37 @@ class RepositoryContractTest(unittest.TestCase):
             self.assertNotIn("/mnt/extra-addons/theme_common", source)
 
     def test_exact_integration_pins_match_superproject_gitlinks(self):
-        """The superproject gitlink is the single source of truth for every pin."""
+        """The staged candidate gitlink is the single source of truth for every pin."""
         for path in sorted(EXPECTED_SUBMODULE_PATHS):
             tree_line = subprocess.check_output(
-                ["git", "-C", str(ROOT), "ls-tree", "HEAD", path], text=True
+                ["git", "-C", str(ROOT), "ls-files", "--stage", "--", path], text=True
             ).strip()
             self.assertTrue(tree_line, path)
-            mode_type_sha, _ = tree_line.split("\t", 1)
-            mode, object_type, expected = mode_type_sha.split()
+            self.assertEqual(len(tree_line.splitlines()), 1, path)
+            mode_sha_stage, indexed_path = tree_line.split("\t", 1)
+            mode, expected, stage = mode_sha_stage.split()
             self.assertEqual(mode, "160000", path)
-            self.assertEqual(object_type, "commit", path)
+            self.assertEqual(stage, "0", path)
+            self.assertEqual(indexed_path, path)
             actual = subprocess.check_output(
                 ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"], text=True
             ).strip()
             self.assertEqual(actual, expected, path)
+
+    def test_candidate_pin_contract_rejects_checkout_drift(self):
+        with patch("subprocess.check_output", side_effect=[
+            "160000 " + "1" * 40 + " 0\taddons/facodi-ai\n",
+            "2" * 40,
+        ]):
+            with self.assertRaises(AssertionError):
+                self.test_exact_integration_pins_match_superproject_gitlinks()
+
+    def test_candidate_pin_contract_rejects_unmerged_gitlink(self):
+        with patch("subprocess.check_output", return_value=(
+            "160000 " + "1" * 40 + " 1\taddons/facodi-ai\n"
+        )):
+            with self.assertRaises(AssertionError):
+                self.test_exact_integration_pins_match_superproject_gitlinks()
 
     def test_contextual_contribution_safe_projection_contract(self):
         learning_root = ROOT / "addons/facodi-learning/facodi_learning"
@@ -606,6 +626,89 @@ class RepositoryContractTest(unittest.TestCase):
         )
         self.assertIn("/contact?source=", snippet_sources)
         self.assertNotIn("/submissions/new?type=contact", snippet_sources)
+
+class NativeTestVerdictTest(unittest.TestCase):
+    def verdict(self, summary, process_exit=0):
+        source = (ROOT / "tests/test_api_e2e_isolated.sh").read_text()
+        function = re.search(r"^run_native_tests\(\) \{.*?^\}\n", source, re.MULTILINE | re.DOTALL)
+        self.assertIsNotNone(function)
+        with tempfile.TemporaryDirectory(prefix="facodi-native-verdict-") as temporary:
+            return subprocess.run(
+                ["bash", "-c", 'set -euo pipefail\n'
+                 'compose=(bash -c \'printf "%s\\n" "$NATIVE_RESULT"; exit "$NATIVE_EXIT"\')\n'
+                 'odoo_args=()\n' + function.group() + '\nrun_native_tests --init=fixture'],
+                env={"PATH": os.environ["PATH"], "TMPDIR": temporary,
+                     "NATIVE_RESULT": summary, "NATIVE_EXIT": str(process_exit)},
+                text=True, capture_output=True,
+            )
+
+    def test_success_requires_executed_tests(self):
+        result = self.verdict('odoo.tests.result: 0 failed, 0 error(s) of 13 tests')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_zero_tests_are_rejected(self):
+        result = self.verdict('odoo.tests.result: 0 failed, 0 error(s) of 0 tests')
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_native_failure_is_rejected_even_with_process_exit_zero(self):
+        result = self.verdict('odoo.tests.result: 1 failed, 0 error(s) of 13 tests')
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_process_failure_is_rejected_even_with_success_summary(self):
+        result = self.verdict('odoo.tests.result: 0 failed, 0 error(s) of 13 tests', process_exit=42)
+        self.assertNotEqual(result.returncode, 0)
+
+
+class ApiSourcePreflightTest(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="facodi-source-contract-")
+        self.addCleanup(temporary.cleanup)
+        self.repository = Path(temporary.name)
+        self.addon = self.repository / "facodi_api"
+        self.addon.mkdir()
+        (self.addon / "__manifest__.py").write_text("{'name': 'Fixture'}\n")
+        self.git("init", "--quiet")
+        self.git("add", "facodi_api/__manifest__.py")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "fixture")
+
+    def git(self, *arguments):
+        return subprocess.check_output(
+            ["git", "-C", str(self.repository), *arguments], text=True,
+        ).strip()
+
+    def check_source(self, source=None):
+        return subprocess.run(
+            ["bash", str(ROOT / "tests/test_api_e2e_isolated.sh"), "--check-source"],
+            env={"PATH": os.environ["PATH"], "FACODI_API_SOURCE": str(source or self.addon)},
+            text=True, capture_output=True,
+        )
+
+    def test_clean_tracked_checkout_without_historical_directory_name(self):
+        result = self.check_source()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(self.git("rev-parse", "HEAD"), result.stdout)
+
+    def test_modified_checkout_is_rejected(self):
+        (self.addon / "__manifest__.py").write_text("{'name': 'Changed'}\n")
+        result = self.check_source()
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Refusing modified API source", result.stderr)
+
+    def test_untracked_addon_is_rejected(self):
+        self.git("rm", "--cached", "facodi_api/__manifest__.py")
+        result = self.check_source()
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Refusing API source outside the tracked facodi_api addon", result.stderr)
+
+    def test_nested_addon_is_rejected(self):
+        nested = self.addon / "facodi_api"
+        nested.mkdir()
+        (nested / "__manifest__.py").write_text("{'name': 'Untrusted'}\n")
+        result = self.check_source(nested)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Refusing API source outside the tracked facodi_api addon", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
