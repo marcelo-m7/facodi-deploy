@@ -492,7 +492,7 @@ try:
     api_course = env["slide.channel"].create({
         "name": "FACODI Runtime Private API Course",
         "user_id": admin.id, "website_id": website.id,
-        "visibility": "members", "website_published": False,
+        "visibility": "members", "enroll": "invite", "website_published": False,
     })
     before_jobs = env["facodi.learning.analysis.job"].search_count([])
     with patch.object(type(env["slide.slide"]), "_facodi_sync_supabase_video", return_value=True) as legacy_transport:
