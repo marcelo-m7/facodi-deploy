@@ -495,7 +495,7 @@ try:
         "visibility": "members", "enroll": "invite", "website_published": False,
     })
     before_jobs = env["facodi.learning.analysis.job"].search_count([])
-    with patch.object(type(env["slide.slide"]), "_facodi_sync_supabase_video", return_value=True) as legacy_transport:
+    with patch.object(type(env["slide.slide"]), "_facodi_sync_supabase_video", autospec=True, return_value=True) as legacy_transport:
         api_run = env["facodi.pipeline.run"].with_user(admin).create({
             "source_type": "youtube",
             "source_url": "https://www.youtube.com/watch?v=w9gb71ZUJDs",
@@ -544,13 +544,14 @@ try:
         legacy_transport.assert_not_called()
         assert env["facodi.learning.analysis.job"].search_count([]) == before_jobs
         # Ordinary legacy creations still invoke their existing export hook.
-        env["slide.slide"].create({
+        legacy_control = env["slide.slide"].create({
             "name": "FACODI Runtime Legacy Hook Control",
             "channel_id": api_course.id, "slide_category": "video",
             "source_type": "external", "video_url": api_run.source_url,
             "is_published": False, "website_published": False,
         })
-        legacy_transport.assert_called_once()
+        assert legacy_transport.call_count > 0
+        assert all(call.args[0].ids == legacy_control.ids for call in legacy_transport.call_args_list)
     print("FACODI_API_PRIVATE_VIDEO_NO_LEGACY_SYNC=passed")
 finally:
     params.set_param("facodi_api.pipeline_enabled", previous_gate)
