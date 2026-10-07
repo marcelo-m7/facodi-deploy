@@ -44,12 +44,12 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled) | `4671ceeab158b9a54f359196156d43372ed146a1` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled) | `b830811cb2d4bd408e1811d5d5de3ab9d181b82c` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `2a3a83cf1f518bee1edff7bf4de15ed423255117` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `1a4bb096dbc96f800732d50f1892dfa69f3f74ed` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
-The candidate composition uses `facodi_api 19.0.3.2.0`, `facodi_learning 19.0.2.1.0` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version and authorized private curriculum import. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
+The candidate composition uses `facodi_api 19.0.3.3.0`, `facodi_learning 19.0.2.2.0` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version and authorized private curriculum import. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
 
 ### Historical Release Context
 
@@ -84,7 +84,7 @@ The API alias `video.ingest` resolves to `v3_ingest_youtube_video` by default. `
 
 ### Current Processing Candidate
 
-The candidate `facodi_api` 19.0.3.2.0 is separately gated. Learning delegates one `odoo_python` job to one immutable run through the ORM facade; native review controls publication. Legacy providers/history remain intact and `slide.channel`/`slide.slide` stay canonical. Project's technical mirror remains debt; the intended projection is human work only. Local real YouTube acquisition passed, while the historical productive IP block has not been retested by a canary. See the current [acceptance report](docs/facodi-api/acceptance-2026-10-07.md), not an inferred deployment state.
+The candidate `facodi_api` 19.0.3.3.0 is separately gated. Learning delegates one `odoo_python` job to one immutable run through the ORM facade; native review controls publication. Legacy providers/history remain intact and `slide.channel`/`slide.slide` stay canonical. Project's technical mirror remains debt; the intended projection is human work only. Local real YouTube acquisition passed, while the historical productive IP block has not been retested by a canary. See the current [acceptance report](docs/facodi-api/acceptance-2026-10-07.md), not an inferred deployment state.
 
 Configure server-only `FACODI_SUPABASE_WEBHOOK_SECRET` and `FACODI_STRIPE_WEBHOOK_SECRET` in Coolify before rollout, with corresponding sender signatures. They are distinct from outbound Supabase credentials, forwarded to `migrate` and `odoo`, and empty by default. Missing configuration returns 503 without an event. Do not weaken authentication to recover a sender that has not been configured. This source delivery never enables the production gate or cron.
 
