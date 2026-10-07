@@ -253,3 +253,5 @@ restore the original gate/cron configuration. A manual transcript never proves
 YouTube acquisition, and a local baseline summary never proves an LLM response.
 A main CI build proves the disposable image, not the Coolify production rollout;
 verify the running module/version and actual persisted outputs separately.
+
+Production, development and isolated API acceptance use the same Odoo base image digest (`dd9013e669caaa23d26765dc55814655eaeecca7cfc2c265dbabae913bce22fd`). The virtual environment pins setuptools 78.1.1 to satisfy the base image maxminddb requirement; pip check remains a build gate.

@@ -1,6 +1,6 @@
-FROM docker.io/library/odoo:19.0@sha256:1fc509063908c84f47dfad0b52ea01afc4c7787c92d09b5af0f868d82bbf551d
+FROM odoo:19.0@sha256:dd9013e669caaa23d26765dc55814655eaeecca7cfc2c265dbabae913bce22fd
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt /tmp/facodi-api-requirements.txt
-RUN python3 -m venv --system-site-packages /opt/api-venv && /opt/api-venv/bin/pip install --no-cache-dir -r /tmp/facodi-api-requirements.txt && /opt/api-venv/bin/pip check && /opt/api-venv/bin/python -c "import youtube_transcript_api, pypdf, docx" && printf '%s\n' '#!/bin/sh' 'exec /opt/api-venv/bin/python /usr/bin/odoo "$@"' > /usr/local/bin/odoo && chmod 0755 /usr/local/bin/odoo
+RUN python3 -m venv --system-site-packages /opt/api-venv && /opt/api-venv/bin/pip install --no-cache-dir -r /tmp/facodi-api-requirements.txt 'setuptools==78.1.1' && /opt/api-venv/bin/pip check && /opt/api-venv/bin/python -c "import youtube_transcript_api, pypdf, docx" && printf '%s\n' '#!/bin/sh' 'exec /opt/api-venv/bin/python /usr/bin/odoo "$@"' > /usr/local/bin/odoo && chmod 0755 /usr/local/bin/odoo
 USER odoo

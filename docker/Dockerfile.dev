@@ -1,4 +1,4 @@
-FROM odoo:19.0
+FROM odoo:19.0@sha256:dd9013e669caaa23d26765dc55814655eaeecca7cfc2c265dbabae913bce22fd
 
 USER root
 COPY addons/facodi-ai/requirements.txt /tmp/facodi-ai-requirements.txt
@@ -9,7 +9,7 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends python3-venv; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m venv --system-site-packages /opt/facodi-venv; \
-    /opt/facodi-venv/bin/pip install --no-cache-dir -r /tmp/facodi-ai-requirements.txt -r /tmp/facodi-api-requirements.txt; \
+    /opt/facodi-venv/bin/pip install --no-cache-dir -r /tmp/facodi-ai-requirements.txt -r /tmp/facodi-api-requirements.txt 'setuptools==78.1.1'; \
     /opt/facodi-venv/bin/pip check; \
     /opt/facodi-venv/bin/python3 -c "import OpenSSL, cryptography, pydantic_ai, youtube_transcript_api, pypdf, docx"; \
     rm /tmp/facodi-ai-requirements.txt /tmp/facodi-api-requirements.txt; \
