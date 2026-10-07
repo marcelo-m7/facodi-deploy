@@ -29,19 +29,24 @@ odoo_container = subprocess.run(
     capture_output=True,
     check=True,
 ).stdout.strip()
-published = subprocess.run(
-    [
-        "docker", "inspect", "--format",
-        '{{range (index .NetworkSettings.Ports "8069/tcp")}}{{.HostIp}}:{{.HostPort}}{{end}}',
-        odoo_container,
-    ],
-    text=True,
-    capture_output=True,
-    check=True,
-).stdout.strip()
-if not published.startswith("127.0.0.1:"):
-    raise RuntimeError(f"Odoo port is not bound to loopback: {published!r}")
-BASE_URL = "http://" + published
+def refresh_http_binding():
+    global published, BASE_URL
+    published = subprocess.run(
+        [
+            "docker", "inspect", "--format",
+            '{{range (index .NetworkSettings.Ports "8069/tcp")}}{{.HostIp}}:{{.HostPort}}{{end}}',
+            odoo_container,
+        ],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    if not published.startswith("127.0.0.1:"):
+        raise RuntimeError(f"Odoo port is not bound to loopback: {published!r}")
+    BASE_URL = "http://" + published
+
+
+refresh_http_binding()
 
 
 def odoo_shell(source):
@@ -383,6 +388,9 @@ def main():
     print("PASS reviewer approval publishes canonical slide once and website serves it")
 
     subprocess.run(COMPOSE + ["restart", "odoo"], check=True, capture_output=True, text=True)
+    # Docker may allocate a different ephemeral host port after restart.
+    refresh_http_binding()
+    print(f"PASS restarted isolated binding remains loopback: {BASE_URL}")
     wait_http()
     status, restarted = http("GET", f"/facodi/api/v2/pipeline/runs/{run_id}", operator_key)
     assert status == 200 and restarted["status"] == "published", (status, restarted)
