@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${FACODI_E2E_DB_USER:?}
+      POSTGRES_PASSWORD: ${FACODI_E2E_DB_PASSWORD:?}
+    volumes:
+      - api-e2e-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks:
+      - isolated
+
+  odoo:
+    image: docker.io/library/odoo:19.0@sha256:1fc509063908c84f47dfad0b52ea01afc4c7787c92d09b5af0f868d82bbf551d
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      USER: ${FACODI_E2E_DB_USER:?}
+      PASSWORD: ${FACODI_E2E_DB_PASSWORD:?}
+      FACODI_E2E_DATABASE: ${FACODI_E2E_DATABASE:?}
+      FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
+    volumes:
+      - ${FACODI_API_SOURCE:?}:/mnt/extra-addons/facodi_api:ro
+      - api-e2e-odoo:/var/lib/odoo
+    ports:
+      - "127.0.0.1:${FACODI_E2E_HTTP_PORT:?}:8069"
+    command:
+      - --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+      - --http-port=8069
+      - --http-interface=0.0.0.0
+      - --workers=0
+      - --max-cron-threads=0
+      - --log-level=info
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=4).close()"
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+    networks:
+      - isolated
+
+volumes:
+  api-e2e-postgres:
+  api-e2e-odoo:
+
+networks:
+  isolated:
