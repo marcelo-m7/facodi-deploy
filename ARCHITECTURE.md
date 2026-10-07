@@ -58,9 +58,9 @@ The deployment does not create a parallel community model and does not seed fict
 
 The image also makes the pinned addon sources available. `muk_web_theme` remains the backend theme, while only `monodoo_core` and `monodoo_home` are installed from Monodoo to provide the application launcher/Home. Monodoo theme/backend-polish modules, Monynha modules and OnlyOffice are explicitly retired by the migration and are not part of the installation contract.
 
-### Supabase processing plane
+### Processing consumer matrix
 
-Network enrichment and learning-resource analysis are owned outside the Odoo image by `marcelo-m7/facodi-supabase`. The production boundary is:
+Legacy network enrichment and learning-resource analysis are owned outside the Odoo image by `marcelo-m7/facodi-supabase`. Their boundary remains:
 
 ```text
 Odoo submission / canonical source
@@ -74,6 +74,10 @@ Odoo submission / canonical source
 Odoo authenticates server-to-server with `SUPABASE_SECRET_KEY`; `SUPABASE_URL` and the secret key must be configured together. Migration sets `facodi_learning.analysis_provider=supabase_edge` only when that pair is valid. `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are forwarded for future lower-privilege surfaces but do not authorize the privileged analysis bridge.
 
 Supabase does not publish courses/content, apply tags, approve mappings, or create academic equivalence. The standard Odoo records and explicit Manager review remain canonical.
+
+`facodi_learning.analysis_provider=odoo_python` is a separate, administrator-selected consumer. A delegated Learning job creates exactly one immutable `facodi.pipeline.run`; only the API scheduler executes it, and the legacy scheduler excludes it. The accepted actor, provider and origin are frozen, while editorial reconciliation is atomic and publication still requires the native Learning review. The technical user must be an internal Pipeline Operator and eLearning Manager. Migration preserves this explicit selection, requires the API addon to be installed, and does not enable the API gate.
+
+`slide.channel` and `slide.slide` remain the canonical course and content records in every consumer. Project tasks mirror pipeline execution for operations only; they are not a second publication or learning model.
 
 On Edge failures, cross-system correlation is deliberately narrow: the private Supabase job must first persist its failed state and private diagnostics. Only then may the Edge response expose the opaque `processing_job_id` UUID. Odoo bounds the error response, accepts only that UUID, revalidates it as a trusted `SupabaseAnalysisError`, and persists only the sanitized correlation marker in job/attempt audit evidence.
 

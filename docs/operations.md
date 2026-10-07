@@ -31,7 +31,7 @@ odoo-data:/var/lib/odoo
 
 Do not rename these volumes, add explicit Compose `name:` overrides, delete them, or recreate the Coolify resource simply to deploy a revision.
 
-The existing generated database secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. FACODI resource analysis additionally uses a server-only Supabase configuration. `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are an atomic pair: configure both or neither. If only one is present, migration intentionally fails before the persistent Odoo service starts. If both are intentionally removed later, migration resets the persisted FACODI analysis provider to the deterministic local fallback instead of leaving stale Supabase activation behind.
+The existing generated database secret contract is `$SERVICE_PASSWORD_64_POSTGRES`. FACODI resource analysis additionally uses a server-only Supabase configuration. For legacy providers, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are an atomic pair: configure both or neither. If only one is present, migration intentionally fails before the persistent Odoo service starts. If both are intentionally removed later, migration resets a legacy selection to the deterministic local fallback instead of leaving stale Supabase activation behind. An explicit administrative `odoo_python` selection is preserved independently of those credentials, but migration fails closed unless `facodi_api` is installed; it never enables the API pipeline gate.
 
 The current Coolify environment may also provide `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_JWKS_URL` and `GEMINI_API_KEY`. The publishable/JWKS values do not replace the privileged secret key. Never expose `SUPABASE_SECRET_KEY` or `GEMINI_API_KEY` in Website/browser code or logs.
 
@@ -140,6 +140,8 @@ The community acceptance also requires `website_forum` and `website_slides_forum
 For the backend, authenticate as an internal user and verify that `/odoo` renders the standard Odoo navigation and applications.
 
 When the Supabase processing plane is enabled, also verify that an imported URL-bearing resource queues one `supabase_edge` analysis job and that provider/network failures remain sanitized. Do not use a production publication decision as the smoke test; analysis output must remain review-only.
+
+When `odoo_python` is selected for a private canary, first confirm the configured technical user is internal and has Pipeline Operator plus eLearning Manager access. Verify one Learning job creates one API run, the legacy scheduler never claims it, the API scheduler is the only executor, and a failed editorial projection cannot publish partial content. Keep `facodi_api.pipeline_enabled=false` outside the bounded canary and restore the original provider, gate, cron and permissions afterwards.
 
 Then verify operational persistence using real existing content:
 

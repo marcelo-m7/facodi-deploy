@@ -49,6 +49,14 @@ O CI dedicado usa PostgreSQL/Odoo, banco, volumes, rede e portas próprios. Veri
 
 O CI composto instala API+Learning e usa o review nativo; verifica evidência ausente sem publicação, defaults hostis ignorados, review aprovado único, vídeo standard e replay. Apenas o transporte externo legado Supabase é controlado nesse cenário, com assert por registro; engine, ORM, review e publicação são reais. A fixture de vídeo com transcript explícito prova o handoff, **não aquisição externa ou licença real**.
 
+## Continuação da integração API → Learning
+
+Os PRs [API #17](https://github.com/marcelo-m7/facodi-api/pull/17), [Learning #197](https://github.com/marcelo-m7/facodi-learning/pull/197) e [Deploy #262](https://github.com/marcelo-m7/facodi-deploy/pull/262) implementam a continuação auditada em ordem dependente. A API estabiliza comandos versionados, wizard backend não forjável, snapshot ACL-visível, retry/replay e submissão concorrente. Learning adiciona o consumidor opt-in `odoo_python`, cancel versionado, reconciliação editorial atómica, exclusão mútua dos schedulers e a origem persistida que impede reenvio Supabase apenas para conteúdo da API. Deploy preserva a seleção administrativa em migrações repetidas, exige a API instalada e executa o teste nativo do adapter antes de iniciar Odoo.
+
+Na validação pré-merge, a API passou 101 testes puros (1 skip) e 23 testes nativos isolados, incluindo instalação limpa, dois upgrades, HTTP, concorrência, publicação e restart. Learning passou a matriz Odoo 19 com 225 testes (263 estatísticas de métodos), seguida de dois upgrades, incluindo regressões legacy Supabase e `facodi_api_consumers`. Estes resultados são evidência descartável de código; não provam promoção, canary, identidade da imagem ou recuperação produtiva.
+
+A promoção continua deliberadamente desligada: `facodi_api.pipeline_enabled=false`, provider produtivo `local_metadata` e processing plane produtivo `supabase` na última leitura autorizada. Não houve escrita produtiva nesta continuação. O canary YouTube continua bloqueado por `YOUTUBE_IP_BLOCKED`; benchmark, provider externo, backup/restauro produtivo emparelhado e cutover amplo permanecem critérios abertos.
+
 Website/browser e restauração emparelhada de PostgreSQL+`odoo-data` passaram em ambiente descartável, preservando elementos Website, progresso, currículo/reviews e attachment/filestore. Isso não comprova backup/restauração dos volumes produtivos. Benchmark p95 e recovery completo de crash/retry/cancel ainda não foram aceitos.
 
 ## Teste controlado na instância via Odoo MCP
@@ -82,9 +90,9 @@ O conteúdo manual é texto original gerado exclusivamente para o teste autoriza
 ## Bloqueadores e próximos passos
 
 1. **P0 — aquisição YouTube real bloqueada por IP** ([API #6](https://github.com/marcelo-m7/facodi-api/issues/6)). Resolver transporte suportado/configuração server-side ou alternativa autorizada, com orçamento, redaction e teste externo positivo. Fonte não pode fornecer proxy/credencial arbitrários. Não confundir correção de timeout com correção do bloqueio de rede.
-2. Implementar retry/cancel/waiting_input/lease/recovery e nova evidência de transcript manual sem editar a entrada aceita.
+2. Retry/cancel/waiting_input, comandos versionados e replay imutável foram implementados na integração #17; ainda falta promover e provar recovery/canary produtivo sem editar a entrada aceita.
 3. Provider de enriquecimento independente: baseline atual não comprova LLM. Completar capabilities/OpenAPI, documentos por attachments autorizados e snapshot curricular real.
-4. Integrar consumidores de Learning por provider congelado por job/run; um scheduler por trabalho; provar ausência de chamadas/loops AI/Supabase no novo fluxo.
+4. O consumidor opt-in de Learning foi implementado em #197 com provider/ator/origem congelados, um run por job e exclusão mútua dos schedulers; ainda falta a revisão final, merge ordenado e canary privado antes de qualquer cutover.
 5. Simplificar Learning e retirar chamadas AI apenas após paridade, preservando modelos/histórico e funções AI fora desse domínio.
 6. Antes de cutover amplo, confirmar backup produtivo emparelhado e identidade da imagem instalada, executar benchmark e canary. Não alegar essas provas a partir deste CI.
 

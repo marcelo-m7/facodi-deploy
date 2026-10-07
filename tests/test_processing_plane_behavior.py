@@ -4,7 +4,7 @@ import textwrap
 import unittest
 from unittest.mock import patch
 
-from test_migration_contract import load_migration_module
+from tests.test_migration_contract import load_migration_module
 
 
 class Params:
@@ -74,7 +74,26 @@ class ProcessingPlaneBehavior(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'configured together'):
             self.execute(Env('supabase_edge'), {'SUPABASE_URL': 'https://example.supabase.co'})
 
-    def test_legacy_without_credentials_still_uses_safe_metadata_fallback(self):
-        env = Env('supabase_edge')
-        self.execute(env, {})
-        self.assertEqual(env.params.values['facodi_learning.analysis_provider'], 'local_metadata')
+    def test_legacy_without_credentials_repeatedly_uses_safe_metadata_fallback(self):
+        for provider in ('local_metadata', 'supabase_edge'):
+            env = Env(provider)
+            self.execute(env, {})
+            self.execute(env, {})
+            self.assertEqual(env.params.values['facodi_learning.analysis_provider'], 'local_metadata')
+            self.assertEqual(env.params.values['facodi_learning.processing_plane'], 'local')
+            self.assertEqual(env.params.values['facodi_api.pipeline_enabled'], 'false')
+            self.assertEqual(env.commits, 2)
+
+    def test_complete_legacy_pair_repeatedly_selects_supabase(self):
+        variables = {
+            'SUPABASE_URL': 'https://example.supabase.co',
+            'SUPABASE_SECRET_KEY': 'fixture',
+        }
+        for provider in ('local_metadata', 'supabase_edge'):
+            env = Env(provider)
+            self.execute(env, variables)
+            self.execute(env, variables)
+            self.assertEqual(env.params.values['facodi_learning.analysis_provider'], 'supabase_edge')
+            self.assertEqual(env.params.values['facodi_learning.processing_plane'], 'supabase')
+            self.assertEqual(env.params.values['facodi_api.pipeline_enabled'], 'false')
+            self.assertEqual(env.commits, 2)
