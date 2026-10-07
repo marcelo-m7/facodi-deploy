@@ -2,6 +2,7 @@
 import http.client as http_client
 """Exercise the API through an isolated Odoo 19 HTTP and ORM runtime."""
 
+import ast
 import concurrent.futures
 import json
 import os
@@ -263,6 +264,15 @@ def main():
     global WORKER_OPERATOR_KEY
     wait_http()
     print(f"PASS host can reach isolated Odoo at {BASE_URL}")
+    with open(os.path.join(os.environ['FACODI_API_SOURCE'], '__manifest__.py'), encoding='utf-8') as manifest_file:
+        expected_version = ast.literal_eval(manifest_file.read())['version']
+    health_status, health = http('GET', '/facodi/api/v1/health')
+    assert health_status == 200 and health['version'] == expected_version
+    for provider in ('supabase', 'stripe'):
+        status, _ = http('POST', f'/facodi/api/v1/{provider}/webhook', body={'id': 'unsigned-fixture'})
+        assert status == 503, (provider, status)
+    odoo_shell('assert env["facodi.api.event"].search_count([]) == 0\n')
+    print('PASS loaded health version and unconfigured webhooks reject HTTP without event persistence')
     data = fixture()
     keys = data["keys"]
     channel_id = data["channel_id"]

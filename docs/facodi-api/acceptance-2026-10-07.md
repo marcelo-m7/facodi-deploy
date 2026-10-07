@@ -1,5 +1,237 @@
 # Aceite e próximos passos — FACODI API, 2026-10-07
 
+## Auditoria de continuidade: estado observado e candidata local
+
+Esta seção prevalece sobre os estados históricos abaixo. PRs API #19,
+Learning #198 e deploy #262 já foram mesclados; não são entregas pendentes.
+A candidata desta auditoria ainda não identifica uma imagem produtiva saudável.
+Nenhuma escrita remota, habilitação de pipeline ou alteração de permissões foi
+feita nesta rodada. Fonte local, versão instalada e identidade de imagem são
+evidências diferentes.
+
+### Instância e ambiente
+
+- Alvo confirmado pelo conector compartilhado: `https://facodi.com`, banco
+	`facodi`. A consulta de identidade foi corrigida para selecionar o UID
+	autenticado, não o primeiro usuário visível; releitura confirmou igualdade.
+- Versões instaladas observadas: API `19.0.3.1.0`, Learning `19.0.2.0.0`,
+	AI `19.0.2.0.0`, AI Learning `19.0.1.2.0`, theme `19.0.10.89.0`.
+- Browser público respondeu health v1 com `19.0.1.0.0`, divergente da versão
+	instalada. A candidata API `19.0.3.2.0` lê o manifest carregado. Health não
+	comprova SHA/digest de imagem nem readiness de providers.
+- Gate API `false`, cron API inativo, provider Learning `supabase_edge`;
+	crons Learning e AI Learning ativos. Eventos API: 0; jobs Learning: 2;
+	jobs AI Learning: 0. Não houve leitura de payload privado de jobs.
+- O usuário de inspeção não dispõe de Operator para ler runs. Browser anônimo
+	recebeu 401 em v2; o cliente HTTP comum recebeu Cloudflare 403. Essa resposta
+	de infraestrutura não é uma resposta contratual do controller.
+- Schema REST Supabase acessível em leitura; isso não identifica as versões
+	efetivamente implantadas das Edge Functions. Segredos não foram registrados.
+- YouTube local adquiriu transcrição real para `4GVbqYFmGBw` e `9-WOBr534pQ`;
+	replay da primeira chave conservou document ID/checkpoint. Duração não foi
+	medida: não constitui aceite de vídeo longo, canary Odoo ou publicação.
+	O `YOUTUBE_IP_BLOCKED` produtivo abaixo é evidência histórica, não uma falha
+	reproduzida nesta rodada nem um bloqueio de todos os ambientes.
+- Sem acesso Coolify/digest, backup produtivo emparelhado, provider LLM/custos,
+	benchmark de recuperação ou permissão GitHub Project. Produção YouTube:
+	**NOT_EXECUTED** nesta rodada; não foi substituído por transcrição manual.
+
+### Matriz de capacidade
+
+`Sim` indica implementação existente, não aceite produtivo. `Parcial` limita a
+afirmação ao alcance descrito. Testes abaixo são de candidata descartável;
+consultar o registro de validação para falhas e resultados finais. `Contrato`
+remete ao README API; `Plano` às decisões incrementais desta seção.
+
+| Capacidade | Planejado | Implementação | Prova disponível | API | Odoo | Frontend | Docs | Dívida | Próxima ação |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Engine independente | Sim | Core puro | Suite pura | v2 fachada | ORM adapter | Backend | Contrato | Paridade externa | Providers |
+| Manual/Markdown | Sim | Sim | Pure/HTTP/ORM | Intake | Run | Wizard | Contrato | Canary | Privado |
+| Documento | Sim | Parcial | Normalização | Intake | Fonte | Wizard | Contrato | Attachments autorizados | ACL/limites |
+| YouTube automático | Sim | Sim | Local real + limites | Intake | Adapter | Wizard | Auditoria | Transporte produtivo | Canary guardado |
+| Transcript manual | Sim | Sim explícito | HTTP/ORM | input | Revisão filha | Backend | Contrato | Não confundir aquisição | Manter proveniência |
+| Normalização/chunks | Sim | Sim | Pure/checkpoint | Run | Projeção | Resultado | Contrato | Volume/duração | Benchmark |
+| Enriquecimento metadata | Sim | Sim | Pure/ORM | Run | Resultado | Review | Contrato | Não é LLM | Capabilities |
+| Enriquecimento LLM | Sim | Parcial/legado | Sem canary atual | Provider | AI/Supabase | Review | Plano | Provider real/custos | Adapter contratual |
+| Snapshot catálogo | Sim | Parcial, cursos até 50 | ORM | Intake | ACL-visível | Backend | Contrato | UC/outcomes incompletos | Snapshot versionado |
+| Matching lexical | Sim | Sim | Pure | Resultado | Propostas | Review | Contrato | Pesos fixos/confidence | Explicar componentes |
+| Matching semântico | Sim | Não | Nenhuma | Não | Não | Não | Plano | Embeddings/avaliação | Dataset e baseline |
+| Intake async | Sim | Sim | HTTP 202/scheduler | v2 | Run | Backend | Contrato | Canary | Não self-HTTP |
+| Identidade imutável | Sim | Sim | Pure/ORM | v2 | Source/provider/actor | Backend | Contrato | Cutover | Preservar |
+| Idempotência/replay | Sim | Sim | Pure/HTTP/ORM | Chave/revisão | Locks/receipts | Backend | Contrato | Não exactly-once rede | Recovery |
+| Checkpoints | Sim | Sim | Spies ingest/normalize/enrich | Retry | Storage | Estado | Contrato | Crash em processo | Failure injection |
+| Retry/budget | Sim | Sim, limite 20 | Pure/ORM | retry | Tentativas | Backend | Contrato | p95/recovery | Benchmark |
+| Cancel | Sim | Parcial, fronteira transacional | ORM/consumer | cancel | Estado | Backend | Contrato | Não interrompe IO ativo | Deadline/cancel |
+| Waiting input | Sim | Sim | ORM | input | Revisão filha | Backend | Contrato | UX/externalcanary | Validar |
+| Review/publicação | Sim | Sim | HTTP/ORM | approve | Review + slide nativo | Backend/Website | Contrato | Canary privado | Guardas |
+| Consumidor Learning | Sim | Opt-in | Native consumer | Fachada ORM | Um job/um run | Backend | Contrato | Provider ativo legado | Canary/paridade |
+| Webhooks autenticados | Sim | Candidata corrigida | Pure/native/HTTP | v1 | Evento após auth | Não | Contrato | Config/replay dedup | Não promover sem secrets |
+| Version health | Sim | Candidata corrigida | Native/HTTP | v1 | Manifest | JSON | Contrato | Não é digest | Imagem verificável |
+| Learning Object genérico | Sim | Não como contrato completo | Nenhuma | Sem rota LO | Slides/resultados existem | Parcial | Plano | Identidade/versões | Referência incremental |
+| Relações consultáveis | Sim | Parcial | Curriculum/mapping native | Sem grafo genérico | Coverage/assignments | Currículo | Plano | Relações tipadas/proveniência | Read model |
+| Estrutura educacional gerada | Sim | Não | Nenhuma | Não | Composição manual | Currículo | Plano | Proposta/review/rollback | Não auto-publicar |
+| Project trabalho humano | Sim | Não; mirror técnico atual | Mirror existente | Run | Project + 3 subtasks/run | Project | Plano | Não conforme intenção | Projeção humana |
+| API discovery/OpenAPI | Sim | Não | Nenhuma | Sem capabilities/OpenAPI | Não | Não | Plano | Contrato consultável | Specs executáveis |
+| Restore | Sim | Descartável comprovado antes | Gate local anterior | Não | DB + filestore | Browser anterior | Histórico | Backup produtivo | Par emparelhado |
+
+### Contrato real e recuperação
+
+Rotas existentes: GET `/facodi/api/v1/health`; POST v1 `webhook/supabase`
+e `webhook/stripe`; POST `/facodi/api/v2/pipeline/runs`; GET de um run e
+POST `retry`, `cancel`, `input`, `approve` nesse run. Não existem hoje rotas
+`/jobs`, `/sources`, `/learning-objects`, `/matches`, capabilities ou OpenAPI.
+Payloads, bearer, campos e respostas estão no [README API](../../addons/facodi-api/README.md).
+V2 exige bearer, Operator e gate; aprovação exige Reviewer/review nativo.
+Entrada aceita não é editada: correção de transcript cria revisão filha.
+
+Core: `ContentSource`, `ContentDocument`, `EnrichedDocument`, `CatalogSnapshot`,
+`TargetEntity`, `MappingCandidate`, `MappingResult`, `PipelineRun`.
+Etapas: ingest, normalize, enrich, map. Fingerprint de checkpoint vincula
+source/catalog/provider/pipeline version. Garantia: execução at-least-once
+com efeitos idempotentes, não entrega exactly-once de rede.
+
+| Cenário | Evidência / limite |
+| --- | --- |
+| A: sucesso | Pure, native e HTTP; vídeo externo local separado de handoff |
+| B: falha antes ingest | Retry sem checkpoint de documento fictício |
+| C: falha enrich | Retry reutiliza ingest/normalize; spies impedem repetição |
+| D: falha map | Retry mantém call counts ingest/normalize/enrich em 1 |
+| E: duplicação | Chave/payload/revisão, concorrência e replay ORM/HTTP |
+| F: cancel | Estado/consumer provados; interrupção de IO ativo não provada |
+| G: timeout/rede | Limites/erros seguros; browser403 separado do contrato |
+| H: segredo ausente | Webhook503, assinatura ausente/inválida401, nenhum evento |
+| I: input/review | Filho imutável, revisão humana, publicação canônica única |
+| J: crash/restart | Persistência/restart anteriores; crash em toda fronteira e p95 pendentes |
+
+Assinaturas usam corpo exato e limite de 262144 bytes: Supabase HMAC-SHA256;
+Stripe SDK oficial com tolerância 300 segundos. Timestamp expirado/tamper são
+testados. Replay dedup de evento continua pendente: não fecha API #2 inteiro.
+Configuração de signing secrets é pré-condição de rollout, não uma razão para
+voltar a aceitar webhook sem autenticação.
+
+### Arquitetura incremental, ainda não implementada
+
+Não criar um segundo engine em Learning ou AI. O core API aceita fonte,
+catálogo, provider e política versionados e retorna artefatos/propostas sem
+depender de Odoo. Adapters internos usam a fachada ORM comum, nunca self-HTTP.
+Learning conserva histórico, revisão, conteúdo canônico e projeções; AI mantém
+serviços reutilizáveis fora desse domínio.
+
+1. **Learning Object reference.** Estender proveniência existente com identidade
+	`(source_kind, canonical_source_id, revision)`, hash, artifact/checkpoint IDs,
+	provider/pipeline/policy versions, actor e scope. Vincular resultados e
+	`slide.slide`, sem curso/progresso paralelo. Migration aditiva preenche só
+	fatos verificáveis; histórico desconhecido permanece legado. Aceite: replay
+	conserva identidade, revisão cria filho, public não lê artefato privado.
+2. **Relações consultáveis.** Reusar mapping, coverage e assignments; adicionar
+	apenas tipos não representáveis, com origem, evidência, status e versão.
+	Read model consulta por LO/unidade/curso e revalida ACL dos destinos; não
+	abrir ACL de auditoria. Aceite: revisão não expõe destino privado, reversão
+	preserva histórico, replay não duplica relação.
+3. **Matching explicável.** Baseline lexical atual: concept .30, tag .25,
+	name .20, summary .10, max 1, threshold .25, top 5; confidence é score,
+	não probabilidade calibrada. Introduzir política versionada de pesos e
+	thresholds, evidência por componente e razões de exclusão. Outcomes e
+	prerequisites exigem catálogo real; embeddings exigem dataset revisado.
+	Congelar política no run. Aceite: ranking determinístico explicado,
+	comparação com baseline multilíngue e isolamento entre atores.
+4. **Geração revisável.** LOs/relações/matches propõem unidades, agrupamentos e
+	composição pelos modelos Learning existentes. Preview não altera conteúdo;
+	reviewer aprova diff idempotente, auditável e reversível. Nenhuma proposta
+	publica automaticamente. Aceite: rejeição não muda progresso/curso, replay
+	não duplica itens e rollback preserva evidência.
+
+### Project: trabalho humano
+
+O código ainda cria Project privado, tarefa principal e três subtarefas técnicas
+por run. Isso é legado, não a política desejada. Não foi removido nesta candidata.
+Estados, checkpoints e tentativas técnicos ficam em runs/jobs/logs.
+
+Projetar somente revisão editorial, validação de fonte, decisão curricular,
+bloqueio operacional e aprovação/publicação que exijam pessoa. Chave idempotente
+`(run_id, revision, human_reason)`; tarefa tem referência, responsável/papel,
+contexto, decisão e prazo, sem segredo/transcript privado. Replay atualiza a
+mesma pendência; aprovação/cancel encerra ou arquiva sem excluir histórico.
+Mirror legado só fica read-only/arquivado após reconciliação. Testes: zero
+tarefa em etapa automática, uma por motivo humano, retry/replay/cancel sem
+duplicação e isolamento entre atores. Dependência: eventos de decisão do run.
+
+### Consumidores legados classificados
+
+| Call site | Papel real | Decisão incremental |
+| --- | --- | --- |
+| Learning `analysis_job` | Metadata/Supabase; cron exclui `odoo_python` | Preservar até paridade/canary |
+| Learning `pipeline_adapter` | Um job/um run, sem engine próprio | Manter fachada ORM, sem self-HTTP |
+| Learning discovery/YouTube | Metadata Supabase | Separar discovery de análise |
+| Learning `slide_slide` export | Origem API exclui export legado | Manter origem/provider e teste de edições |
+| AI Learning `slide_extensions` | Enfileira job por course/slide | Migrar intake após equivalência |
+| AI Learning `learning_suggestion` | Cron, `_process`, profile, `facodi.ai.service._run` | Provider adapter, preservar filas/histórico |
+| AI audit/settings/profile | Sanitização/config/proveniência | Conservar serviços fora de Learning |
+| AI análises/suggestions/mappings | Histórico de revisão | Preservar consulta; não reprocessar |
+| Supabase `v3_analyze_learning_resource` | Análise externa | Validar contrato/provider/versionamento |
+| Supabase `v3_discover_resource_metadata` | Discovery | Metadata não é análise educacional |
+| Supabase `v2_process_video_pipeline`, push/sync | Orquestração/export legado | Impedir dois workers/publicações |
+
+Python produtivo de Learning não contém chamadas diretas a
+`facodi.ai.service`; referências históricas em testes não são consumidores.
+Transporte outbound Supabase com `apikey` não autentica webhook inbound:
+a branch concorrente desse transporte é entrega distinta, não sobrescrita aqui.
+
+Learning já tem sugestões determinísticas de coverage versionadas e review-only
+([#23](https://github.com/marcelo-m7/facodi-learning/issues/23), PR #194 mesclado).
+Isso não é o matching lexical do core API nem um grafo genérico. A evolução deve
+reusar `course-profile-v1`, title similarity e coverage, preservando decisões
+terminais. O bloqueador HITL de #23 permanece aberto.
+
+Coordenação existente: [Program #7](https://github.com/marcelo-m7/facodi-monorepo/issues/7)
+e [Increment #12](https://github.com/marcelo-m7/facodi-monorepo/issues/12).
+`facodi-monorepo` é control plane de engenharia; deploy é control plane de
+release; somente commits aprovados/mesclados podem ser promovidos. A candidata
+local não autoriza promoção nem substitui esses owners.
+
+### Próximos cinco passos
+
+| Ordem | Dono / issue | Dependência | Aceite | Teste |
+| --- | --- | --- | --- | --- |
+| 1 | API/Deploy #2,#4,#13 | Signing secrets, review/CI exato | Health real, webhook fail-closed; dedup ainda aberto | Pure/native/HTTP/assinatura expirada |
+| 2 | Operações/API #6,#13 | Digest, backup DB+filestore, Operator/provider | Canary YouTube privado, aquisição/custo, sem cutover | Desktop/mobile, retry/cancel/recovery/p95, vídeo longo medido |
+| 3 | API #8 + Learning #23, Increment #12 | UC/outcomes/dataset reais | LO/relações/política explicável aditivos | Replay/revisão/ACL, ranking explicado, migration |
+| 4 | API/Learning #5,#9 | Eventos humanos, relações/matching | Project humano e estrutura proposta/revisável | Zero tarefa automática, replay/cancel, review/rollback |
+| 5 | API #11 + Learning/AI/Supabase, deploy #255-258 | Canary/paridade | Cutover opt-in, histórico, schedulers exclusivos | Legacy/provider E2E, upgrade/restore/browser |
+
+Project não sincronizado: token sem escopo do board. Página pública sem Projects
+não prova inexistência de board privado. Requer acesso `project` ao board correto;
+não criar board ou duplicar issues como substituição. Correções parciais não
+fecham épicos nem critérios produtivos.
+
+### Validação e publicação desta candidata
+
+- Root: 22 testes passaram; identidade autenticada: 3 focados.
+- API pure: 111 passed, 1 skipped (ORM fora do runtime nativo).
+- Deploy/migração/preflight: 66 unittest passaram; subset pytest: 61.
+- Baseline native: API 27 + Learning consumer 18 passaram.
+- Candidata final: **29 API + 423 Learning native, zero falhas/erros**.
+	HTTP health/segredo ausente sem evento, fresh install, upgrade legado,
+	dois upgrades, concorrência, review/publicação e restart passaram.
+- Learning ampliado: primeira rodada 5 falhas/4 erros; segunda 4 falhas/0 erros;
+	terceira verde. Não removidos cenários/skips. Corrigidos criação interna de
+	capture/group/occurrence após source write authorization, assertions antigas
+	de bootstrap/prefill e fallback authored OpenGraph; ACL permanece read-only.
+- [API PR #22](https://github.com/marcelo-m7/facodi-api/pull/22):
+	`3fd9ac88990b1cfc6523fcfcfcfed5d5f549fb43`, manifest `19.0.3.2.0`.
+- [Learning PR #200](https://github.com/marcelo-m7/facodi-learning/pull/200):
+	`0476d073ef56aa04ca4e49bfeb4de073f20dcf0c`, manifest `19.0.2.1.0`.
+- Imagem canônica inicial passou migração, consumer 18 e browser desktop/mobile,
+	narrow320, portal e backend. D2 HTTP passou; invocação interrompida por ausência
+	do diretório screenshot D2. Repetição com variável correta mantém todos os gates.
+- Repetição completa: **PASS imagem canônica, D1/D2 browser desktop/mobile e
+	restore emparelhado DB+filestore**, preservando Website, progresso, currículo,
+	reviews e attachment. State foi exclusivamente descartável.
+- Compose encaminha signing secrets server-only, vazio por padrão; contrato e
+	resolução com valores sintéticos passaram, mantendo portas/gate/volumes.
+	CI remoto da candidata exata permanece gate de publicação, não de promoção.
+	Nenhum deploy produtivo está implícito nesses PRs.
+
 ## Resultado
 
 **Base isolada revisada, corrigida, mesclada e observada na instância. Integração ampla ainda não liberada.** O fluxo de conteúdo original passou via MCP até revisão nativa e publicação canônica em curso privado. A aquisição automática de dois vídeos YouTube na instância falhou com `YOUTUBE_IP_BLOCKED`; portanto, o E2E real de aquisição YouTube está **BLOQUEADO**, sem substituição por transcrição manual.

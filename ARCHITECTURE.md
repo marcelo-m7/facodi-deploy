@@ -8,9 +8,9 @@ Business and presentation changes remain in their owning addon repositories:
 
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `c6da48b8eeb62ff0f83a084bec4a6928de31cc0e` |
+| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `3fd9ac88990b1cfc6523fcfcfcfed5d5f549fb43` |
 | `marcelo-m7/facodi-ai` | AI runtime | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `2c066b3ae4b9e865d22d8af7747687729598e0da` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `0476d073ef56aa04ca4e49bfeb4de073f20dcf0c` |
 | `marcelo-m7/facodi-theme` | FACODI Website presentation | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
 The gitlinks are the authoritative pins. The values above identify the locally validated candidate, not the production image. Before commit, the exact-pin contract checks staged gitlinks; CI checks the same index supplied by its commit. Learning's opt-in adapter delegates processing internally to the shared API facade, while historical providers and human review remain intact. Production default/gate activation requires a separate operational gate.
@@ -77,7 +77,7 @@ Supabase does not publish courses/content, apply tags, approve mappings, or crea
 
 `facodi_learning.analysis_provider=odoo_python` is a separate, administrator-selected consumer. A delegated Learning job creates exactly one immutable `facodi.pipeline.run`; only the API scheduler executes it, and the legacy scheduler excludes it. The accepted actor, provider and origin are frozen, while editorial reconciliation is atomic and publication still requires the native Learning review. The technical user must be an internal Pipeline Operator and eLearning Manager. Migration preserves this explicit selection, requires the API addon to be installed, and does not enable the API gate.
 
-`slide.channel` and `slide.slide` remain the canonical course and content records in every consumer. Project tasks mirror pipeline execution for operations only; they are not a second publication or learning model.
+`slide.channel` and `slide.slide` remain canonical. Project still mirrors technical runs, but this is legacy debt: the intended policy projects only human editorial/source/curricular/operational decisions. The migration must preserve history and deduplicate by run/revision/reason, not create tasks for automatic stages. The [continuity audit](docs/facodi-api/acceptance-2026-10-07.md) defines the incremental LO/relations/explainable-matching design and its acceptance gates. None is represented as implemented merely because it is specified.
 
 On Edge failures, cross-system correlation is deliberately narrow: the private Supabase job must first persist its failed state and private diagnostics. Only then may the Edge response expose the opaque `processing_job_id` UUID. Odoo bounds the error response, accepts only that UUID, revalidates it as a trusted `SupabaseAnalysisError`, and persists only the sanitized correlation marker in job/attempt audit evidence.
 
