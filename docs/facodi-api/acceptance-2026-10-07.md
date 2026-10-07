@@ -207,10 +207,11 @@ fecham épicos nem critérios produtivos.
 ### Validação e publicação desta candidata
 
 - Root: 22 testes passaram; identidade autenticada: 3 focados.
-- API pure: 111 passed, 1 skipped (ORM fora do runtime nativo).
+- Baseline API pure: 111 passed, 1 skipped (ORM fora do runtime nativo).
+	Pin API mesclado: 112 passed, 1 skipped, após teste adicional do transporte.
 - Deploy/migração/preflight: 66 unittest passaram; subset pytest: 61.
 - Baseline native: API 27 + Learning consumer 18 passaram.
-- Candidata final: **29 API + 423 Learning native, zero falhas/erros**.
+- Baseline isolada antes dos merges: **29 API + 423 Learning native, zero falhas/erros**.
 	HTTP health/segredo ausente sem evento, fresh install, upgrade legado,
 	dois upgrades, concorrência, review/publicação e restart passaram.
 - Learning ampliado: primeira rodada 5 falhas/4 erros; segunda 4 falhas/0 erros;
@@ -221,6 +222,14 @@ fecham épicos nem critérios produtivos.
 	`4671ceeab158b9a54f359196156d43372ed146a1`, manifest `19.0.3.2.0`.
 - [Learning PR #200](https://github.com/marcelo-m7/facodi-learning/pull/200):
 	`2a3a83cf1f518bee1edff7bf4de15ed423255117`, manifest `19.0.2.1.0`.
+- Esses merges incorporam também as alterações concorrentes aprovadas pelo owner:
+	Supabase outbound usa secret key em `apikey`, sem bearer; export v2 de vídeo
+	permanece desligado por padrão e exige função de compatibilidade explícita.
+	Os registros/histórico legados continuam preservados. A fixture de plataforma
+	verifica default sem chamada e opt-in explícito, sem executar transporte real.
+- CI dos pins mesclados: [API/full Learning](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37685198494)
+	e [plataforma/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37685198454).
+	Seus resultados devem ser associados ao SHA próprio, não ao baseline anterior.
 - Imagem canônica inicial passou migração, consumer 18 e browser desktop/mobile,
 	narrow320, portal e backend. D2 HTTP passou; invocação interrompida por ausência
 	do diretório screenshot D2. Repetição com variável correta mantém todos os gates.
