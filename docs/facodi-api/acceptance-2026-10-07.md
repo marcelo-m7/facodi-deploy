@@ -42,6 +42,14 @@
 	snapshots privados e volumes produtivos; nao fechar criterios de backlog
 	que continuam sem implementacao ou prova.
 
+<details>
+<summary>Historico integral: todas as secoes abaixo registram rodadas anteriores</summary>
+
+Todo o conteudo deste bloco, ate o final do documento, e historico. Inclui as
+secoes posteriores de bloqueadores, proximos passos e gates locais: nao use
+esses estados antigos para inferir pendencias atuais de backup, autorizacao,
+merge ou rollout. O estado pos-merge acima e o registro atual desta entrega.
+
 ## Auditoria inicial: estado observado e candidata local
 
 Esta seção registra a descoberta inicial; o estado pos-merge acima prevalece.
@@ -541,3 +549,5 @@ autorizam ligar default/gate/cron. YouTube/LLM externos, MCP descartável,
 benchmark, recuperação completa e canary continuam explicitamente pendentes.
 Issues somente podem ser fechadas quando todos os seus critérios específicos
 tiverem evidência; este avanço não fecha automaticamente o epic.
+
+</details>
