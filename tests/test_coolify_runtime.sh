@@ -548,15 +548,33 @@ try:
         assert native_reviews.reviewed_by_id == admin
         legacy_transport.assert_not_called()
         assert env["facodi.learning.analysis.job"].search_count([]) == before_jobs
-        # Ordinary legacy creations still invoke their existing export hook.
+        # The retired v2 Supabase export must stay disabled by default. It may
+        # only run when an explicit compatibility function is configured.
         legacy_control = env["slide.slide"].create({
             "name": "FACODI Runtime Legacy Hook Control",
             "channel_id": api_course.id, "slide_category": "video",
             "source_type": "external", "video_url": api_run.source_url,
             "is_published": False, "website_published": False,
         })
+        legacy_transport.assert_not_called()
+
+        import os
+        with patch.dict(
+            os.environ,
+            {"FACODI_SUPABASE_VIDEO_INGEST_FUNCTION": "v2_ingest_youtube_video"},
+            clear=False,
+        ):
+            explicit_legacy_control = env["slide.slide"].create({
+                "name": "FACODI Runtime Explicit Legacy Hook Control",
+                "channel_id": api_course.id, "slide_category": "video",
+                "source_type": "external", "video_url": api_run.source_url,
+                "is_published": False, "website_published": False,
+            })
         assert legacy_transport.call_count > 0
-        assert all(call.args[0].ids == legacy_control.ids for call in legacy_transport.call_args_list)
+        assert all(
+            call.args[0].ids == explicit_legacy_control.ids
+            for call in legacy_transport.call_args_list
+        )
     print("FACODI_API_PRIVATE_VIDEO_NO_LEGACY_SYNC=passed")
 finally:
     params.set_param("facodi_api.pipeline_enabled", previous_gate)
