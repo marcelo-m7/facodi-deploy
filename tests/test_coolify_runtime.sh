@@ -115,7 +115,7 @@ state="$({
 website = env["website"].search([], order="id", limit=1)
 if not website:
     raise RuntimeError("FACODI Website record is missing")
-expected_modules = ("facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_learning", "muk_web_theme", "monodoo_core", "monodoo_home")
+expected_modules = ("facodi_api", "facodi_learning", "theme_facodi", "facodi_ai", "facodi_ai_learning", "muk_web_theme", "monodoo_core", "monodoo_home")
 modules = env["ir.module.module"].search([("name", "in", list(expected_modules))])
 module_states = {module.name: module.state for module in modules}
 if set(module_states) != set(expected_modules):
