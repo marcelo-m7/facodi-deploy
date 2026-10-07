@@ -10,31 +10,38 @@
 - API [#22](https://github.com/marcelo-m7/facodi-api/pull/22), Learning
 	[#200](https://github.com/marcelo-m7/facodi-learning/pull/200) e deploy
 	[#264](https://github.com/marcelo-m7/facodi-deploy/pull/264) foram mesclados.
-	A composicao aceita e `407cf44cef3960a0b0fe7985aebaf75cbadf0096`, com API
+	A primeira composicao aceita foi `407cf44cef3960a0b0fe7985aebaf75cbadf0096`, com API
 	`4671ceeab158b9a54f359196156d43372ed146a1` e Learning
 	`2a3a83cf1f518bee1edff7bf4de15ed423255117`. Deploy #263 foi fechado;
 	nao deve originar rebuild separado.
 - CI pos-merge passou nesse SHA: [API/native Learning](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37687855264)
 	e [runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37687855440).
-	A suite pura API tem 112 testes passando e 1 skip; as suites nativas
+	Nesse primeiro aceite, a suite pura API passou com 112 testes e 1 skip; as suites nativas
 	passaram com 29 testes API e 425 Learning. Codoo #46 integra o gitlink
 	aceito e a correcao de identidade, com 22 testes e CodeQL passando.
+- A composicao posterior inclui a integracao Supabase nativa e deploy
+	[#267](https://github.com/marcelo-m7/facodi-deploy/pull/267), consumidos por
+	[Codoo #47](https://github.com/Corvanis/Codoo/pull/47). Os pins atuais estao
+	na secao Supabase abaixo. CI completo passou no head `4f9e8e8`:
+	[API/native](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37695113814)
+	e [runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37695113729).
 - Releitura guardada de `https://facodi.com` / `facodi` confirmou API
-	`19.0.3.2.0`, Learning `19.0.2.1.0` e health publico `19.0.3.2.0`.
+	`19.0.3.3.0`, Learning `19.0.2.2.0` e health publico `19.0.3.3.0`.
 	Jobs Learning 1/2 estao `completed`, provider `supabase_edge`, com resultados
 	associados. Esses estados nao comprovam nova aquisicao YouTube ou o
 	conteudo/provider de cada resultado.
 	- Smoke publico em browser apos a autorizacao: HTTP 200 em `/web/login`, `/`,
 	  `/pt/`, `/es/`, `/fr/`, `/courses`, `/forum` e `/facodi/api/v1/health`;
-	  health `status=ok`, versao `19.0.3.2.0`. Isso nao substitui o aceite
+	  a nova consulta de health, sem reutilizar cache, confirmou `status=ok`
+	  e versao `19.0.3.3.0`. Isso nao substitui o aceite
 	  autenticado de `/odoo` nem identifica a imagem produtiva.
 - Gate Python permanece `false`. O cron resolvido por
 	`facodi_api.ir_cron_facodi_pipeline_process` e o ID 26: a leitura com
 	`active_test=False` confirmou `active=False`. Crons 20/25 permanecem ativos.
 	Promover codigo nao ativa automaticamente provider, gate, cron ou publicacao.
 - Nao ha acesso Coolify configurado nesta sessao nem deployment registrado
-	no GitHub do deploy. Nao foi iniciado novo rollout nem comprovado digest
-	da imagem produtiva. O canary Python continua **NOT_EXECUTED**, aguardando
+	no GitHub do deploy. Nao foi executado redeploy manual nesta sessao nem
+	comprovado digest da imagem produtiva. O canary Python continua **NOT_EXECUTED**, aguardando
 	identidade da imagem e execucao operacional guardada; backup e autorizacao
 	nao devem continuar listados como bloqueios.
 - Limpeza deve remover somente branches desta entrega cujo conteudo esteja
@@ -62,7 +69,7 @@ fila/RPC/pipeline foram removidos da árvore deployável do repositório
 `facodi-supabase`; as evidências Open2 permanecem apenas no histórico Git.
 
 A fonte Supabase consolidada está em
-`c63f94ac2f11394d35343324bceb05a7b5edf30f`. O código Odoo candidato usa API
+`c63f94ac2f11394d35343324bceb05a7b5edf30f`. A composicao Odoo aceita usa API
 `b830811cb2d4bd408e1811d5d5de3ab9d181b82c` (`19.0.3.3.0`) e Learning
 `1a4bb096dbc96f800732d50f1892dfa69f3f74ed` (`19.0.2.2.0`). A API resolve
 `video.ingest` para `v3_ingest_youtube_video` por padrão; o override
