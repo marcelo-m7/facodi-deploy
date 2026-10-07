@@ -218,9 +218,9 @@ fecham épicos nem critérios produtivos.
 	capture/group/occurrence após source write authorization, assertions antigas
 	de bootstrap/prefill e fallback authored OpenGraph; ACL permanece read-only.
 - [API PR #22](https://github.com/marcelo-m7/facodi-api/pull/22):
-	`3fd9ac88990b1cfc6523fcfcfcfed5d5f549fb43`, manifest `19.0.3.2.0`.
+	`4671ceeab158b9a54f359196156d43372ed146a1`, manifest `19.0.3.2.0`.
 - [Learning PR #200](https://github.com/marcelo-m7/facodi-learning/pull/200):
-	`0476d073ef56aa04ca4e49bfeb4de073f20dcf0c`, manifest `19.0.2.1.0`.
+	`2a3a83cf1f518bee1edff7bf4de15ed423255117`, manifest `19.0.2.1.0`.
 - Imagem canônica inicial passou migração, consumer 18 e browser desktop/mobile,
 	narrow320, portal e backend. D2 HTTP passou; invocação interrompida por ausência
 	do diretório screenshot D2. Repetição com variável correta mantém todos os gates.
