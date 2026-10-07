@@ -520,6 +520,11 @@ try:
         assert api_run.status == "waiting_review" and not api_run.published_slide_id
         # Explicit synthetic reviewer evidence in a disposable test database.
         # This fixture does not assert real YouTube authorship or acquisition.
+        api_run = api_run.with_context(
+            default_facodi_analysis_job_ids=[(0, 0, {"provider": "local_metadata"})],
+            default_facodi_content_review_ids=[(0, 0, {"author": "Injected review", "responsible_id": admin.id})],
+            default_source_id=999999,
+        )
         api_run.action_approve_and_publish(publication_evidence={
             "author": "FACODI CI synthetic publication fixture",
             "rights_mode": "external",
