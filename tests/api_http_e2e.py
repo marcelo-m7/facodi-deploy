@@ -291,6 +291,34 @@ def main():
     conn.close()
     print("PASS bounded body reading enforces HTTP 413 with and without Content-Length")
 
+    # Oversized chunked input may have a completely valid JSON prefix at the limit.
+    # A sentinel byte must prevent that prefix from being accepted as a full request.
+    conn = http_client.HTTPConnection(host, int(port_str), timeout=15)
+    conn.putrequest("POST", "/facodi/api/v2/pipeline/runs")
+    conn.putheader("Authorization", f"Bearer {operator_key}")
+    conn.putheader("Content-Type", "application/json")
+    conn.putheader("Transfer-Encoding", "chunked")
+    conn.putheader("Idempotency-Key", "oversize-valid-prefix")
+    conn.endheaders()
+    prefix = json.dumps(content(channel_id)).encode()
+    padded = prefix + b" " * (262144 - len(prefix)) + b"!"
+    conn.send(bytes(hex(len(padded))[2:], "ascii") + bytes([13, 10]) + padded + bytes([13, 10, 48, 13, 10, 13, 10]))
+    oversized_prefix = conn.getresponse()
+    assert oversized_prefix.status == 413, oversized_prefix.status
+    conn.close()
+    # An exact-size body reaches semantic validation rather than the size gate.
+    boundary = b'{"sync": true}' + b" " * (262144 - len(b'{"sync": true}'))
+    conn = http_client.HTTPConnection(host, int(port_str), timeout=15)
+    conn.request("POST", "/facodi/api/v2/pipeline/runs", boundary, {
+        "Authorization": f"Bearer {operator_key}", "Content-Type": "application/json",
+        "Idempotency-Key": "exact-limit",
+    })
+    boundary_response = conn.getresponse()
+    assert boundary_response.status == 400, boundary_response.status
+    conn.close()
+    print("PASS exact payload limit and oversized chunked valid-prefix regression")
+
+
     empty_status, _ = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, content(channel_id, raw_content=" \n "), "empty-input")
     assert empty_status == 400, empty_status
     # Keep the TCP peer open while waiting for a small Content-Length response.
