@@ -17,6 +17,9 @@
 
 ## Domain and implementation boundaries
 
+- Discover current source, live target and executable contracts before correcting or expanding. The [continuity audit](docs/facodi-api/acceptance-2026-10-07.md) is the capability/failure matrix, not a claim of productive readiness. Engineering coordination remains in `facodi-monorepo`; this repository owns release acceptance.
+- API owns the pure engine, checkpoints and deterministic processing; Learning owns editorial results/history/review and canonical projections. Internal adapters call the shared ORM facade, never self-HTTP or a duplicated engine. Accepted source/provider/actor/catalog/policy remain immutable; replay effects are idempotent, not network exactly-once.
+- Project must evolve toward human editorial/source/curricular/operational decisions only. The existing per-run technical mirror is legacy debt, not the desired contract. Preserve history and require idempotent human-event projection before retiring it.
 - Keep standard Odoo eLearning authoritative: `slide.channel` is the sole course model and `slide.slide` is canonical course content. Do not introduce parallel course, learner-progress or prerequisite models.
 - `facodi_learning` owns course discovery, analysis provenance, reviewed course/content mappings, curriculum references, curricular units, coverage and reusable curriculum modules. `theme_facodi` owns presentation only; do not move domain queries or editorial data into theme QWeb.
 - A curriculum reference/unit is external evidence, not a FACODI degree, credit or enrolment record. Coverage types are `covers`, `partial`, `supports` and `equivalent`; `equivalent` never grants academic equivalence, ECTS, credits or transcript status.

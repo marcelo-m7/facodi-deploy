@@ -17,4 +17,5 @@ jobs:
       - name: Install, upgrade, HTTP, ORM, concurrency, publish and restart
         env:
           FACODI_API_SOURCE: ${{ github.workspace }}/addons/facodi-api/facodi_api
+          FACODI_LEARNING_FULL_TESTS: "1"
         run: bash tests/test_api_e2e_isolated.sh

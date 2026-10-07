@@ -420,6 +420,8 @@ class RepositoryContractTest(unittest.TestCase):
             "SUPABASE_SECRET_KEY",
             "SUPABASE_PUBLISHABLE_KEY",
             "SUPABASE_JWKS_URL",
+            "FACODI_SUPABASE_WEBHOOK_SECRET",
+            "FACODI_STRIPE_WEBHOOK_SECRET",
         ):
             self.assertGreaterEqual(
                 compose.count(f"{variable}: ${{{variable}:-}}"),

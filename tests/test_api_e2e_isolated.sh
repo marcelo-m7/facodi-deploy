@@ -202,7 +202,11 @@ manifest = ast.literal_eval(Path(sys.argv[1]).read_text())
 sys.exit(0 if 'facodi_api' in manifest.get('depends', []) else 1)
 PY
 then
-  run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags=facodi_api_consumers
+  learning_test_tags=facodi_api_consumers
+  if [[ "${FACODI_LEARNING_FULL_TESTS:-0}" == "1" ]]; then
+    learning_test_tags=/facodi_learning
+  fi
+  run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags="$learning_test_tags"
   echo "PASS native Learning consumer delegation, receipts and reviewed publication"
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
