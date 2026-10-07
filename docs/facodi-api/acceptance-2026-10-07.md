@@ -1,10 +1,52 @@
 # Aceite e próximos passos — FACODI API, 2026-10-07
 
-## Auditoria de continuidade: estado observado e candidata local
+## Estado pos-merge e autorizacao de producao
 
-Esta seção prevalece sobre os estados históricos abaixo. PRs API #19,
-Learning #198 e deploy #262 já foram mesclados; não são entregas pendentes.
-A candidata desta auditoria ainda não identifica uma imagem produtiva saudável.
+- O responsavel confirmou o backup de producao concluido e autorizou promover
+	o codigo operacional validado em 2026-10-07. O backup deixa de ser pendencia
+	de autorizacao; nao houve inspeccao independente dos seus artefatos nesta
+	sessao. Continuam aplicaveis o par PostgreSQL/filestore e o recurso Coolify
+	existente do [runbook](../operations.md).
+- API [#22](https://github.com/marcelo-m7/facodi-api/pull/22), Learning
+	[#200](https://github.com/marcelo-m7/facodi-learning/pull/200) e deploy
+	[#264](https://github.com/marcelo-m7/facodi-deploy/pull/264) foram mesclados.
+	A composicao aceita e `407cf44cef3960a0b0fe7985aebaf75cbadf0096`, com API
+	`4671ceeab158b9a54f359196156d43372ed146a1` e Learning
+	`2a3a83cf1f518bee1edff7bf4de15ed423255117`. Deploy #263 foi fechado;
+	nao deve originar rebuild separado.
+- CI pos-merge passou nesse SHA: [API/native Learning](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37687855264)
+	e [runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37687855440).
+	A suite pura API tem 112 testes passando e 1 skip; as suites nativas
+	passaram com 29 testes API e 425 Learning. Codoo #46 integra o gitlink
+	aceito e a correcao de identidade, com 22 testes e CodeQL passando.
+- Releitura guardada de `https://facodi.com` / `facodi` confirmou API
+	`19.0.3.2.0`, Learning `19.0.2.1.0` e health publico `19.0.3.2.0`.
+	Jobs Learning 1/2 estao `completed`, provider `supabase_edge`, com resultados
+	associados. Esses estados nao comprovam nova aquisicao YouTube ou o
+	conteudo/provider de cada resultado.
+	- Smoke publico em browser apos a autorizacao: HTTP 200 em `/web/login`, `/`,
+	  `/pt/`, `/es/`, `/fr/`, `/courses`, `/forum` e `/facodi/api/v1/health`;
+	  health `status=ok`, versao `19.0.3.2.0`. Isso nao substitui o aceite
+	  autenticado de `/odoo` nem identifica a imagem produtiva.
+- Gate Python permanece `false`. O cron resolvido por
+	`facodi_api.ir_cron_facodi_pipeline_process` e o ID 26: a leitura com
+	`active_test=False` confirmou `active=False`. Crons 20/25 permanecem ativos.
+	Promover codigo nao ativa automaticamente provider, gate, cron ou publicacao.
+- Nao ha acesso Coolify configurado nesta sessao nem deployment registrado
+	no GitHub do deploy. Nao foi iniciado novo rollout nem comprovado digest
+	da imagem produtiva. O canary Python continua **NOT_EXECUTED**, aguardando
+	identidade da imagem e execucao operacional guardada; backup e autorizacao
+	nao devem continuar listados como bloqueios.
+- Limpeza deve remover somente branches desta entrega cujo conteudo esteja
+	integrado. Preservar historico, workspaces principais, alteracoes locais,
+	snapshots privados e volumes produtivos; nao fechar criterios de backlog
+	que continuam sem implementacao ou prova.
+
+## Auditoria inicial: estado observado e candidata local
+
+Esta seção registra a descoberta inicial; o estado pos-merge acima prevalece.
+PRs API #19, Learning #198 e deploy #262 já estavam mesclados.
+A candidata desta auditoria ainda não identificava uma imagem produtiva saudável.
 Nenhuma escrita remota, habilitação de pipeline ou alteração de permissões foi
 feita nesta rodada. Fonte local, versão instalada e identidade de imagem são
 evidências diferentes.
