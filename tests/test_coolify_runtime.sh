@@ -537,6 +537,7 @@ try:
         assert slide.channel_id == api_course and slide.is_published
         assert not api_course.website_published and api_course.visibility == "members"
         assert slide.video_url == api_run.source_url
+        assert not slide.html_content and "Explicit manual transcript" in slide.description
         native_reviews = env["facodi.learning.content.review"].search([("slide_id", "=", slide.id)])
         assert len(native_reviews) == 1 and native_reviews.state == "approved"
         assert native_reviews.reviewed_by_id == admin
