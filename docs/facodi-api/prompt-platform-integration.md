@@ -2,6 +2,18 @@
 
 Você assume a próxima fase de implementação da plataforma FACODI. Trabalhe autonomamente até entregar a integração completa, validada ponta a ponta, com documentação e PRs revisáveis. Não pare em planejamento, scaffolding, testes unitários, relatório de intenção ou indicação de que alguém deve concluir o código. Corrija falhas encontradas, execute os testes reais e acompanhe os builds. Se existir um bloqueio externo incontornável, conclua todo o trabalho independente e informe o bloqueio concreto, a evidência e a intervenção mínima necessária; não invente um sucesso nem permaneça repetindo uma operação sem resultado.
 
+## Baseline verificada e prioridade imediata — 2026-10-07
+
+API PR #16 e deploy PR #261 estão mesclados. Merges de código: API `4f9051ff78469fb8acab6891b3eff5ad21b71a05`; deploy `2dc03d9da929d573388365366d15f6230976c626`. Gitlink API do deploy: `3f2683bf0dff7c7975e0037db776f4227dede796`. Documentação posterior pode avançar main sem mudar esse pin; sempre refaça o inventário dos heads reais.
+
+CI final dos PRs [runtime 37610480117](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37610480117) e [plataforma 37610480249](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37610480249) passou. Após merge, [runtime 37611311972](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37611311972) e [plataforma 37611312267](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37611312267) também passaram. Leia [aceite completo](acceptance-2026-10-07.md) e não repita o relato antigo do agente como prova.
+
+MCP confirmou `facodi_api 19.0.2.0.0` e a quarentena do histórico. Os vídeos YouTube `4GVbqYFmGBw` e `9-WOBr534pQ` foram submetidos sem texto manual, runs 4/5: ambos falharam `YOUTUBE_IP_BLOCKED`, sem chunks nem publicação. **Comece resolvendo a aquisição externa real.** Transporte alternativo/proxy exige configuração suportada server-side e credenciais autorizadas, jamais URLs/segredos escolhidos pela fonte. A falta de acesso externo é um bloqueio verificável, não autorização para falsificar legendas ou relaxar segurança. Implemente e valide o restante independente enquanto esse bloqueio é tratado.
+
+Controle positivo separado: run 6 com texto original → waiting_review → revisão nativa 553 approved → slide article 1062, curso privado 43; replay sem duplicação. Isso comprova handoff de conteúdo original, não YouTube adquirido ou LLM. Ao final: gate false, cron 26 inactive, permissões temporárias removidas, curso 43 members/invite/unpublished. Não reprocessar runs históricos 1/2/3 ou fixtures 4/5/6 para simular nova evidência. Use novos registros de teste e preserve o histórico.
+
+Backup emparelhado foi testado apenas no runtime descartável. O SHA da imagem produtiva e backup produtivo precisam de confirmação operacional antes do cutover amplo.
+
 ## 1. Estado inicial e leitura obrigatória
 
 Repositórios: `marcelo-m7/facodi-api`, `marcelo-m7/facodi-learning`, `marcelo-m7/facodi-ai` e `marcelo-m7/facodi-deploy`. `facodi-theme` só participa quando apresentação/traduções exigirem uma alteração específica. Identifique o owner de cada arquivo antes de editar. O deploy consome commits exatos por gitlink; não copie código de addons para o superprojeto.
@@ -49,6 +61,12 @@ Inspecione os hooks de slide.slide que sincronizam vídeos com Supabase: a publi
 Preserve o handoff de revisão: executor propõe; um reviewer autorizado aprova pelos métodos de domínio existentes. Use versão esperada/snapshot para bloquear propostas obsoletas. Ao publicar ou reutilizar o receipt, revalide curso/website/empresa, visibilidade, conteúdo canônico e estado atual de publicação. Alteração manual posterior requer reconciliação explícita. Preserve vídeos como vídeos e documentos/anexos como seus tipos standard; não converta tudo em artigo de resumo.
 
 Para submissões anônimas/Portal, o controller valida a submissão pública e delega uma solicitação mínima a um serviço autorizado. Não conceda grupo de operador técnico a todos os contribuidores, não exponha UUIDs técnicos/artefatos/task IDs/segredos no tracking público e não use sudo genérico sobre dados do catálogo. Reutilize o token de tracking e as páginas existentes com uma projeção segura.
+
+### Contrato editorial já integrado: preserve e complete
+
+A aprovação HTTP aceita {"publication_evidence":{"author":"...","rights_mode":"original|licensed|external","usage_basis":"...","purpose":"..."}}. Quando Learning está instalado, evidência explícita e eLearning Manager são obrigatórios. A API cria draft, usa facodi.learning.content.review.action_approve e só então publica pelo write guardado, sob savepoint. Não invente autoria/licença nem desligue facodi_publication_review_enabled. O contexto interno facodi_supabase_video_sync suprime o export legado somente nesta criação; a próxima fase deve substituir essa contenção por origem/provider persistidos e cobrir edições posteriores. O CI composto rastreia os registros que acionam o hook legado, preservando suas criações comuns.
+
+A review nativa não substitui a proposta curricular versionada: faça o handoff pelos métodos de domínio e bloqueie revisões obsoletas. A API continua independente de Learning; o adapter de Learning pode depender da API sem criar ciclo. Atualize o critério histórico de dependência nas issues conforme essa direção.
 
 ## 6. Simplifique learning e retire chamadas de AI após comprovar paridade
 
