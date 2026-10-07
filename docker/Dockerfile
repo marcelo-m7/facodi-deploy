@@ -1,4 +1,4 @@
-FROM odoo:19.0
+FROM odoo:19.0@sha256:dd9013e669caaa23d26765dc55814655eaeecca7cfc2c265dbabae913bce22fd
 
 LABEL org.opencontainers.image.source="https://github.com/marcelo-m7/facodi-deploy"
 LABEL org.opencontainers.image.title="FACODI Odoo"
@@ -26,8 +26,9 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends python3-venv; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m venv --system-site-packages /opt/facodi-venv; \
-    /opt/facodi-venv/bin/pip install --no-cache-dir -r /opt/facodi-addon-sources/facodi-ai/requirements.txt PyJWT; \
-    /opt/facodi-venv/bin/python3 -c "import OpenSSL, cryptography, pydantic_ai"; \
+    /opt/facodi-venv/bin/pip install --no-cache-dir -r /opt/facodi-addon-sources/facodi-ai/requirements.txt -r /opt/facodi-addon-sources/facodi-api/requirements.txt PyJWT 'setuptools==78.1.1'; \
+    /opt/facodi-venv/bin/pip check; \
+    /opt/facodi-venv/bin/python3 -c "import OpenSSL, cryptography, pydantic_ai, youtube_transcript_api, pypdf, docx"; \
     printf '%s\n' '#!/bin/sh' 'exec /opt/facodi-venv/bin/python3 /usr/bin/odoo "$@"' > /usr/local/bin/odoo; \
     chmod 0755 /usr/local/bin/odoo; \
     chmod 0755 /usr/local/bin/facodi-entrypoint; \

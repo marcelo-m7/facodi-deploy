@@ -8,9 +8,10 @@ Business and presentation changes remain in their owning addon repositories:
 
 | Owner | Responsibility | Verified gitlink |
 | --- | --- | --- |
-| `marcelo-m7/facodi-ai` | AI runtime | `52012480fd9dfea9cb4e03a7f390086f0f0347b4` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `f2c71f956d02228c037666a8ae3902d28fd9fcd3` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `5e7e8fd2995141d46916f87e3d09f95a2de1f79f` |
+| `marcelo-m7/facodi-api` | Isolated v2 content pipeline | `3f2683bf0dff7c7975e0037db776f4227dede796` |
+| `marcelo-m7/facodi-ai` | AI runtime | `c9cf01739180b12a758b3f61082a38179e1e475b` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `c85d2ea04ae593b0167a0e00d8f92ebe107aee51` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `ee411d74effcd2450f2854336ab19582d47c5d38` |
 
 The gitlinks are the authoritative pins. The values above are verified from the superproject for this release.
 
@@ -29,6 +30,7 @@ Coolify
 
 The runtime requests these modules through `FACODI_MODULES`:
 
+- `facodi_api` (isolated v2 intake, processing, review and canonical publication; gate disabled)
 - `facodi_learning`
 - `theme_facodi`
 - `facodi_ai`

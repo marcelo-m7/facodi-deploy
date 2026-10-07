@@ -9,6 +9,7 @@ import subprocess
 import textwrap
 
 UPDATE_MODULES = (
+    "facodi_api",
     "facodi_learning",
     "theme_facodi",
     "facodi_ai",

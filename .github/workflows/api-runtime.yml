@@ -1,0 +1,24 @@
+name: API isolated runtime
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  api-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: docker/setup-qemu-action@v3
+      - name: Prepare isolated pinned API source
+        run: |
+          mkdir -p /tmp/facodi-api-e2e-${{ github.run_id }}
+          cp -a addons/facodi-api/. /tmp/facodi-api-e2e-${{ github.run_id }}/
+      - name: Install, upgrade, HTTP, ORM, concurrency, publish and restart
+        env:
+          FACODI_API_SOURCE: /tmp/facodi-api-e2e-${{ github.run_id }}/facodi_api
+        run: bash tests/test_api_e2e_isolated.sh
