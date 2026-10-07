@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import http.client as http_client
 """Exercise the API through an isolated Odoo 19 HTTP and ORM runtime."""
 
 import concurrent.futures
@@ -152,6 +153,9 @@ assert run.project_id.privacy_visibility == "followers"
 assert run.task_id.project_id == run.project_id
 assert run.owner_id in run.task_id.user_ids
 assert not run.published_slide_id
+subtasks = env["project.task"].sudo().search([("parent_id", "=", run.task_id.id)], order="sequence")
+assert len(subtasks) == 3, len(subtasks)
+assert [s.sequence for s in subtasks] == [1, 2, 3]
 print("PASS private Project and assigned Task exist before processing")
 ''')
 
@@ -238,6 +242,25 @@ def main():
 
     unauthorized_status, _ = http("POST", "/facodi/api/v2/pipeline/runs", body=content(channel_id), idempotency_key="no-key")
     assert unauthorized_status == 401, unauthorized_status
+
+    # Verify bounded reading and 413 handling with and without Content-Length
+    status_oversize_cl, _ = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, content(channel_id, raw_content="A" * 300000), "oversize-cl")
+    assert status_oversize_cl == 413, status_oversize_cl
+
+    host, port_str = published.split(":")
+    conn = http_client.HTTPConnection(host, int(port_str), timeout=15)
+    conn.putrequest("POST", "/facodi/api/v2/pipeline/runs")
+    conn.putheader("Authorization", f"Bearer {operator_key}")
+    conn.putheader("Content-Type", "application/json")
+    conn.putheader("Transfer-Encoding", "chunked")
+    conn.putheader("Idempotency-Key", "oversize-chunked")
+    conn.endheaders()
+    chunk = b'{"raw_content": "' + b'B' * 300000 + b'"}'
+    conn.send(bytes(hex(len(chunk))[2:], "ascii") + bytes([13, 10]) + chunk + bytes([13, 10, 48, 13, 10, 13, 10]))
+    resp_chunked = conn.getresponse()
+    assert resp_chunked.status == 413, resp_chunked.status
+    conn.close()
+    print("PASS bounded body reading enforces HTTP 413 with and without Content-Length")
 
     source = content(channel_id, raw_content="Safe <script>alert(1)</script> material.")
     status, accepted = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, source, "review-run-1")
