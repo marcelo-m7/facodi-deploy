@@ -393,6 +393,12 @@ class MigrationContractTest(unittest.TestCase):
             text.rindex("configure_processing_plane("),
         )
 
+    def test_native_adapter_gate_runs_before_runtime_start(self):
+        runtime = (ROOT / "tests/test_coolify_runtime.sh").read_text()
+        adapter = runtime.index("--test-tags facodi_api_consumers")
+        start = runtime.index('"${compose[@]}" up -d odoo')
+        self.assertLess(adapter, start)
+
     def test_odoo_19_without_demo_option_uses_boolean_value(self):
         text = MIGRATION.read_text()
         self.assertIn('"--without-demo=True"', text)

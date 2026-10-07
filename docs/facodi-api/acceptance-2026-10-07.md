@@ -49,6 +49,14 @@ O CI dedicado usa PostgreSQL/Odoo, banco, volumes, rede e portas próprios. Veri
 
 O CI composto instala API+Learning e usa o review nativo; verifica evidência ausente sem publicação, defaults hostis ignorados, review aprovado único, vídeo standard e replay. Apenas o transporte externo legado Supabase é controlado nesse cenário, com assert por registro; engine, ORM, review e publicação são reais. A fixture de vídeo com transcript explícito prova o handoff, **não aquisição externa ou licença real**.
 
+## Continuação da integração API → Learning
+
+Os PRs [API #17](https://github.com/marcelo-m7/facodi-api/pull/17), [Learning #197](https://github.com/marcelo-m7/facodi-learning/pull/197) e [Deploy #262](https://github.com/marcelo-m7/facodi-deploy/pull/262) implementam a continuação auditada em ordem dependente. A API estabiliza comandos versionados, wizard backend não forjável, snapshot ACL-visível, retry/replay e submissão concorrente. Learning adiciona o consumidor opt-in `odoo_python`, cancel versionado, reconciliação editorial atómica, exclusão mútua dos schedulers e a origem persistida que impede reenvio Supabase apenas para conteúdo da API. Deploy preserva a seleção administrativa em migrações repetidas, exige a API instalada e executa o teste nativo do adapter antes de iniciar Odoo.
+
+Na validação pré-merge, a API passou 101 testes puros (1 skip) e 23 testes nativos isolados, incluindo instalação limpa, dois upgrades, HTTP, concorrência, publicação e restart. Learning passou a matriz Odoo 19 com 225 testes (263 estatísticas de métodos), seguida de dois upgrades, incluindo regressões legacy Supabase e `facodi_api_consumers`. Estes resultados são evidência descartável de código; não provam promoção, canary, identidade da imagem ou recuperação produtiva.
+
+A promoção continua deliberadamente desligada: `facodi_api.pipeline_enabled=false`, provider produtivo `local_metadata` e processing plane produtivo `supabase` na última leitura autorizada. Não houve escrita produtiva nesta continuação. O canary YouTube continua bloqueado por `YOUTUBE_IP_BLOCKED`; benchmark, provider externo, backup/restauro produtivo emparelhado e cutover amplo permanecem critérios abertos.
+
 Website/browser e restauração emparelhada de PostgreSQL+`odoo-data` passaram em ambiente descartável, preservando elementos Website, progresso, currículo/reviews e attachment/filestore. Isso não comprova backup/restauração dos volumes produtivos. Benchmark p95 e recovery completo de crash/retry/cancel ainda não foram aceitos.
 
 ## Teste controlado na instância via Odoo MCP
@@ -82,9 +90,9 @@ O conteúdo manual é texto original gerado exclusivamente para o teste autoriza
 ## Bloqueadores e próximos passos
 
 1. **P0 — aquisição YouTube real bloqueada por IP** ([API #6](https://github.com/marcelo-m7/facodi-api/issues/6)). Resolver transporte suportado/configuração server-side ou alternativa autorizada, com orçamento, redaction e teste externo positivo. Fonte não pode fornecer proxy/credencial arbitrários. Não confundir correção de timeout com correção do bloqueio de rede.
-2. Implementar retry/cancel/waiting_input/lease/recovery e nova evidência de transcript manual sem editar a entrada aceita.
+2. Retry/cancel/waiting_input, comandos versionados e replay imutável foram implementados na integração #17; ainda falta promover e provar recovery/canary produtivo sem editar a entrada aceita.
 3. Provider de enriquecimento independente: baseline atual não comprova LLM. Completar capabilities/OpenAPI, documentos por attachments autorizados e snapshot curricular real.
-4. Integrar consumidores de Learning por provider congelado por job/run; um scheduler por trabalho; provar ausência de chamadas/loops AI/Supabase no novo fluxo.
+4. O consumidor opt-in de Learning foi implementado em #197 com provider/ator/origem congelados, um run por job e exclusão mútua dos schedulers; ainda falta a revisão final, merge ordenado e canary privado antes de qualquer cutover.
 5. Simplificar Learning e retirar chamadas AI apenas após paridade, preservando modelos/histórico e funções AI fora desse domínio.
 6. Antes de cutover amplo, confirmar backup produtivo emparelhado e identidade da imagem instalada, executar benchmark e canary. Não alegar essas provas a partir deste CI.
 
@@ -201,3 +209,52 @@ credencial produtiva foi usada. Os containers/volumes de CI foram removidos pelo
 harness. Permanecem pendentes o commit/CI dessa candidata, identidade e backup
 produtivos, autorização de promoção, MCP descartável, benchmark e provas
 externas YouTube/LLM. Este gate não ativa processamento como default.
+
+## Publicação consolidada e correções de revisão
+
+A composição anterior foi consolidada com o trabalho preservado do PR deploy
+#262, incluindo a migração que conserva a escolha explícita `odoo_python`
+sem ativar o gate. O commit local `f8fc321dd29d185f4904d1df50609e5eb16ebd16`
+foi preservado por merge, não descartado. Seus cinco testes de comportamento
+agora fazem parte obrigatória de `scripts/validate-repository.sh`.
+
+Revisões finais consumidas:
+
+- API `c6da48b8eeb62ff0f83a084bec4a6928de31cc0e`, addon `19.0.3.1.0`,
+	[PR #19 mesclado](https://github.com/marcelo-m7/facodi-api/pull/19).
+- Learning `2c066b3ae4b9e865d22d8af7747687729598e0da`,
+	[PR #198 mesclado](https://github.com/marcelo-m7/facodi-learning/pull/198).
+- Theme permanece `2cc983d6f5f99601983d57cc19ef7923aa60c7dc`;
+	AI/Monodoo/MuK permanecem nos pins anteriores.
+
+A primeira execução nativa da correção API recusou a fixture de replay porque
+ela tinha Officer, não Reviewer/Manager. O teste foi corrigido concedendo o
+papel requerido; a autorização de publicação não foi relaxada. O harness
+detectou a falha e bloqueou a entrega antes do merge.
+
+| Gate repetido nos SHAs finais | Resultado |
+| --- | --- |
+| API pura | 104 passed, 1 skipped (Odoo nativo) |
+| Contratos deploy/migração/provider | 66 testes, sem falhas |
+| API nativa | 27 testes, sem falhas/erros |
+| Learning: consumidores nativos | 18 testes, sem falhas/erros |
+| Instalação/upgrades/HTTP/scheduler/replay/restart | PASS, saída 0 |
+| Imagem canônica/Chromium D1+D2/restore emparelhado | PASS, saída 0 |
+
+A recuperação de receipts Learning foi revalidada: projeção terminal repetida
+não duplica resultado/tentativa, actor/configuração congelados persistem e
+falhas de projeção não permitem publicação incompleta. A API congela nome e
+digest de attachment, recusa replay de conteúdo alterado e classifica falhas
+de transporte com códigos seguros.
+
+Logs locais completos: `/tmp/facodi-publish-native-final-20261007.log` e
+`/tmp/facodi-publish-full-browser-20261007.log`. Capturas D1/D2 permanecem
+temporárias, sem dados produtivos. CI e merge do deploy são acompanhados no
+[PR #262](https://github.com/marcelo-m7/facodi-deploy/pull/262); resultados de
+commits antigos não substituem os checks do head final desse PR.
+
+Os merges/pushes de fonte não comprovam identidade ou backup produtivos nem
+autorizam ligar default/gate/cron. YouTube/LLM externos, MCP descartável,
+benchmark, recuperação completa e canary continuam explicitamente pendentes.
+Issues somente podem ser fechadas quando todos os seus critérios específicos
+tiverem evidência; este avanço não fecha automaticamente o epic.

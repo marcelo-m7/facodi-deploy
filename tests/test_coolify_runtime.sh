@@ -82,6 +82,11 @@ fi
 
 "${compose[@]}" run --rm migrate
 
+# Run the opt-in adapter against the real installed registry before starting HTTP.
+# Odoo returns non-zero on test failures, so missing adapters cannot be skipped.
+"${compose[@]}" run --rm --no-deps --entrypoint /bin/bash migrate -lc \
+  'odoo --db_host="$DB_HOST" --db_port="$DB_PORT" --db_user="$DB_USER" --db_password="$DB_PASSWORD" -d "$ODOO_DB" -u facodi_learning --test-enable --test-tags facodi_api_consumers --stop-after-init --without-demo=true'
+
 "${compose[@]}" up -d odoo
 
 healthy=0

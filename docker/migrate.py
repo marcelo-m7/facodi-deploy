@@ -393,11 +393,6 @@ def configure_processing_plane(config: str, database: str) -> None:
     supabase_url = (os.environ.get("SUPABASE_URL") or "").strip()
     supabase_secret = (os.environ.get("SUPABASE_SECRET_KEY") or "").strip()
 
-    if bool(supabase_url) != bool(supabase_secret):
-        raise RuntimeError(
-            "SUPABASE_URL and SUPABASE_SECRET_KEY must be configured together"
-        )
-
     module = env["ir.module.module"].search(
         [("name", "=", "facodi_learning"), ("state", "=", "installed")],
         limit=1,
@@ -408,7 +403,21 @@ def configure_processing_plane(config: str, database: str) -> None:
         )
 
     params = env["ir.config_parameter"].sudo()
-    if not supabase_url:
+    local_selected = params.get_param("facodi_learning.analysis_provider") == "odoo_python"
+    if local_selected:
+        engine = env["ir.module.module"].search(
+            [("name", "=", "facodi_api"), ("state", "=", "installed")], limit=1,
+        )
+        if not engine:
+            raise RuntimeError("facodi_api must be installed for odoo_python processing")
+        # Explicit selection belongs to administrators, not to legacy credentials.
+        # Do not activate the pipeline gate or modify accepted jobs during migrate.
+        params.set_param("facodi_learning.processing_plane", "odoo_python")
+    elif bool(supabase_url) != bool(supabase_secret):
+        raise RuntimeError(
+            "SUPABASE_URL and SUPABASE_SECRET_KEY must be configured together"
+        )
+    elif not supabase_url:
         # Removing the runtime pair is an explicit switch back to the safe local
         # fallback; never leave a stale persisted Supabase provider selected.
         params.set_param("facodi_learning.analysis_provider", "local_metadata")
