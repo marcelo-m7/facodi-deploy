@@ -16,7 +16,9 @@ services:
       - isolated
 
   odoo:
-    image: docker.io/library/odoo:19.0@sha256:1fc509063908c84f47dfad0b52ea01afc4c7787c92d09b5af0f868d82bbf551d
+    build:
+      context: ${FACODI_API_SOURCE:?}/..
+      dockerfile: ${FACODI_E2E_DOCKERFILE:?}
     depends_on:
       db:
         condition: service_healthy
@@ -28,15 +30,16 @@ services:
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
     volumes:
       - ${FACODI_API_SOURCE:?}:/mnt/extra-addons/facodi_api:ro
+      - ${FACODI_LEGACY_SOURCE:?}:/mnt/legacy-addons/facodi_api:ro
       - api-e2e-odoo:/var/lib/odoo
     ports:
-      - "127.0.0.1:${FACODI_E2E_HTTP_PORT:?}:8069"
+      - "127.0.0.1::8069"
     command:
       - --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
       - --http-port=8069
       - --http-interface=0.0.0.0
       - --workers=0
-      - --max-cron-threads=0
+      - --max-cron-threads=1
       - --log-level=info
     healthcheck:
       test:

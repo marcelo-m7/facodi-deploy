@@ -123,11 +123,12 @@ observer = env["res.users"].create({{
 }})
 channel = env["slide.channel"].create({{
     "name": "Disposable API E2E Course", "user_id": operator.id,
+    "website_id": env["website"].search([("company_id", "=", env.company.id)], limit=1).id,
     "visibility": "public", "website_published": True,
 }})
 params = env["ir.config_parameter"].sudo()
-params.set_param("facodi_api.pipeline_enabled", "true")
-env.ref("facodi_api.ir_cron_facodi_pipeline_process").active = True
+params.set_param("facodi_api.pipeline_enabled", "false")
+env.ref("facodi_api.ir_cron_facodi_pipeline_process").active = False
 expiration = datetime.now() + timedelta(hours=1)
 keys = {{
     "operator": env["res.users.apikeys"].with_user(operator).sudo()._generate("rpc", "e2e operator", expiration),
@@ -161,20 +162,41 @@ print("PASS private Project and assigned Task exist before processing")
 
 
 def run_worker(run_id):
-    odoo_shell(f'''\
-cron = env.ref("facodi_api.ir_cron_facodi_pipeline_process")
-assert cron.active
-outcome = cron.method_direct_trigger()
-assert outcome is True, outcome
-print("PASS real ir.cron trigger completed")
-''')
-    odoo_shell(f'''\
+    # A separate real PostgreSQL transaction owns the queue row while a worker tries to claim it.
+    odoo_shell(f'''from odoo import api, SUPERUSER_ID
 run = env["facodi.pipeline.run"].sudo().search([("run_id", "=", {run_id!r})], limit=1)
+with env.registry.cursor() as locker:
+    locker.execute("SELECT id FROM facodi_pipeline_run WHERE id=%s FOR UPDATE", [run.id])
+    with env.registry.cursor() as worker:
+        worker_env = api.Environment(worker, SUPERUSER_ID, {{}})
+        worker_env["facodi.pipeline.run"].cron_process_received_runs()
+        worker.commit()
+    run.invalidate_recordset()
+    assert run.status == "received" and not run.metadata_json
+    assert not run.published_slide_id
+    locker.rollback()
+print("PASS separate worker cursor skips an exclusively locked run")
+cron = env.ref("facodi_api.ir_cron_facodi_pipeline_process")
+cron.write({{"active": True, "interval_number": 1, "interval_type": "minutes", "nextcall": __import__('datetime').datetime.now()}})
+env.cr.commit()
+''')
+    # This must be completed by the scheduler thread: no direct_trigger or manual action here.
+    deadline = time.monotonic() + 150
+    while time.monotonic() < deadline:
+        status, data = http("GET", f"/facodi/api/v2/pipeline/runs/{run_id}", WORKER_OPERATOR_KEY)
+        if status == 200 and data["status"] == "waiting_review":
+            break
+        if status == 200 and data["status"] == "failed":
+            raise AssertionError(data)
+        time.sleep(2)
+    else:
+        raise AssertionError("Actual scheduler did not process the queued run")
+    odoo_shell(f'''run = env["facodi.pipeline.run"].sudo().search([("run_id", "=", {run_id!r})], limit=1)
 assert run.status == "waiting_review", run.status
 assert run.project_id.privacy_visibility == "followers"
 assert run.metadata_json and run.artifacts_json
 assert not run.published_slide_id
-print("PASS actual ir.cron processed run into review without publication")
+print("PASS actual ir.cron scheduler processed run into review without publication")
 ''')
 
 
@@ -233,12 +255,19 @@ def reviewer_session(password):
 
 
 def main():
+    global WORKER_OPERATOR_KEY
     wait_http()
     print(f"PASS host can reach isolated Odoo at {BASE_URL}")
     data = fixture()
     keys = data["keys"]
     channel_id = data["channel_id"]
     operator_key, reviewer_key, observer_key = keys["operator"], keys["reviewer"], keys["observer"]
+    WORKER_OPERATOR_KEY = operator_key
+
+    gated_status, _ = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, content(channel_id), "gate-disabled")
+    assert gated_status == 503, gated_status
+    odoo_shell('assert env["facodi.pipeline.run"].search_count([]) == 0\nassert not env["project.project"].search([("name", "like", "FACODI Pipeline %")])\nenv["ir.config_parameter"].sudo().set_param("facodi_api.pipeline_enabled", "true")\nenv.cr.commit()\n')
+    print("PASS disabled gate rejects real authenticated HTTP intake with no side effects")
 
     unauthorized_status, _ = http("POST", "/facodi/api/v2/pipeline/runs", body=content(channel_id), idempotency_key="no-key")
     assert unauthorized_status == 401, unauthorized_status
@@ -261,6 +290,18 @@ def main():
     assert resp_chunked.status == 413, resp_chunked.status
     conn.close()
     print("PASS bounded body reading enforces HTTP 413 with and without Content-Length")
+
+    empty_status, _ = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, content(channel_id, raw_content=" \n "), "empty-input")
+    assert empty_status == 400, empty_status
+    # Keep the TCP peer open while waiting for a small Content-Length response.
+    conn = http_client.HTTPConnection(host, int(port_str), timeout=15)
+    small = json.dumps(content(channel_id)).encode()
+    conn.request("POST", "/facodi/api/v2/pipeline/runs", small, {"Authorization": f"Bearer {operator_key}", "Content-Type": "application/json", "Idempotency-Key": "keepalive"})
+    response = conn.getresponse()
+    assert response.status == 202, response.status
+    response.read()
+    conn.close()
+    print("PASS small keep-alive POST responds without waiting for EOF; blank source rejected")
 
     source = content(channel_id, raw_content="Safe <script>alert(1)</script> material.")
     status, accepted = http("POST", "/facodi/api/v2/pipeline/runs", operator_key, source, "review-run-1")

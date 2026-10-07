@@ -13,10 +13,17 @@ if [[ "$api_source" != /tmp/facodi-api-e2e-*/facodi_api ]]; then
   exit 2
 fi
 
+cd "$root"
+legacy_source="/tmp/facodi-api-e2e-legacy-$$"
+mkdir -p "$legacy_source"
+# The exact installed-module baseline reviewed in this delivery, never a mutable branch.
+git -C "$root/addons/facodi-api" fetch --depth=1 origin d7c7579d214edbcb2e6d46a27e1f3001d266c275
+git -C "$root/addons/facodi-api" archive d7c7579d214edbcb2e6d46a27e1f3001d266c275 facodi_api | tar -x -C "$legacy_source"
+export FACODI_LEGACY_SOURCE="$legacy_source/facodi_api"
+
 project="facodi-api-e2e-$(date -u +%Y%m%d%H%M%S)-$$"
-port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
 export FACODI_API_SOURCE="$api_source"
-export FACODI_E2E_HTTP_PORT="$port"
+export FACODI_E2E_DOCKERFILE="$root/tests/Dockerfile.api-e2e"
 export FACODI_E2E_DB_USER="api_e2e_$$"
 export FACODI_E2E_DB_PASSWORD="$(openssl rand -hex 24)"
 export FACODI_E2E_DATABASE="facodi_api_e2e"
@@ -54,11 +61,13 @@ cleanup() {
     "${compose[@]}" logs --no-color >&2 || true
   fi
   "${compose[@]}" down --volumes --remove-orphans >/dev/null
+  rm -rf "$legacy_source"
   return "$status"
 }
 trap cleanup EXIT
 
 "${compose[@]}" config --quiet
+"${compose[@]}" build odoo
 "${compose[@]}" up -d db
 
 db_id="$("${compose[@]}" ps -q db)"
@@ -88,12 +97,33 @@ odoo_args=(
   --max-cron-threads=0
   --http-interface=0.0.0.0
 )
-"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --init=facodi_api --stop-after-init
-echo "PASS clean install"
+"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --init=facodi_api --test-enable --test-tags=/facodi_api --stop-after-init
+echo "PASS clean install and native ORM security tests"
 "${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --update=facodi_api --stop-after-init
 echo "PASS first upgrade"
 "${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --update=facodi_api --stop-after-init
 echo "PASS repeated upgrade"
+
+# Prove a real old-addon -> new-addon upgrade on a separate disposable database.
+legacy_database="facodi_api_upgrade_e2e"
+legacy_args=(--addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/legacy-addons --database="$legacy_database" --without-demo=true --workers=0 --max-cron-threads=0)
+"${compose[@]}" run --rm -T odoo "${legacy_args[@]}" --init=facodi_api --stop-after-init
+"${compose[@]}" run --rm -T --entrypoint odoo odoo shell --no-http "${legacy_args[@]}" --db_host=db --db_user="$FACODI_E2E_DB_USER" --db_password="$FACODI_E2E_DB_PASSWORD" <<'LEGACY'
+run = env["facodi.pipeline.run"].create({"name": "Historical run", "source_type": "manual", "raw_content": "Preserve original legacy content", "status": "published", "idempotency_key": "legacy-record", "metadata_json": '{"legacy_evidence": true}'})
+env.cr.commit()
+LEGACY
+"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --database="$legacy_database" --update=facodi_api --stop-after-init
+"${compose[@]}" run --rm -T --entrypoint odoo odoo shell --no-http "${odoo_args[@]}" --database="$legacy_database" --db_host=db --db_user="$FACODI_E2E_DB_USER" --db_password="$FACODI_E2E_DB_PASSWORD" <<'UPGRADE'
+run = env["facodi.pipeline.run"].search([("idempotency_key", "=", "legacy-record")])
+assert run.legacy_quarantined and run.legacy_status == "published"
+assert run.status == "cancelled" and not run.published_slide_id
+assert run.raw_content == "Preserve original legacy content"
+assert run.metadata_json == '{"legacy_evidence": true}'
+assert not env.ref("facodi_api.ir_cron_facodi_pipeline_process").active
+assert env["ir.config_parameter"].get_param("facodi_api.pipeline_enabled", "false") == "false"
+assert not env.ref("facodi_api.access_facodi_pipeline_run", raise_if_not_found=False)
+print("PASS installed legacy database upgrade preserves evidence and quarantines unverified publication")
+UPGRADE
 
 "${compose[@]}" up -d odoo
 odoo_id="$("${compose[@]}" ps -q odoo)"
@@ -127,4 +157,4 @@ PY
 
 python3 tests/api_http_e2e.py
 
-echo "PASS isolated Odoo HTTP health at http://127.0.0.1:$port"
+echo "PASS isolated Odoo HTTP health at http://127.0.0.1:$("${compose[@]}" port odoo 8069)"

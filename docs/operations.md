@@ -106,7 +106,7 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_learning`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_api`, `facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_learning`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
 
 After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 
@@ -225,3 +225,31 @@ A deployment refactor is ready for merge only when the exact PR head has green C
 - successful FACODI Website/eLearning HTTP checks.
 
 Any failure in that matrix keeps the PR in draft/review state until corrected.
+
+## Isolated FACODI API v2
+
+The image installs and upgrades `facodi_api` alongside the existing modules. Its
+Python dependencies are pinned in the API repository's `requirements.txt` and
+installed into the same `/opt/facodi-venv` interpreter used by Odoo. Pipeline
+artifacts use `/var/lib/odoo/facodi-pipeline` inside the existing `odoo-data`
+volume. The API gate and scheduler remain disabled after installation/upgrade;
+existing learning/AI consumers retain their current path.
+
+Version `19.0.2.0.0` quarantines earlier runs without claiming canonical
+publication: `legacy_status` preserves the old state and payloads/artifacts remain
+available to authorized reviewers. Resubmit only after identifying the real owner,
+company, website and target course. Do not replay shared historical Projects.
+
+Validate `tests/test_api_e2e_isolated.sh` in addition to the full Coolify runtime.
+The dedicated CI uses disposable databases and volumes, tests ORM bypass attempts
+and the real cron scheduler, and exercises an exact old-module installation before
+upgrading it. No test lifecycle command applies to production persistence.
+
+For a live acceptance run: confirm facodi.com/database facodi, installed addon
+version and new model fields; inventory the gate, cron and existing queue; create
+only labeled test runs in an authorized unpublished course; use selected run IDs
+for controlled MCP execution; inspect persisted results and provider error codes;
+restore the original gate/cron configuration. A manual transcript never proves
+YouTube acquisition, and a local baseline summary never proves an LLM response.
+A main CI build proves the disposable image, not the Coolify production rollout;
+verify the running module/version and actual persisted outputs separately.

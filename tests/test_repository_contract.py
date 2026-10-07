@@ -16,7 +16,7 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/monodoo",
 }
 
-FACODI_MODULES = "facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_api,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
