@@ -36,6 +36,8 @@ services:
       - "127.0.0.1::8069"
     command:
       - --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+      - --database=${FACODI_E2E_DATABASE:?}
+      - --db-filter=^${FACODI_E2E_DATABASE:?}$
       - --http-port=8069
       - --http-interface=0.0.0.0
       - --workers=0
