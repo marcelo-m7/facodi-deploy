@@ -508,13 +508,33 @@ try:
         api_run.action_execute_pipeline()
         assert api_run.status == "waiting_review", api_run.status
         assert not api_run.published_slide_id
-        api_run.action_approve_and_publish()
+        from odoo.exceptions import UserError
+        before_slides = env["slide.slide"].search_count([])
+        try:
+            api_run.action_approve_and_publish()
+        except UserError:
+            pass
+        else:
+            raise AssertionError("Missing publication evidence was accepted")
+        assert env["slide.slide"].search_count([]) == before_slides
+        assert api_run.status == "waiting_review" and not api_run.published_slide_id
+        # Explicit synthetic reviewer evidence in a disposable test database.
+        # This fixture does not assert real YouTube authorship or acquisition.
+        api_run.action_approve_and_publish(publication_evidence={
+            "author": "FACODI CI synthetic publication fixture",
+            "rights_mode": "external",
+            "usage_basis": "Synthetic evidence supplied by the disposable test reviewer.",
+            "purpose": "Exercise native review and isolated canonical video publication.",
+        })
         api_run.action_approve_and_publish()
         slide = api_run.published_slide_id
         assert api_run.status == "published" and slide.slide_category == "video"
         assert slide.channel_id == api_course and slide.is_published
         assert not api_course.website_published and api_course.visibility == "members"
         assert slide.video_url == api_run.source_url
+        native_reviews = env["facodi.learning.content.review"].search([("slide_id", "=", slide.id)])
+        assert len(native_reviews) == 1 and native_reviews.state == "approved"
+        assert native_reviews.reviewed_by_id == admin
         legacy_transport.assert_not_called()
         assert env["facodi.learning.analysis.job"].search_count([]) == before_jobs
         # Ordinary legacy creations still invoke their existing export hook.
