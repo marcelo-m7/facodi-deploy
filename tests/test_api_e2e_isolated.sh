@@ -239,6 +239,7 @@ then
   run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags="$learning_test_tags"
   echo "PASS native Learning consumer delegation, receipts and reviewed publication"
   "${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database=facodi_learning_e2e <<'CANONICAL'
+import json
 from uuid import uuid4
 from odoo import Command
 
@@ -276,18 +277,26 @@ assert env['project.project'].search_count([]) == projects_before
 assert env['project.task'].search_count([]) == tasks_before + 1
 assert not run.task_id.child_ids
 run.task_id.write({'name': 'Human editorial decision', 'description': 'Preserve authored work'})
+catalog = json.loads(run.canonical_payload_json)['catalog_snapshot']
+enriched_id = str(uuid4())
 receipt = {
     'job_id': str(uuid4()), 'task_ref': run.task_id.facodi_ref, 'company_id': run.company_id.id,
     'cohort': 'p2', 'revision': 5, 'status': 'needs_review', 'attempt': 1,
     'result': {'document_data': {'text_content': run.raw_content, 'language': run.language},
-               'enriched_data': {'summary': run.raw_content, 'keywords': [], 'concepts': [],
+               'enriched_data': {'id': enriched_id, 'summary': run.raw_content, 'keywords': [], 'concepts': [],
                                  'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
+               'mapping_data': {'id': str(uuid4()), 'enriched_document_id': enriched_id,
+                                'snapshot_id': catalog['snapshot_id'], 'snapshot_hash': catalog['snapshot_hash'],
+                                'ranking_algorithm_version': 'deterministic-v2', 'candidates': [],
+                                'unmatched_concepts': [], 'schema_version': '2.0.0'},
                'chunks': []},
 }
 assert run._apply_canonical_receipt(receipt)
 assert not run._apply_canonical_receipt(receipt)
+assert json.loads(run.metadata_json)['mapping_data'] == receipt['result']['mapping_data']
 job.with_user(actor).action_process()
 assert job.state == 'completed' and job.result_id.summary
+assert job.result_id.raw_payload['mapping_data'] == receipt['result']['mapping_data']
 assert job.pipeline_receipt_revision == run.revision
 assert len(job.attempt_ids) == 1 and len(slide.facodi_analysis_result_ids) == 1
 assert not slide.is_published and not slide.website_published and not course.website_published

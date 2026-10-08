@@ -63,6 +63,29 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+Catalog continuation candidates: API `9e80f0088ff008db5dc6e166b90cd3a234012cec`,
+Learning `60d223fda80544af7e833f394a91e4f2a29e24bd` (patch `19.0.2.2.1`), and
+Supabase `5102e431fa8d672ec5fcbd5c72a39f759ac4124e`. Local API tests: 44 native,
+112 pure and one historical skip. Learning: 425 native tests. Supabase: 13 Python
+tests (eight native database) and 26 Deno tests/typecheck. Deployment: 65 contracts.
+The actual authenticated endpoint/native SQL test now carries a catalog; the
+composed unpublished probe preserves exact proposals in both API metadata and
+the existing immutable Learning result. Exact successor CI remains required.
+
+The complete authorized catalog is frozen in dispatch, within the 60000-byte
+ASCII JSON wire budget. Supabase verifies company/Website scope and the existing
+Python sorted-ASCII-JSON SHA-256 before enqueue/acquisition/payment. Native golden
+fixtures cover Unicode, astral characters and control escaping. Mapping preserves
+deterministic-v2 scores, threshold, ties, top five and unmatched concepts; evidence
+terms have stable sorting rather than Python's unordered set iteration. Mapping
+and enriched-document identity share the saved analysis checkpoint. A mismatched
+recovery checkpoint fails for native human review without a new paid call.
+API accepts only matching snapshots and proposed targets; old immutable requests
+without catalog and old ASCII receipt encoding remain replay-compatible.
+No historical editorial result is rewritten and no proposal is auto-approved.
+
+Verified preceding bounded-worker release, not CI acceptance of these successors:
+
 - Continuation candidates: API `32757980cc71043d79c9edb09a28e93bf99c5630`
   and Supabase `d946dc2528bba33c16633e903a3b394e26d92131` (code-only head).
   API now freezes a bounded text dispatch intent, reads
@@ -112,8 +135,8 @@ Project, task or remote job.
   terminal replay and preservation of human task fields. The focused real
   registry probe passed; all fixture changes roll back.
 - This is an explicit-text cohort limited to 12000 UTF-8 bytes, not all-source
-  parity. Scheduler activation, binary documents, transcript acquisition, accepted
-  catalog mapping and versioned retry/cancel/input remain unfinished. Final
+  parity. Scheduler activation, binary documents, transcript acquisition,
+  oversized catalogs and versioned retry/cancel/input remain unfinished. Final
   exact-pin runtime/browser/restore and productive canary remain mandatory.
   No remote schema/functions, intake gate or publication were changed.
 
