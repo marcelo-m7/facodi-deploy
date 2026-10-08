@@ -34,6 +34,12 @@ picked up by Odoo's development reloader without rebuilding the image.
 
 ## Module Workflow
 
+The independent `facodi_project` sibling lives in the API source repository and
+depends only on standard Project. See the [Project foundation contract and
+acceptance evidence](facodi-project/README.md) before running its isolated harness.
+The full harness requires both API-owner addons at the same clean commit; it
+does not treat uncommitted Project code as release evidence.
+
 Install requested modules only on a new local database:
 
 ```bash

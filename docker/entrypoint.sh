@@ -8,7 +8,7 @@ set -euo pipefail
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
 : "${ODOO_DB:?ODOO_DB is required}"
 : "${ODOO_ADMIN_PASSWD:?ODOO_ADMIN_PASSWD is required}"
-: "${FACODI_MODULES:=facodi_api,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum}"
+: "${FACODI_MODULES:=facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum}"
 : "${ODOO_CONFIG_TEMPLATE:=/etc/odoo/odoo.conf}"
 : "${ODOO_WORKERS:=2}"
 : "${ODOO_MAX_CRON_THREADS:=1}"

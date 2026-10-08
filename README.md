@@ -4,6 +4,11 @@
 
 The repository does not own FACODI business logic. It pins independent addon repositories, builds one reproducible Odoo image, defines the canonical Coolify Compose lifecycle, and provides the migration and acceptance tests that must pass before a revision is deployed.
 
+The [INC-P1 Project foundation](docs/facodi-project/README.md) is a greenfield
+source candidate in this integration. New helpers use permanent workspaces and
+canonical tasks; legacy pipelines remain untouched until INC-P2. Owner native
+CI and real standalone concurrency passed; production promotion is separate.
+
 ## Canonical runtime
 
 The only active runtime architecture in this repository is:
@@ -44,7 +49,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled) | `b830811cb2d4bd408e1811d5d5de3ab9d181b82c` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `3891e749c05008344cca26ad099ead26ef344c6a` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `1a4bb096dbc96f800732d50f1892dfa69f3f74ed` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |

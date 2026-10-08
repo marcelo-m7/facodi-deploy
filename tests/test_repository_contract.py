@@ -19,10 +19,19 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/monodoo",
 }
 
-FACODI_MODULES = "facodi_api,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_project_foundation_is_an_independent_native_addon(self):
+        path = ROOT / "addons/facodi-api/facodi_project/__manifest__.py"
+        manifest = ast.literal_eval(path.read_text())
+        self.assertEqual(manifest["depends"], ["project"])
+        self.assertEqual(manifest["version"], "19.0.1.0.0")
+        self.assertNotIn("post_init_hook", manifest)
+        self.assertNotIn("pre_init_hook", manifest)
+        self.assertIn("facodi_project", FACODI_MODULES.split(","))
+
     def test_submodules_and_modules(self):
         parser = configparser.ConfigParser()
         parser.read(ROOT / ".gitmodules")

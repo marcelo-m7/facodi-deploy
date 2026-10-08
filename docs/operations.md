@@ -106,7 +106,13 @@ For a fresh target database the migration initializes Odoo and the FACODI module
 
 For an existing database it first inspects the Odoo module registry. The historical `website_facodi` → `theme_facodi` presentation transition is performed only when the known legacy ownership shape is unambiguous. Unexpected XML IDs, dependent custom views or simultaneous legacy/current registry records cause a fail-closed exit rather than a guessed data rewrite.
 
-For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_api`, `facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_learning`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+For an existing database, the migration first uninstalls retired optional backend and Website modules with Odoo's standard module API. The generic missing-module phase then installs any newly required canonical addon. Normal upgrades update only the FACODI-managed/pinned addons (`facodi_api`, `facodi_project`, `facodi_learning`, `theme_facodi`, `facodi_ai`, `facodi_ai_learning`, `muk_web_theme`, `monodoo_core`, `monodoo_home`); standard Odoo dependencies such as `website_forum` and `website_slides_forum` are installed when missing but are not force-updated on every deployment.
+
+The INC-P1 `facodi_project` candidate is schema/identity only. Install/upgrade
+does not adopt or backfill historical Projects/tasks, activate processing, alter
+publication or cut over legacy dispatch. Merge/promotion requires exact-head
+acceptance and the paired backup gate; candidate source CI is not authorization
+to deploy or proof of the productive image identity.
 
 After module operations the migration emits `[facodi-migrate]` stage markers to the container log. `button_choose_theme()` is a bootstrap-only operation for a fresh database; an existing Website keeps its already-applied theme and editor-managed views. The migration then uses standard Odoo APIs to:
 

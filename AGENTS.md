@@ -17,6 +17,15 @@
 
 ## Domain and implementation boundaries
 
+- The [INC-P1 Project foundation](docs/facodi-project/README.md) is greenfield:
+	all new helpers use permanent Projects and canonical tasks, never per-run
+	Projects or compulsory technical subtasks. No historical adoption/backfill or
+	pipeline change occurs in P1. Legacy engine/reviewer rules below describe
+	current compatibility behavior, not the future architecture. P2 cuts over new
+	execution; P3 adds autonomous guarded decisions/publication. Supabase owns
+	durable technical jobs/checkpoints; Learning owns academic/content facts;
+	Project owns human/product work; API owns boundaries/adapters; Theme presents.
+
 - Discover current source, live target and executable contracts before correcting or expanding. The [continuity audit](docs/facodi-api/acceptance-2026-10-07.md) is the capability/failure matrix, not a claim of productive readiness. Engineering coordination remains in `facodi-monorepo`; this repository owns release acceptance.
 - API owns the pure engine, checkpoints and deterministic processing; Learning owns editorial results/history/review and canonical projections. Internal adapters call the shared ORM facade, never self-HTTP or a duplicated engine. Accepted source/provider/actor/catalog/policy remain immutable; replay effects are idempotent, not network exactly-once.
 - Project must evolve toward human editorial/source/curricular/operational decisions only. The existing per-run technical mirror is legacy debt, not the desired contract. Preserve history and require idempotent human-event projection before retiring it.

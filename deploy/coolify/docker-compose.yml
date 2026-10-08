@@ -31,7 +31,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
@@ -64,7 +64,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
