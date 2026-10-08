@@ -5,10 +5,10 @@ Status: reviewed source candidate; no production install or promotion.
 `facodi_project` is an independent sibling addon in the API source repository.
 It depends only on native `project`, not API, Learning, AI or Supabase. Its
 version is `19.0.1.0.0`. Candidate owner commit is
-`e6d56e7f669737df65f1e3bec6e2e0af7b97b349`, published in
+`cefc014d158e9155b3ffbea36d1ebe942afdfe3b`, published in
 [API PR26](https://github.com/marcelo-m7/facodi-api/pull/26).
-[Owner native/pure CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37706636989)
-passed at this exact SHA. Deployment integration and promotion remain separate
+[Owner native/pure CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37709007523)
+tracks this exact SHA. Deployment integration and promotion remain separate
 gates; the previous accepted production/source pin is not this candidate.
 
 ## Greenfield Contract
@@ -83,10 +83,13 @@ before existing API/Learning checks. It does not exclude the concurrency test.
 
 - Fresh standalone install and final-source native suite: 23 ORM/security/HTTP
   tests, zero failures/errors, on pinned disposable Odoo19/PostgreSQL16.
-- Separate-process standalone race passed outside module loading: independent
+- Twenty separate-process races passed outside module loading: independent
   snapshots, PostgreSQL uniqueness, real full-transaction retry, one task/receipt,
-  then concurrent archived replay preserving human edits. No ORM/SQL/helper
-  mocks, vendor changes or concurrency exclusion.
+  then concurrent archived replay preserving human edits. Each race has an
+  absolute 60-second deadline; structured CI logs record exit codes, both task
+  IDs, attempts, SQL count and elapsed seconds. Local maximum was 3.038 seconds;
+  all exits zero/counts one. Same key in another authorized Project creates a
+  different task. No ORM/SQL/helper mocks, vendor changes or concurrency exclusion.
 - Native history captured before addon installation and compared after install
   and two upgrades: unchanged titles/descriptions, Projects, stages/states,
   active flags, assignees, followers, chatter IDs and write timestamps. Neither
@@ -105,7 +108,7 @@ CI and the deployment harness.
 
 ## Integration Evidence (2026-10-08)
 
-- Full isolated harness at the exact clean API owner SHA: 23 Project, 29 API
+- Full isolated harness at implementation baseline `e6d56e7`: 23 Project, 29 API
   and 425 Learning native tests, each with zero failures/errors. Mandatory
   standalone concurrency, pre-install history, two upgrades, old-addon upgrade,
   real authenticated HTTP/size limits/role separation, replay/publication and
@@ -122,7 +125,10 @@ CI and the deployment harness.
   or lockfile change. Native negative-path/shutdown logs are not substituted for
   the explicit zero-failure test verdicts.
 
-Deployment exact-head remote CI is still required after its candidate commit.
+Final owner `cefc014` differs only by the mandatory 20-race/time-bound evidence
+enhancement. [Deployment PR272](https://github.com/marcelo-m7/facodi-deploy/pull/272)
+repeats all integration/runtime/browser/restore gates with this final exact pin;
+its exact-head remote CI is required, not inferred from baseline local results.
 Merge order: reviewed API source, deployment candidate pin, then Codoo pointer.
 Architecture PR271 is the independent greenfield clarification. Keep production
 promotion separate: re-read the approved target/gates/crons, matched restore
