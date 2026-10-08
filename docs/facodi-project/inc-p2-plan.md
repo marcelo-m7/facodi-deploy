@@ -45,7 +45,7 @@ identify the productive image or prove the private canary.
 Current external preflight: the user restored Supabase MCP access. Read-only
 inspection verified `https://bhfywztfyidvrlarebmg.supabase.co`, the existing
 processing table with RLS, migration history and zero security advisories.
-CLI authentication is still absent but no longer blocks remote Supabase access
+CLI authentication was restored by the owner; remote access was already verified
 through MCP. The owner confirmed that main automatically deploys through the
 existing Coolify resource; no generic extra deployment permission is required.
 Productive image identity remains unverified. The previously confirmed paired
@@ -63,8 +63,9 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
-- Continuation candidates: API `af9dd031614b48874fc0e1d8e3c41a2e63f44ab9`
-  and Supabase `b89bca4`. API now freezes a bounded text dispatch intent, reads
+- Continuation candidates: API `32757980cc71043d79c9edb09a28e93bf99c5630`
+  and Supabase `d946dc2528bba33c16633e903a3b394e26d92131` (code-only head).
+  API now freezes a bounded text dispatch intent, reads
   committed records in a separate scheduler transaction and reconciles
   authenticated scoped monotonic receipts. Stable job binding survives a lost
   acceptance response; fair polling cannot starve later jobs; terminal projection
@@ -72,21 +73,46 @@ Project, task or remote job.
   and one historical non-native skip. Owner exact-head
   [API CI passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37846789306)
   and [Supabase CI passed](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37846796993).
-  Deployment exact-head integration gates are still pending.
+  Those owner CI links cover preceding heads, not the successors above.
+  All deployment gates passed at `94bae13`, with API `af9dd03`:
+  [runtime/quick contracts](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37848130600)
+  and [native integration](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37848130744).
+  Successor deployment gates are required after the activity/pin follow-up.
 - Supabase now accepts native `task:<uuid>` references and includes bounded
   secret-auth submit/receipt/worker endpoints. Saved metadata and analysis survive
   recovery; stale leases cannot persist or finish. At most two claims can invoke
   analysis, while later claims may finish an existing analysis checkpoint without
   another paid call. Frozen baseline/Gemini evidence contracts are used, not v3
   metadata fallback. Dependency locks and native execution are mandatory in CI.
-  Thirteen Python owner tests (eight native database tests) and eighteen Deno
+  Thirteen Python owner tests (eight native database tests) and nineteen Deno
   tests passed. The latter use the real auth wrapper/client with native SQL.
+- Terminal failure creates one native review activity for the course responsible
+  user or accepted owner, without technical payload. The focused composed-registry
+  replay test passed and the independent API suite passed all 42 tests.
+  Two historical API-only publication fixtures fail with Learning's stricter
+  rights guard; independent tests and the composed projection probe remain
+  separate. No publication guard was weakened.
+- The final lease guard reserves 75 seconds before a new paid call and bounds
+  RPCs to 10 seconds. All 19 Deno tests/typecheck passed and
+  [exact code-head CI passed](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37848842873).
+- The deployment candidate adds a main-only five-minute Actions wake, disabled
+  unless repository variable `FACODI_CANONICAL_WORKER_ENABLED=true`. The Edge
+  worker has its own default-off gate. Existing repository secrets authenticate
+  a fixed endpoint without redirects/proxies, with a 100-second deadline,
+  bounded discarded response and no credential in argv. GitHub schedules are
+  best-effort, not a latency SLA; lost/delayed wakes recover at the next tick.
+  Supabase alone owns claims/checkpoints. Disable new intake on rollback, but
+  keep wake and reconciliation enabled until accepted jobs drain.
+  The local pg_cron/pg_net proposal was withdrawn: managed queue grants could
+  expose secret headers and the normal database role cannot revoke them.
+  Probe transactions rolled back; no extension/grant persisted or remote write
+  occurred. Three focused no-network wake tests passed.
 - The existing deployment harness now includes a disposable native Learning
   projection probe: one canonical task, one unpublished result and attempt,
   terminal replay and preservation of human task fields. The focused real
   registry probe passed; all fixture changes roll back.
 - This is an explicit-text cohort limited to 12000 UTF-8 bytes, not all-source
-  parity. Worker scheduling, binary documents, transcript acquisition, accepted
+  parity. Scheduler activation, binary documents, transcript acquisition, accepted
   catalog mapping and versioned retry/cancel/input remain unfinished. Final
   exact-pin runtime/browser/restore and productive canary remain mandatory.
   No remote schema/functions, intake gate or publication were changed.

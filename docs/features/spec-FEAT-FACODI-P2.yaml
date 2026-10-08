@@ -28,8 +28,11 @@ implemented_slice:
   - committed-record-dispatch-and-stable-job-binding
   - monotonic-scoped-receipts-and-fair-polling
   - unpublished-native-learning-projection-and-idempotent-replay
+  - idempotent-native-human-review-activity-on-terminal-failure
+  - live-lease-budget-before-paid-call-and-rpc-deadlines
+  - disabled-main-only-actions-worker-wake
 remaining:
-  - durable-worker-scheduling-and-operational-recovery
+  - worker-wake-operational-activation-and-recovery-proof
   - all-source-and-accepted-catalog-mapping-parity
   - canonical-versioned-retry-cancel-and-input
   - full-provider-crash-restart-and-concurrency-proof
@@ -51,13 +54,18 @@ validation:
   repeated_upgrades: 2
   current_supabase_owner_tests: 13
   current_supabase_native_database_tests: 8
-  current_supabase_deno_tests: 18
+  current_supabase_deno_tests: 19
+  current_worker_wake_contract_tests: 3
   native_learning_projection: passed-disposable-probe-required-in-harness
-  api_candidate: af9dd031614b48874fc0e1d8e3c41a2e63f44ab9
-  supabase_candidate: b89bca4
-  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37846789306
-  supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37846796993
-  exact_head_ci: owner-gates-passed-deployment-gates-pending
+  api_candidate: 32757980cc71043d79c9edb09a28e93bf99c5630
+  supabase_code_candidate: d946dc2528bba33c16633e903a3b394e26d92131
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37849596711
+  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37848842873
+  exact_head_ci: api-passed-successor-supabase-docs-and-deployment-gates-pending
+  supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
+  previous_deployment_head: 94bae1301870758fcd66b7398dd71f81b8810caf
+  previous_deployment_runtime_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37848130600
+  previous_deployment_native_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37848130744
   previous_api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
   supabase_protocol_draft: https://github.com/marcelo-m7/facodi-supabase/pull/13
   previous_supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
@@ -75,7 +83,7 @@ promotion:
 blockers:
   - productive-image-identity-and-private-canary-not-yet-observed
 supabase_preflight:
-  access: verified-via-mcp-cli-authentication-not-required-for-mcp
+  access: verified-via-mcp-owner-restored-cli-and-actions-secrets
   target: https://bhfywztfyidvrlarebmg.supabase.co
   security_advisories: 0
   remote_schema_or_function_mutations: 0
