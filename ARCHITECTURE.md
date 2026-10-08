@@ -1,3 +1,5 @@
+> **Current architecture direction (2026-10-07):** FACODI automation is moving to a Project-centric, Odoo-standard model with autonomous-by-default execution. See [docs/architecture/project-centric-automation.md](docs/architecture/project-centric-automation.md). Older pipeline/project-mirroring descriptions remain historical or transitional unless explicitly retained there.
+
 # FACODI Deploy Architecture
 
 ## Ownership
