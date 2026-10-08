@@ -26,6 +26,16 @@ if [[ "${1:-}" == --check-source ]]; then
   exit 0
 fi
 
+export FACODI_PROJECT_SOURCE="$api_repository/facodi_project"
+if ! git -C "$api_repository" cat-file -e HEAD:facodi_project/__manifest__.py 2>/dev/null ||
+   [[ -n "$(git -C "$api_repository" status --porcelain -- facodi_project)" ]]; then
+  echo "Refusing untracked or modified Project source: require the same clean API owner commit" >&2
+  exit 2
+fi
+if [[ "${1:-}" == --check-project-source ]]; then
+  exit 0
+fi
+
 cd "$root"
 export FACODI_LEARNING_SOURCE="$root/addons/facodi-learning/facodi_learning"
 learning_repository="$root/addons/facodi-learning"
@@ -132,6 +142,26 @@ run_native_tests() {
   fi
   rm -f "$native_log"
 }
+project_database="facodi_project_e2e"
+"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --database="$project_database" --init=project --stop-after-init
+"${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database="$project_database" <<'PY'
+from pathlib import Path
+exec(Path('/mnt/extra-addons/facodi_project/tests/test_preservation.py').read_text())
+capture_history(env)
+PY
+run_native_tests --database="$project_database" --init=facodi_project --test-tags=/facodi_project
+"${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database="$project_database" <<'PY'
+from odoo.addons.facodi_project.tests.test_concurrency import run_concurrency
+run_concurrency(env)
+PY
+echo "PASS standalone Project install and identity/access/concurrency tests"
+"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --database="$project_database" --update=facodi_project --stop-after-init
+"${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --database="$project_database" --update=facodi_project --stop-after-init
+"${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database="$project_database" <<'PY'
+from odoo.addons.facodi_project.tests.test_preservation import verify_history
+verify_history(env)
+PY
+echo "PASS repeated standalone Project upgrade"
 run_native_tests --init=facodi_api --test-tags=/facodi_api
 echo "PASS clean install and native ORM security tests"
 "${compose[@]}" run --rm -T odoo "${odoo_args[@]}" --update=facodi_api --stop-after-init

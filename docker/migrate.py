@@ -10,6 +10,7 @@ import textwrap
 
 UPDATE_MODULES = (
     "facodi_api",
+    "facodi_project",
     "facodi_learning",
     "theme_facodi",
     "facodi_ai",
