@@ -1,6 +1,6 @@
 # INC-P2: Canonical Execution Cutover
 
-Status: execution authorized, intake slice under validation; full P2 cutover and
+Status: execution authorized, bounded text slice under validation; full P2 cutover and
 production rollout are not complete. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
 API PR26, `3891e749c05008344cca26ad099ead26ef344c6a`.
 
@@ -46,8 +46,11 @@ Current external preflight: the user restored Supabase MCP access. Read-only
 inspection verified `https://bhfywztfyidvrlarebmg.supabase.co`, the existing
 processing table with RLS, migration history and zero security advisories.
 CLI authentication is still absent but no longer blocks remote Supabase access
-through MCP. Coolify management access and productive image identity remain
-unverified. No ad hoc RPC client, secret prompt through the assistant, target
+through MCP. The owner confirmed that main automatically deploys through the
+existing Coolify resource; no generic extra deployment permission is required.
+Productive image identity remains unverified. The previously confirmed paired
+backup must be checked for applicability to the final schema rollout, not
+described as unavailable. No ad hoc RPC client, secret prompt through the assistant, target
 substitution or production fallback is permitted. Remote migration still
 requires the exact validated source and promotion gates, not tool availability.
 
@@ -60,15 +63,45 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+- Continuation candidates: API `af9dd031614b48874fc0e1d8e3c41a2e63f44ab9`
+  and Supabase `b89bca4`. API now freezes a bounded text dispatch intent, reads
+  committed records in a separate scheduler transaction and reconciles
+  authenticated scoped monotonic receipts. Stable job binding survives a lost
+  acceptance response; fair polling cannot starve later jobs; terminal projection
+  has one local revision. Forty-two native API tests passed, plus 112 pure tests
+  and one historical non-native skip. Owner exact-head
+  [API CI passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37846789306)
+  and [Supabase CI passed](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37846796993).
+  Deployment exact-head integration gates are still pending.
+- Supabase now accepts native `task:<uuid>` references and includes bounded
+  secret-auth submit/receipt/worker endpoints. Saved metadata and analysis survive
+  recovery; stale leases cannot persist or finish. At most two claims can invoke
+  analysis, while later claims may finish an existing analysis checkpoint without
+  another paid call. Frozen baseline/Gemini evidence contracts are used, not v3
+  metadata fallback. Dependency locks and native execution are mandatory in CI.
+  Thirteen Python owner tests (eight native database tests) and eighteen Deno
+  tests passed. The latter use the real auth wrapper/client with native SQL.
+- The existing deployment harness now includes a disposable native Learning
+  projection probe: one canonical task, one unpublished result and attempt,
+  terminal replay and preservation of human task fields. The focused real
+  registry probe passed; all fixture changes roll back.
+- This is an explicit-text cohort limited to 12000 UTF-8 bytes, not all-source
+  parity. Worker scheduling, binary documents, transcript acquisition, accepted
+  catalog mapping and versioned retry/cancel/input remain unfinished. Final
+  exact-pin runtime/browser/restore and productive canary remain mandatory.
+  No remote schema/functions, intake gate or publication were changed.
+
+Previous intake/protocol evidence, not acceptance of the continuation heads:
+
 - API `19.0.3.4.0` candidate: frozen execution plane, explicit managed workspace
   per Website, one canonical task, native permission checks and no legacy claim.
 - Six additional native tests cover route replay, passive legacy preservation,
   missing workspace, forged executor/commands and caller rollback. API native
   suite: 35 passed; clean API plus Project install: 59 passed; two upgrades passed.
   Existing pure API suite: 112 passed, one historical non-native skip.
-- Canonical intake remains off by default. Supabase dispatch/receipt/callback
-  integration, Learning cutover, provider recovery and remote acceptance are NOT
-  implemented by this slice; do not enable or promote it as a completed pipeline.
+- Canonical intake remains off by default. The original intake-only candidate
+  did not implement dispatch/receipts or Learning projection; the continuation
+  above adds these for bounded text only. Do not promote it as a completed P2.
 - API draft PR27: `52cfe8a414e72103a6876d1b45cb62801d3dc46f`; both owner
   [checks passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971).
   The first CI attempt failed on the image's setuptools requirement; the

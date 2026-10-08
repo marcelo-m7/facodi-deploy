@@ -238,6 +238,65 @@ then
   fi
   run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags="$learning_test_tags"
   echo "PASS native Learning consumer delegation, receipts and reviewed publication"
+  "${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database=facodi_learning_e2e <<'CANONICAL'
+from uuid import uuid4
+from odoo import Command
+
+params = env['ir.config_parameter'].sudo()
+params.set_param('facodi_api.pipeline_enabled', 'true')
+params.set_param('facodi_api.enrichment_provider', 'baseline')
+params.set_param('facodi_api.canonical_intake_enabled', 'true')
+params.set_param('facodi_learning.analysis_provider', 'odoo_python')
+actor = env['res.users'].create({
+    'name': 'Canonical native acceptance actor', 'login': 'canonical-native-acceptance',
+    'group_ids': [Command.set([env.ref('facodi_api.group_pipeline_reviewer').id])],
+})
+params.set_param('facodi_learning.pipeline_user_id', str(actor.id))
+website = env['website'].search([('company_id', '=', env.company.id)], limit=1)
+workspace = env['project.project'].create({
+    'name': 'Permanent canonical acceptance workspace', 'facodi_managed': True,
+    'company_id': env.company.id, 'privacy_visibility': 'employees',
+})
+params.set_param('facodi_api.canonical_workspace.%s' % website.id, str(workspace.id))
+course = env['slide.channel'].with_user(actor).create({
+    'name': 'Private canonical acceptance course', 'user_id': actor.id,
+    'website_id': website.id, 'website_published': False, 'visibility': 'members', 'enroll': 'invite',
+})
+slide = env['slide.slide'].with_user(actor).create({
+    'name': 'Native canonical acceptance evidence', 'channel_id': course.id,
+    'slide_category': 'article', 'html_content': '<p>Native educational evidence remains unpublished until review.</p>',
+    'is_published': False, 'website_published': False,
+})
+projects_before = env['project.project'].search_count([])
+tasks_before = env['project.task'].search_count([])
+job = slide.with_user(actor).action_facodi_request_analysis()
+run = job.pipeline_run_id.with_user(actor)
+assert run.execution_plane == 'supabase' and run.project_id == workspace
+assert env['project.project'].search_count([]) == projects_before
+assert env['project.task'].search_count([]) == tasks_before + 1
+assert not run.task_id.child_ids
+run.task_id.write({'name': 'Human editorial decision', 'description': 'Preserve authored work'})
+receipt = {
+    'job_id': str(uuid4()), 'task_ref': run.task_id.facodi_ref, 'company_id': run.company_id.id,
+    'cohort': 'p2', 'revision': 5, 'status': 'needs_review', 'attempt': 1,
+    'result': {'document_data': {'text_content': run.raw_content, 'language': run.language},
+               'enriched_data': {'summary': run.raw_content, 'keywords': [], 'concepts': [],
+                                 'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
+               'chunks': []},
+}
+assert run._apply_canonical_receipt(receipt)
+assert not run._apply_canonical_receipt(receipt)
+job.with_user(actor).action_process()
+assert job.state == 'completed' and job.result_id.summary
+assert job.pipeline_receipt_revision == run.revision
+assert len(job.attempt_ids) == 1 and len(slide.facodi_analysis_result_ids) == 1
+assert not slide.is_published and not slide.website_published and not course.website_published
+assert run.task_id.name == 'Human editorial decision'
+assert run.task_id.description == '<p>Preserve authored work</p>'
+assert run.task_id.facodi_external_ref == receipt['job_id']
+env.cr.rollback()
+print('PASS canonical native Learning projection, terminal replay and unpublished human work')
+CANONICAL
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
 fi

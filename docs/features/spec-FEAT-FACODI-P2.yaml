@@ -1,6 +1,6 @@
 id: FEAT-FACODI-P2
 title: Canonical analysis execution cutover
-status: intake-slice-in-progress
+status: bounded-text-slice-in-progress
 owners:
   operational: facodi_project
   technical_execution: facodi-supabase
@@ -21,11 +21,17 @@ implemented_slice:
   - no-per-run-project-or-mandatory-technical-subtasks
   - legacy-worker-and-commands-exclude-canonical-jobs
   - native-record-and-company-permissions
+  - native-namespaced-task-reference-roundtrip
+  - durable-lease-fencing-and-immutable-checkpoints
+  - bounded-secret-authenticated-submit-receipt-and-worker
+  - frozen-evidence-based-provider-and-paid-call-budget
+  - committed-record-dispatch-and-stable-job-binding
+  - monotonic-scoped-receipts-and-fair-polling
+  - unpublished-native-learning-projection-and-idempotent-replay
 remaining:
-  - durable-supabase-claim-lease-checkpoints-and-recovery
-  - post-commit-recoverable-boundary-dispatch
-  - authenticated-monotonic-receipts-and-callbacks
-  - new-learning-consumer-cohort-cutover
+  - durable-worker-scheduling-and-operational-recovery
+  - all-source-and-accepted-catalog-mapping-parity
+  - canonical-versioned-retry-cancel-and-input
   - full-provider-crash-restart-and-concurrency-proof
   - exact-image-target-and-paired-backup-promotion-preflight
   - private-unpublished-canary-and-bounded-activation
@@ -39,15 +45,22 @@ impacted_files:
   - facodi-learning/facodi_learning/models/analysis_job.py
   - facodi-supabase/facodi-processing-plane/supabase
 validation:
-  current_native_api_tests: 35
-  current_clean_native_api_and_project_tests: 59
+  current_native_api_tests: 42
+  previous_clean_native_api_and_project_tests: 59
   current_pure_tests: 112
   repeated_upgrades: 2
-  current_supabase_owner_tests: 12
-  current_supabase_native_database_tests: 7
-  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
+  current_supabase_owner_tests: 13
+  current_supabase_native_database_tests: 8
+  current_supabase_deno_tests: 18
+  native_learning_projection: passed-disposable-probe-required-in-harness
+  api_candidate: af9dd031614b48874fc0e1d8e3c41a2e63f44ab9
+  supabase_candidate: b89bca4
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37846789306
+  supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37846796993
+  exact_head_ci: owner-gates-passed-deployment-gates-pending
+  previous_api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
   supabase_protocol_draft: https://github.com/marcelo-m7/facodi-supabase/pull/13
-  supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
+  previous_supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
   required_full_gates:
     - native-provider-database-races-and-crash-windows
     - independent-project-native-security-and-concurrency
@@ -56,14 +69,17 @@ validation:
     - desktop-mobile-browser
     - matched-postgresql-filestore-restore
     - exact-owner-and-deployment-head-ci
+promotion:
+  trigger: main-automatically-deploys-existing-coolify-resource
+  paired_backup: owner-confirmed-pair-requires-applicability-check-for-new-schema
 blockers:
-  - coolify-management-access-and-image-identity-unavailable
+  - productive-image-identity-and-private-canary-not-yet-observed
 supabase_preflight:
   access: verified-via-mcp-cli-authentication-not-required-for-mcp
   target: https://bhfywztfyidvrlarebmg.supabase.co
   security_advisories: 0
   remote_schema_or_function_mutations: 0
-  durable_protocol: locally-tested-draft-not-integrated-worker
+  durable_protocol: bounded-text-worker-and-native-projection-tested-not-activated
 rollback:
   - disable-new-intake-expansion
   - keep-accepted-executor-and-reconciliation-until-terminal
