@@ -1,8 +1,94 @@
 # INC-P2: Canonical Execution Cutover
 
-Status: executable delivery plan, not implemented or approved for production
-rollout. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
+Status: execution authorized, intake slice under validation; full P2 cutover and
+production rollout are not complete. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
 API PR26, `3891e749c05008344cca26ad099ead26ef344c6a`.
+
+## Execution Plan: 2026-10-08
+
+The owner requested planning followed by autonomous implementation and necessary
+promotion/merges. Preserve the invariants below and require the promotion gates;
+authorization does not waive tests, backup pairing or target/image verification.
+Starting deployment is `3d4caf6`, with API `ee86ea6` and Learning `1a4bb09`.
+Read-only approved connector inspection confirmed the FACODI target and installed
+Project `19.0.1.0.0`, API `19.0.3.3.0`, Learning `19.0.2.2.0`. This does not
+identify the productive image or prove the private canary.
+
+1. Integrate the reviewed architecture PR271 after verifying its exact-head CI
+  and compatibility with current main. Complete P1 operational verification
+  through the approved live workflow, not by assuming merge means deployment.
+2. Implement P2 atomic acceptance in API: an initially disabled canonical route,
+  explicit managed company/Website workspace and immutable accepted executor.
+  Test disabled routing, failed workspace authorization, replay after routing
+  changes, rollback and absence of per-run Projects/technical subtasks.
+3. Implement the durable Supabase contract in its independent owner: stable task
+  key/job UUID, transactional claim/lease/checkpoints, recovery and bounded
+  authenticated receipt transport. Test real database races and restart/crash
+  windows before integrating API dispatch and callbacks. Never repurpose old
+  provider identities or call remote processing before intake commits.
+4. Cut over only newly accepted Learning jobs through the shared API boundary.
+  Preserve native content/review, existing providers and all historical work.
+  Reconcile receipts monotonically and project only human-actionable events.
+5. Run native suites, provider database/security/crash tests, full integration,
+  install/two upgrades/history, desktop/mobile browser and paired restore.
+  Publish owner PRs and exact pins in dependency order; merge only green heads.
+6. Promote through the existing resource and migration gate after target,
+  applicable paired restore point, secrets and actual image identity are
+  verified. Use a new private unpublished canary, then activate a bounded
+  cohort. Disable new intake expansion on rollback but continue reconciliation
+  of already accepted jobs. Record observed results, not inferred completion.
+7. Reduce duplicate Learning workflow only after parity (P4), following the P3
+  policy gate where applicable. P3 automatic decisions/publication, P5 Portal
+  expansion and P6 AI retirement retain their own acceptance boundaries; no
+  silent publication or AI uninstall is part of the initial P2 cutover.
+
+Current external preflight: the user restored Supabase MCP access. Read-only
+inspection verified `https://bhfywztfyidvrlarebmg.supabase.co`, the existing
+processing table with RLS, migration history and zero security advisories.
+CLI authentication is still absent but no longer blocks remote Supabase access
+through MCP. Coolify management access and productive image identity remain
+unverified. No ad hoc RPC client, secret prompt through the assistant, target
+substitution or production fallback is permitted. Remote migration still
+requires the exact validated source and promotion gates, not tool availability.
+
+Rejected alternatives: a simultaneous replacement of all executors would lose
+accepted-provider recovery; retrofitting old runs violates passive history;
+keeping technical execution in both Odoo and Supabase duplicates authority.
+The first falsifiable check is native replay after the intake route is disabled:
+the accepted executor and canonical task must remain identical, without a new
+Project, task or remote job.
+
+### Current Slice Evidence
+
+- API `19.0.3.4.0` candidate: frozen execution plane, explicit managed workspace
+  per Website, one canonical task, native permission checks and no legacy claim.
+- Six additional native tests cover route replay, passive legacy preservation,
+  missing workspace, forged executor/commands and caller rollback. API native
+  suite: 35 passed; clean API plus Project install: 59 passed; two upgrades passed.
+  Existing pure API suite: 112 passed, one historical non-native skip.
+- Canonical intake remains off by default. Supabase dispatch/receipt/callback
+  integration, Learning cutover, provider recovery and remote acceptance are NOT
+  implemented by this slice; do not enable or promote it as a completed pipeline.
+- API draft PR27: `52cfe8a414e72103a6876d1b45cb62801d3dc46f`; both owner
+  [checks passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971).
+  The first CI attempt failed on the image's setuptools requirement; the
+  isolated CI environment repair was validated locally and at the new HEAD.
+- Supabase draft [PR13](https://github.com/marcelo-m7/facodi-supabase/pull/13),
+  candidate `a31303bf4c861efcb35e335f749cc339ac28bf1c`: additive logged pgmq queue,
+  atomic scoped replay, fenced
+  leased claims, immutable checkpoints and monotonic terminal receipts. Twelve
+  owner tests passed locally, including seven real database tests with twenty
+  enqueue transactions, twenty claims, rollback, crash recovery and role denial.
+  Native schema lint and security advisors were clean. This is a database
+  protocol candidate, not a worker/transport or completed integration.
+  Both owner [CI gates passed](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221)
+  at that exact source head, including the real database suite.
+- Supabase MCP read-only preflight is now verified. No remote schema/functions
+  changed. The sole performance advisory is an unused legacy index (informative),
+  which is preserved; no unrelated index cleanup is part of P2.
+- Local native logs: `/tmp/facodi-p2-intake-native.log`,
+  `/tmp/facodi-p2-clean-native.log`, `/tmp/facodi-p2-upgrade-{1,2}.log`.
+  Commit/CI evidence must supplement these development logs before acceptance.
 
 ## Invariants
 

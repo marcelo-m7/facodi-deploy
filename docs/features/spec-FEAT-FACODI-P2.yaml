@@ -1,0 +1,71 @@
+id: FEAT-FACODI-P2
+title: Canonical analysis execution cutover
+status: intake-slice-in-progress
+owners:
+  operational: facodi_project
+  technical_execution: facodi-supabase
+  boundary: facodi_api
+  domain: facodi_learning
+  deployment: facodi-deploy
+contract:
+  workspace: explicit-managed-project-per-company-and-website
+  execution: one-canonical-native-task
+  identity: immutable-reference-and-accepted-executor
+  history: passive-preservation-no-adoption-or-backfill
+  publication: native-review-until-P3-policy-gates
+  activation: disabled-until-full-cutover-acceptance
+implemented_slice:
+  - atomic-canonical-intake
+  - replay-preserves-executor-after-routing-change
+  - replay-preserves-human-task-fields
+  - no-per-run-project-or-mandatory-technical-subtasks
+  - legacy-worker-and-commands-exclude-canonical-jobs
+  - native-record-and-company-permissions
+remaining:
+  - durable-supabase-claim-lease-checkpoints-and-recovery
+  - post-commit-recoverable-boundary-dispatch
+  - authenticated-monotonic-receipts-and-callbacks
+  - new-learning-consumer-cohort-cutover
+  - full-provider-crash-restart-and-concurrency-proof
+  - exact-image-target-and-paired-backup-promotion-preflight
+  - private-unpublished-canary-and-bounded-activation
+impacted_files:
+  - facodi-api/facodi_api/models/pipeline_run.py
+  - facodi-api/facodi_api/security/pipeline_security.xml
+  - facodi-api/facodi_api/tests/test_pipeline_security.py
+  - facodi-api/facodi_api/__manifest__.py
+  - facodi-api/.github/workflows/standalone-tests.yml
+  - facodi-learning/facodi_learning/models/pipeline_adapter.py
+  - facodi-learning/facodi_learning/models/analysis_job.py
+  - facodi-supabase/facodi-processing-plane/supabase
+validation:
+  current_native_api_tests: 35
+  current_clean_native_api_and_project_tests: 59
+  current_pure_tests: 112
+  repeated_upgrades: 2
+  current_supabase_owner_tests: 12
+  current_supabase_native_database_tests: 7
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
+  supabase_protocol_draft: https://github.com/marcelo-m7/facodi-supabase/pull/13
+  supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
+  required_full_gates:
+    - native-provider-database-races-and-crash-windows
+    - independent-project-native-security-and-concurrency
+    - api-learning-native-and-authenticated-http
+    - pre-cutover-history-and-two-upgrades
+    - desktop-mobile-browser
+    - matched-postgresql-filestore-restore
+    - exact-owner-and-deployment-head-ci
+blockers:
+  - coolify-management-access-and-image-identity-unavailable
+supabase_preflight:
+  access: verified-via-mcp-cli-authentication-not-required-for-mcp
+  target: https://bhfywztfyidvrlarebmg.supabase.co
+  security_advisories: 0
+  remote_schema_or_function_mutations: 0
+  durable_protocol: locally-tested-draft-not-integrated-worker
+rollback:
+  - disable-new-intake-expansion
+  - keep-accepted-executor-and-reconciliation-until-terminal
+  - do-not-replay-canonical-jobs-through-legacy-or-delete-history
+  - use-approved-paired-restore-for-schema-rollback
