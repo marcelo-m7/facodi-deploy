@@ -2,7 +2,7 @@
 
 Status: executable delivery plan, not implemented or approved for production
 rollout. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
-API PR26, `cefc014d158e9155b3ffbea36d1ebe942afdfe3b`.
+API PR26, `3891e749c05008344cca26ad099ead26ef344c6a`.
 
 ## Invariants
 

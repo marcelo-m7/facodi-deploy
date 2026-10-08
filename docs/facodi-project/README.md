@@ -5,9 +5,9 @@ Status: reviewed source candidate; no production install or promotion.
 `facodi_project` is an independent sibling addon in the API source repository.
 It depends only on native `project`, not API, Learning, AI or Supabase. Its
 version is `19.0.1.0.0`. Candidate owner commit is
-`cefc014d158e9155b3ffbea36d1ebe942afdfe3b`, published in
+`3891e749c05008344cca26ad099ead26ef344c6a`, published in
 [API PR26](https://github.com/marcelo-m7/facodi-api/pull/26).
-[Owner native/pure CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37709007523)
+[Owner native/pure CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37709712723)
 tracks this exact SHA. Deployment integration and promotion remain separate
 gates; the previous accepted production/source pin is not this candidate.
 
@@ -51,6 +51,9 @@ to architecture PR271's Increment1 acceptance wording.
   call, publication action or automatic migration hook is added.
 
 `auto` is workspace policy metadata only in INC-P1. It does not change Learning
+policy or ordinary unmanaged Project defaults. Only explicit managed creation/
+opt-in supplies `auto`; an existing manual choice is preserved.
+It does not change Learning
 policy defaults, activate processing, approve or publish. Runtime policy belongs
 to INC-P3. Native forms, restricted task search and compact kanban kind/origin
 are implemented. Native HTTP tests cover the standard Portal share-token route
@@ -81,8 +84,9 @@ before existing API/Learning checks. It does not exclude the concurrency test.
 
 ## Source Evidence
 
-- Fresh standalone install and final-source native suite: 23 ORM/security/HTTP
-  tests, zero failures/errors, on pinned disposable Odoo19/PostgreSQL16.
+- Final-source native suite: 24 ORM/security/HTTP tests, zero failures/errors,
+  on pinned disposable Odoo19/PostgreSQL16, including managed-only policy default
+  and opt-in without historical task backfill. Clean install repeats in owner CI.
 - Twenty separate-process races passed outside module loading: independent
   snapshots, PostgreSQL uniqueness, real full-transaction retry, one task/receipt,
   then concurrent archived replay preserving human edits. Each race has an
@@ -125,8 +129,9 @@ CI and the deployment harness.
   or lockfile change. Native negative-path/shutdown logs are not substituted for
   the explicit zero-failure test verdicts.
 
-Final owner `cefc014` differs only by the mandatory 20-race/time-bound evidence
-enhancement. [Deployment PR272](https://github.com/marcelo-m7/facodi-deploy/pull/272)
+Final owner `3891e74` adds the mandatory 20-race/time-bound evidence and scopes
+policy defaults to explicit management (24 native tests).
+[Deployment PR272](https://github.com/marcelo-m7/facodi-deploy/pull/272)
 repeats all integration/runtime/browser/restore gates with this final exact pin;
 its exact-head remote CI is required, not inferred from baseline local results.
 Merge order: reviewed API source, deployment candidate pin, then Codoo pointer.
