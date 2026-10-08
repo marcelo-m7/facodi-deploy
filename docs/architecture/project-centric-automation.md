@@ -241,10 +241,18 @@ creating another parallel portal. Only safe fields and chatter should be exposed
 Create `facodi_project` with the minimal Project/Task fields and idempotent task
 helper. No deletion of old models. No broad pipeline cutover.
 
+This increment is greenfield: preserve old Projects/tasks passively, without
+adoption, ref backfill or changes to followers, stages, assignees, chatter or
+history. No preliminary archive/delete is required. Task19 is ordinary work
+tracking, not a special fixture. Legacy dispatch is untouched until Increment2
+and must not be adapted or expanded in Increment1. Workspace `auto` is inert
+metadata here: no processing, approval or publication is activated.
+
 Acceptance:
 
 - unique stable refs;
-- no one-project-per-run behavior for new v3 work;
+- every new Increment1 helper/code path forbids a Project per execution and
+  compulsory technical subtasks; this does not cut over old dispatch;
 - standard Project UI displays automation metadata;
 - upgrade preserves all existing Projects/Tasks.
 
