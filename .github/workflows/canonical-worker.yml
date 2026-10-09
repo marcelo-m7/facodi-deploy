@@ -1,0 +1,27 @@
+name: Canonical worker wake
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: facodi-canonical-worker-p2
+  cancel-in-progress: false
+
+jobs:
+  wake:
+    if: github.ref == 'refs/heads/main' && vars.FACODI_CANONICAL_WORKER_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wake the canonical processing boundary
+        env:
+          FACODI_CANONICAL_WORKER_ENABLED: 'true'
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: bash scripts/wake-canonical-worker.sh

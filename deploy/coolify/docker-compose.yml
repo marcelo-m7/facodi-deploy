@@ -91,6 +91,39 @@ services:
       retries: 12
       start_period: 60s
 
+  processing-worker:
+    profiles: [isolated-processing]
+    build:
+      context: https://github.com/marcelo-m7/facodi-supabase.git#1bd60001702370da1dba3f74e4334551130d231e:facodi-processing-plane
+      dockerfile: workers/canonical/Dockerfile
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 64
+    stop_grace_period: 120s
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    networks: [processing-egress]
+    environment:
+      FACODI_ISOLATED_WORKER_ENABLED: ${FACODI_ISOLATED_WORKER_ENABLED:-false}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
+      FACODI_ENRICHMENT_API_KEY: ${FACODI_ENRICHMENT_API_KEY:-}
+    healthcheck:
+      test: [CMD, /usr/bin/deno, eval, --no-config, "const age = Date.now() - Number(Deno.readTextFileSync('/tmp/facodi-worker-heartbeat')); if (!Number.isFinite(age) || age < 0 || age > 180000) Deno.exit(1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  processing-egress:
+
 volumes:
   postgres-data:
   odoo-data:

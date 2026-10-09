@@ -163,6 +163,42 @@ Do not treat a healthy login route alone as proof that the migration preserved p
 
 ## 7. Routine redeploys
 
+### Optional Isolated Processing Worker
+
+The approved heavy-parser runtime is the separate `processing-worker` service
+in the `isolated-processing` profile. This profile is not part of default
+startup. Enabling the profile alone does not activate claims:
+`FACODI_ISOLATED_WORKER_ENABLED` defaults to false. Do not activate this candidate
+until private source/catalog/result transport and the
+full integration/parity gates are complete.
+
+The pinned candidate requires additive migration
+`20261009124457_facodi_canonical_runtime.sql` in addition to the accepted queue,
+command and retry migrations. Requests without `execution_runtime` remain
+Edge-owned. Only explicitly accepted `isolated` requests can be claimed by the
+external CLI; claims never consume another runtime's visible messages. Apply
+through the Supabase owner's guarded migration workflow, never by rewriting
+accepted request payloads or activating the worker against a partial schema.
+
+Preserve the existing Coolify resource, three-service Odoo migration lifecycle
+and persistent volumes. The worker has a separate egress network, no host port
+or persistent mount and no Odoo/PostgreSQL credentials. Keep its nonroot,
+read-only, capability-free configuration and memory/CPU/PID/temporary-storage
+bounds. Coolify must build the exact immutable remote source selected in Compose,
+not a branch or an unverified locally tagged image. The image also pins its API
+converter source, Python/Deno digests and parser dependencies.
+
+Before activation, verify server capacity, exact FACODI target, applicable paired
+backup, exact image identity, owner/deployment CI, real lease/crash/cancellation
+parity and a new private unpublished canary. Use the modern server-only Supabase
+secret and accepted enrichment credential; never put them in Docker build args,
+public configuration or parser environment. SIGTERM stops new claims and drains
+the active bounded work within the configured grace period.
+
+Rollback stops new intake expansion, not reconciliation or the workers required
+to drain accepted jobs. Preserve accepted provider/input/runtime and all immutable
+history; no automatic legacy replay, publication or AI retirement belongs here.
+
 For ordinary application revisions:
 
 1. review the addon and migration diff;

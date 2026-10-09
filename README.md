@@ -51,12 +51,12 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `3891e749c05008344cca26ad099ead26ef344c6a` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `f3258cc550ab04f712d475f87569a40ce39c8c39` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `1a4bb096dbc96f800732d50f1892dfa69f3f74ed` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `d88b670e1d90205c7bfcb0e7c51cc365b455701d` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
-The candidate composition uses `facodi_api 19.0.3.3.0`, `facodi_learning 19.0.2.2.0` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version and authorized private curriculum import. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
+The candidate composition uses `facodi_api 19.0.3.4.0`, `facodi_learning 19.0.2.3.1` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version, authorized private curriculum import and the disabled bounded canonical analysis candidate, including immutable manual revisions and automatic YouTube acquisition evidence. Learning also preserves the merged upstream native Explore discovery. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
 
 ### Historical Release Context
 
@@ -148,6 +148,20 @@ For legacy selections, that pair remains atomic: a partial pair fails the migrat
 The Compose runtime also forwards `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` for future public-safe/authenticated processing-plane surfaces. Neither is used as the privileged Odoo-to-Supabase credential. `GEMINI_API_KEY` remains server-only and may be forwarded to the authenticated Edge call as a transitional fallback until that provider secret is configured directly in Supabase.
 
 No Supabase or Gemini secret is committed to this repository.
+
+### Optional Isolated Worker Candidate
+
+The owner-approved `isolated-processing` profile adds one separate processing
+service, pinned to Supabase source `1bd60001702370da1dba3f74e4334551130d231e`.
+It is absent from default startup and `FACODI_ISOLATED_WORKER_ENABLED` also
+defaults to false. The service has no public port, Odoo/PostgreSQL credentials,
+persistent volume or dependency on their network. Its read-only nonroot image
+reuses the Supabase engine and the API-owned standalone converter with exact
+runtime/parser/source pins; it does not create another processing authority.
+See [the approved design](docs/plans/2026-10-09-isolated-processing-worker-design.md)
+and [activation gates](docs/operations.md#optional-isolated-processing-worker).
+Private binary/large-payload integration is still pending; source readiness is
+not full P2 acceptance or authorization to activate this profile yet.
 
 ## Validation
 

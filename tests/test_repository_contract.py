@@ -23,6 +23,87 @@ FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_
 
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_isolated_worker_is_optional_pinned_and_separate_from_odoo_persistence(self):
+        import json
+        config = json.loads(subprocess.check_output([
+            "docker", "compose", "--env-file", str(ROOT / ".env.ci"),
+            "-f", str(ROOT / "deploy/coolify/docker-compose.yml"),
+            "--profile", "isolated-processing", "config", "--format", "json",
+        ], text=True, cwd=ROOT, env={**os.environ, "FACODI_ISOLATED_WORKER_ENABLED": "false",
+            "SUPABASE_URL": "", "SUPABASE_SECRET_KEY": "", "FACODI_ENRICHMENT_API_KEY": ""}))
+        worker = config["services"]["processing-worker"]
+        self.assertEqual(worker["profiles"], ["isolated-processing"])
+        self.assertRegex(worker["build"]["context"], r"^https://github\.com/marcelo-m7/facodi-supabase\.git#[0-9a-f]{40}:facodi-processing-plane$")
+        self.assertEqual(worker["build"]["dockerfile"], "workers/canonical/Dockerfile")
+        self.assertEqual(worker["environment"]["FACODI_ISOLATED_WORKER_ENABLED"], "false")
+        self.assertEqual(worker["user"], "10001:10001")
+        self.assertTrue(worker["read_only"])
+        self.assertEqual(worker["cap_drop"], ["ALL"])
+        self.assertIn("no-new-privileges:true", worker["security_opt"])
+        self.assertEqual(int(worker["mem_limit"]), 512 * 1024 * 1024)
+        self.assertEqual(worker["pids_limit"], 64)
+        self.assertEqual(set(worker["networks"]), {"processing-egress"})
+        for forbidden in ("volumes", "ports", "expose", "privileged", "depends_on"):
+            self.assertNotIn(forbidden, worker)
+        self.assertFalse(any(key.startswith(("DB_", "ODOO_")) for key in worker["environment"]))
+        self.assertEqual(config["services"]["odoo"]["depends_on"]["migrate"]["condition"], "service_completed_successfully")
+
+    def test_canonical_wake_action_requires_main_and_explicit_activation(self):
+        workflow = (ROOT / ".github/workflows/canonical-worker.yml").read_text()
+        self.assertIn("if: github.ref == 'refs/heads/main' && vars.FACODI_CANONICAL_WORKER_ENABLED == 'true'", workflow)
+        self.assertIn("cron: '*/5 * * * *'", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertNotIn("pull_request", workflow)
+        self.assertIn("${{ secrets.SUPABASE_SECRET_KEY }}", workflow)
+        self.assertIn("run: bash scripts/wake-canonical-worker.sh", workflow)
+
+    def test_canonical_wake_defaults_off_and_rejects_target_or_publishable_key(self):
+        script = ROOT / "scripts/wake-canonical-worker.sh"
+        for enabled, url, key, expected in (
+            ("false", "", "", 0),
+            ("true", "https://wrong.supabase.co", "sb_secret_disposable", 2),
+            ("true", "https://bhfywztfyidvrlarebmg.supabase.co", "sb_publishable_disposable", 2),
+            ("true", "https://bhfywztfyidvrlarebmg.supabase.co", 'sb_secret_unsafe"', 2),
+        ):
+            with self.subTest(enabled=enabled, url=url, key=key):
+                result = subprocess.run(["bash", str(script)], capture_output=True, text=True,
+                    env={"PATH": os.environ["PATH"], "FACODI_CANONICAL_WORKER_ENABLED": enabled,
+                         "SUPABASE_URL": url, "SUPABASE_SECRET_KEY": key})
+                self.assertEqual(result.returncode, expected)
+                if key:
+                    self.assertNotIn(key, result.stdout + result.stderr)
+
+    def test_canonical_wake_hides_key_and_discards_bounded_response(self):
+        import json
+        with tempfile.TemporaryDirectory() as directory:
+            curl = Path(directory) / "curl"
+            capture = Path(directory) / "capture.json"
+            curl.write_text("#!/usr/bin/env python3\nimport json, os, sys\n"
+                "with open(os.environ['CAPTURE'], 'w') as output:\n"
+                " json.dump({'args': sys.argv[1:], 'config': sys.stdin.read()}, output)\n"
+                "print(os.environ['RESPONSE'], end='')\n")
+            curl.chmod(0o755)
+            for response, expected in (("200", 0), ("302", 1), ("503", 1)):
+                result = subprocess.run(["bash", str(ROOT / "scripts/wake-canonical-worker.sh")],
+                    capture_output=True, text=True,
+                    env={"PATH": directory + os.pathsep + os.environ["PATH"],
+                         "FACODI_CANONICAL_WORKER_ENABLED": "true",
+                         "SUPABASE_URL": "https://bhfywztfyidvrlarebmg.supabase.co",
+                         "SUPABASE_SECRET_KEY": "sb_secret_disposable",
+                         "CAPTURE": str(capture), "RESPONSE": response})
+                self.assertEqual(result.returncode, expected)
+                self.assertNotIn("sb_secret_disposable", result.stdout + result.stderr)
+                recorded = json.loads(capture.read_text())
+                self.assertNotIn("sb_secret_disposable", " ".join(recorded["args"]))
+                self.assertEqual(recorded["config"], 'header = "apikey: sb_secret_disposable"\n')
+                self.assertEqual(recorded["args"], ["--disable", "--config", "-", "--silent",
+                    "--show-error", "--noproxy", "*", "--proto", "=https", "--max-redirs", "0",
+                    "--connect-timeout", "10", "--max-time", "100", "--max-filesize", "65536",
+                    "--request", "POST", "--header", "Content-Type: application/json", "--data", "{}",
+                    "--output", "/dev/null", "--write-out", "%{http_code}", "--url",
+                    "https://bhfywztfyidvrlarebmg.supabase.co/functions/v1/v4_canonical_analysis/work"])
+
     def test_project_foundation_is_an_independent_native_addon(self):
         path = ROOT / "addons/facodi-api/facodi_project/__manifest__.py"
         manifest = ast.literal_eval(path.read_text())

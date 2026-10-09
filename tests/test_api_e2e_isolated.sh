@@ -238,6 +238,211 @@ then
   fi
   run_native_tests --database=facodi_learning_e2e --init=facodi_learning --test-tags="$learning_test_tags"
   echo "PASS native Learning consumer delegation, receipts and reviewed publication"
+  "${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database=facodi_learning_e2e <<'CANONICAL'
+import json
+from uuid import uuid4
+from unittest.mock import patch
+from odoo import Command
+
+params = env['ir.config_parameter'].sudo()
+params.set_param('facodi_api.pipeline_enabled', 'true')
+params.set_param('facodi_api.enrichment_provider', 'baseline')
+params.set_param('facodi_api.canonical_intake_enabled', 'true')
+params.set_param('facodi_learning.analysis_provider', 'odoo_python')
+actor = env['res.users'].create({
+    'name': 'Canonical native acceptance actor', 'login': 'canonical-native-acceptance',
+    'group_ids': [Command.set([env.ref('facodi_api.group_pipeline_reviewer').id])],
+})
+params.set_param('facodi_learning.pipeline_user_id', str(actor.id))
+website = env['website'].search([('company_id', '=', env.company.id)], limit=1)
+workspace = env['project.project'].create({
+    'name': 'Permanent canonical acceptance workspace', 'facodi_managed': True,
+    'company_id': env.company.id, 'privacy_visibility': 'employees',
+})
+params.set_param('facodi_api.canonical_workspace.%s' % website.id, str(workspace.id))
+course = env['slide.channel'].with_user(actor).create({
+    'name': 'Private canonical acceptance course', 'user_id': actor.id,
+    'website_id': website.id, 'website_published': False, 'visibility': 'members', 'enroll': 'invite',
+})
+slide = env['slide.slide'].with_user(actor).create({
+    'name': 'Native canonical acceptance evidence', 'channel_id': course.id,
+    'slide_category': 'article', 'html_content': '<p>Native educational evidence remains unpublished until review.</p>',
+    'is_published': False, 'website_published': False,
+})
+projects_before = env['project.project'].search_count([])
+tasks_before = env['project.task'].search_count([])
+job = slide.with_user(actor).action_facodi_request_analysis()
+run = job.pipeline_run_id.with_user(actor)
+assert run.execution_plane == 'supabase' and run.project_id == workspace
+assert env['project.project'].search_count([]) == projects_before
+assert env['project.task'].search_count([]) == tasks_before + 1
+assert not run.task_id.child_ids
+run.task_id.write({'name': 'Human editorial decision', 'description': 'Preserve authored work'})
+catalog = json.loads(run.canonical_payload_json)['catalog_snapshot']
+enriched_id = str(uuid4())
+receipt = {
+    'job_id': str(uuid4()), 'task_ref': run.task_id.facodi_ref, 'company_id': run.company_id.id,
+    'cohort': 'p2', 'revision': 5, 'status': 'needs_review', 'attempt': 2,
+    'result': {'document_data': {'text_content': run.raw_content, 'language': run.language},
+               'enriched_data': {'id': enriched_id, 'summary': run.raw_content, 'keywords': [], 'concepts': [],
+                                 'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
+               'mapping_data': {'id': str(uuid4()), 'enriched_document_id': enriched_id,
+                                'snapshot_id': catalog['snapshot_id'], 'snapshot_hash': catalog['snapshot_hash'],
+                                'ranking_algorithm_version': 'deterministic-v2', 'candidates': [],
+                                'unmatched_concepts': [], 'schema_version': '2.0.0'},
+               'chunks': []},
+}
+failed = dict(receipt, revision=2, status='failed', attempt=1, result={'error_code': 'PROVIDER_FAILED'})
+assert run._apply_canonical_receipt(failed)
+assert job.state == 'failed' and len(job.attempt_ids) == 1
+failed_attempt = job.attempt_ids
+accepted_input = run.canonical_payload_json
+retry_revision = run.revision
+with patch.object(type(run), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  job.with_user(actor).action_retry()
+  assert run.action_retry(expected_revision=retry_revision)
+retry_intent = json.loads(run.canonical_command_json)
+assert job.state == 'pending' and run.attempt_count == 1 and len(job.attempt_ids) == 1
+
+def retry_ack(record, payload):
+  assert record.id == run.id and payload['action'] == 'retry'
+  assert payload['job_id'] == receipt['job_id'] and payload['command_id'] == retry_intent['command_id']
+  assert payload['expected_revision'] == 0
+  return {'command_id': retry_intent['command_id'], 'command_revision': 1,
+      'receipt': dict(failed, revision=3, status='queued', result={})}
+
+with patch.object(type(run), '_call_canonical_boundary', retry_ack):
+  assert run._dispatch_canonical_receipts()
+assert not run.canonical_command_json and run.canonical_command_revision == 1
+assert run.action_retry(expected_revision=retry_revision) and not run.canonical_command_json
+assert run.canonical_job_id == receipt['job_id'] and run.canonical_payload_json == accepted_input
+assert run._apply_canonical_receipt(receipt)
+assert not run._apply_canonical_receipt(receipt)
+assert json.loads(run.metadata_json)['mapping_data'] == receipt['result']['mapping_data']
+job.with_user(actor).action_process()
+assert job.state == 'completed' and job.result_id.summary
+assert job.result_id.raw_payload['mapping_data'] == receipt['result']['mapping_data']
+assert job.pipeline_receipt_revision == run.revision
+assert len(job.attempt_ids) == 2 and len(slide.facodi_analysis_result_ids) == 1
+assert failed_attempt.state == 'failed' and failed_attempt.number == 1
+assert not slide.is_published and not slide.website_published and not course.website_published
+assert run.task_id.name == 'Human editorial decision'
+assert run.task_id.description == '<p>Preserve authored work</p>'
+assert run.task_id.facodi_external_ref == receipt['job_id']
+historical_result = job.result_id
+historical_payload = json.dumps(historical_result.raw_payload, sort_keys=True)
+cancel_revision = run.revision
+with patch.object(type(run), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  assert job.with_user(actor).action_cancel(expected_revision=cancel_revision)
+  assert job.with_user(actor).action_cancel(expected_revision=cancel_revision)
+intent = json.loads(run.canonical_command_json)
+assert job.state == 'cancelled' and run.status == 'cancelled'
+assert not run._apply_canonical_receipt(receipt)
+
+def cancellation_ack(record, payload):
+  assert record.id == run.id and payload['action'] == 'cancel'
+  assert payload['job_id'] == receipt['job_id'] and payload['command_id'] == intent['command_id']
+  assert payload['expected_revision'] == 1
+  return {'command_id': intent['command_id'], 'command_revision': 2,
+      'receipt': dict(receipt, revision=6, status='cancelled',
+              result={'error_code': 'CANCELLED_BY_OPERATOR'})}
+
+with patch.object(type(run), '_call_canonical_boundary', cancellation_ack):
+  assert run._dispatch_canonical_receipts()
+  assert not run._dispatch_canonical_receipts()
+assert not run.canonical_command_json and run.canonical_command_revision == 2
+assert historical_result.exists() and json.dumps(historical_result.raw_payload, sort_keys=True) == historical_payload
+assert len(job.attempt_ids) == 2 and len(slide.facodi_analysis_result_ids) == 1
+assert run.task_id.name == 'Human editorial decision'
+assert run.task_id.description == '<p>Preserve authored work</p>'
+assert run.task_id.facodi_external_ref == receipt['job_id']
+assert not slide.is_published and not course.website_published
+video = env['slide.slide'].with_user(actor).with_context(website_slides_skip_fetch_metadata=True).create({
+    'name': 'Private canonical input revision', 'channel_id': course.id,
+    'slide_category': 'video', 'source_type': 'external',
+    'video_url': 'https://www.youtube.com/watch?v=4GVbqYFmGBw',
+    'facodi_transcript': 'Original explicitly supplied transcript.',
+    'is_published': False, 'website_published': False,
+})
+input_job = video.with_user(actor).action_facodi_request_analysis()
+parent = input_job.pipeline_run_id.with_user(actor)
+input_failure = {'job_id': str(uuid4()), 'task_ref': parent.task_id.facodi_ref,
+    'company_id': parent.company_id.id, 'cohort': 'p2', 'revision': 2,
+    'status': 'failed', 'attempt': 1, 'result': {'error_code': 'YOUTUBE_LANGUAGE_UNAVAILABLE'}}
+assert parent._apply_canonical_receipt(input_failure) and input_job.state == 'waiting_input'
+parent_input = parent.canonical_payload_json
+input_revision = parent.revision
+jobs_before = env['facodi.learning.analysis.job'].search_count([])
+input_tasks_before = env['project.task'].search_count([])
+params.set_param('facodi_api.canonical_intake_enabled', 'false')
+params.set_param('facodi_learning.pipeline_user_id', '')
+with patch.object(type(parent), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  child = parent.action_supply_transcript('Explicit revised editorial transcript.', 'canonical-input-child', input_revision)
+  assert parent.action_supply_transcript('Explicit revised editorial transcript.', 'canonical-input-child', input_revision) == child
+assert parent.status == 'cancelled' and input_job.state == 'cancelled'
+assert parent.canonical_payload_json == parent_input and parent.canonical_command_json
+assert len(input_job.attempt_ids) == 1 and not input_job.result_id
+assert child.input_parent_id == parent and child.execution_plane == 'supabase'
+assert child.project_id == workspace and child.owner_id == parent.owner_id
+assert child.provider_config_json == parent.provider_config_json
+assert child.catalog_snapshot_json == parent.catalog_snapshot_json
+assert child.task_id != parent.task_id and not child.task_id.parent_id
+assert child.learning_job_id.pipeline_run_id == child and child.learning_job_id.slide_id == video
+assert child.learning_job_id.state == 'pending' and not child.learning_job_id.attempt_ids
+assert not child.learning_job_id.result_id and not child.canonical_job_id
+assert env['facodi.learning.analysis.job'].search_count([]) == jobs_before + 1
+assert env['project.task'].search_count([]) == input_tasks_before + 1
+assert env['project.project'].search_count([]) == projects_before
+assert not video.is_published and not video.website_published and not course.website_published
+params.set_param('facodi_api.canonical_intake_enabled', 'true')
+params.set_param('facodi_learning.pipeline_user_id', str(actor.id))
+automatic_video = env['slide.slide'].with_user(actor).with_context(website_slides_skip_fetch_metadata=True).create({
+  'name': 'Private automatic acquisition evidence', 'channel_id': course.id,
+  'slide_category': 'video', 'source_type': 'external',
+  'video_url': 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+  'is_published': False, 'website_published': False,
+})
+automatic_tasks_before = env['project.task'].search_count([])
+with patch.object(type(parent), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  automatic_job = automatic_video.with_user(actor).action_facodi_request_analysis()
+automatic_run = automatic_job.pipeline_run_id.with_user(actor)
+automatic_request = json.loads(automatic_run.canonical_payload_json)
+assert automatic_request['raw_content'] == ''
+assert automatic_request['acquisition_config'] == {'provider': 'youtube-transcript-plus', 'version': '2.0.3'}
+assert automatic_run.project_id == workspace and not automatic_run.task_id.parent_id
+assert env['project.task'].search_count([]) == automatic_tasks_before + 1
+automatic_catalog = automatic_request['catalog_snapshot']
+automatic_document_id = str(uuid4())
+acquired = {'text_content': 'Acquired educational evidence remains private.', 'language': automatic_run.language,
+  'source_url': automatic_run.source_url, 'extraction_provider': 'youtube-transcript-plus', 'extraction_version': '2.0.3'}
+automatic_receipt = {'job_id': str(uuid4()), 'task_ref': automatic_run.task_id.facodi_ref,
+  'company_id': automatic_run.company_id.id, 'cohort': 'p2', 'revision': 3, 'status': 'needs_review', 'attempt': 1,
+  'result': {'metadata': {'document_data': acquired},
+    'document_data': {'text_content': acquired['text_content'], 'language': acquired['language']},
+    'enriched_data': {'id': automatic_document_id, 'summary': acquired['text_content'], 'concepts': [],
+      'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
+    'mapping_data': {'snapshot_id': automatic_catalog['snapshot_id'], 'snapshot_hash': automatic_catalog['snapshot_hash'],
+      'enriched_document_id': automatic_document_id, 'ranking_algorithm_version': 'deterministic-v2',
+      'candidates': [], 'unmatched_concepts': []}, 'chunks': []}}
+assert automatic_run._apply_canonical_receipt(automatic_receipt)
+automatic_job.with_user(actor).action_process()
+assert automatic_job.state == 'completed' and automatic_job.result_id.transcript == acquired['text_content']
+assert automatic_job.result_id.raw_payload['source_acquisition']['source_url'] == automatic_run.source_url
+assert automatic_job.result_id.raw_payload['source_acquisition']['extraction_version'] == '2.0.3'
+assert automatic_run.raw_content == '' and automatic_run.canonical_payload_json == json.dumps(automatic_request, sort_keys=True)
+assert not automatic_run._apply_canonical_receipt(automatic_receipt)
+assert len(automatic_job.attempt_ids) == 1 and len(automatic_video.facodi_analysis_result_ids) == 1
+assert not automatic_video.is_published and not automatic_video.website_published and not course.website_published
+assert env['project.project'].search_count([]) == projects_before
+assert run.task_id.name == 'Human editorial decision' and historical_result.exists()
+assert json.dumps(historical_result.raw_payload, sort_keys=True) == historical_payload
+env.cr.rollback()
+print('PASS canonical native Learning projection, terminal replay and unpublished human work')
+print('PASS versioned canonical retry, stable job/input/task and immutable failed attempt history')
+print('PASS versioned canonical cancellation, immutable editorial history and human task preservation')
+print('PASS immutable canonical input revision, one new editorial request and preserved accepted routing')
+print('PASS canonical automatic acquisition, immutable provenance/input and one unpublished editorial result')
+CANONICAL
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
 fi

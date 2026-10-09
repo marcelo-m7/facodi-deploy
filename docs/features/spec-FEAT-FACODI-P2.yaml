@@ -1,0 +1,129 @@
+id: FEAT-FACODI-P2
+title: Canonical analysis execution cutover
+status: bounded-text-slice-in-progress
+owners:
+  operational: facodi_project
+  technical_execution: facodi-supabase
+  boundary: facodi_api
+  domain: facodi_learning
+  deployment: facodi-deploy
+contract:
+  workspace: explicit-managed-project-per-company-and-website
+  execution: one-canonical-native-task
+  identity: immutable-reference-and-accepted-executor
+  history: passive-preservation-no-adoption-or-backfill
+  publication: native-review-until-P3-policy-gates
+  activation: disabled-until-full-cutover-acceptance
+implemented_slice:
+  - atomic-canonical-intake
+  - replay-preserves-executor-after-routing-change
+  - replay-preserves-human-task-fields
+  - no-per-run-project-or-mandatory-technical-subtasks
+  - legacy-worker-excludes-canonical-jobs
+  - native-record-and-company-permissions
+  - native-namespaced-task-reference-roundtrip
+  - durable-lease-fencing-and-immutable-checkpoints
+  - bounded-secret-authenticated-submit-receipt-and-worker
+  - frozen-evidence-based-provider-and-paid-call-budget
+  - committed-record-dispatch-and-stable-job-binding
+  - monotonic-scoped-receipts-and-fair-polling
+  - unpublished-native-learning-projection-and-idempotent-replay
+  - idempotent-native-human-review-activity-on-terminal-failure
+  - live-lease-budget-before-paid-call-and-rpc-deadlines
+  - disabled-main-only-actions-worker-wake
+  - frozen-authorized-catalog-with-native-sha256-verification
+  - native-deterministic-v2-bounded-catalog-mapping
+  - immutable-mapping-and-enriched-document-checkpoint-identity
+  - native-learning-result-preserves-unreviewed-mapping-evidence
+  - ascii-wire-budget-and-historical-receipt-encoding-compatibility
+  - versioned-canonical-cancel-outbox-without-precommit-network
+  - atomic-service-only-cancel-audit-and-stale-worker-fencing
+  - cancellation-ack-preserves-editorial-history-and-real-attempt-count
+  - versioned-canonical-retry-outbox-without-precommit-network
+  - atomic-retry-with-immutable-job-input-checkpoints-and-prior-failure
+  - bounded-explicit-paid-retry-budget-and-twenty-lifetime-attempt-ceiling
+  - pending-command-and-acknowledgement-version-fencing
+  - immutable-transcript-child-and-atomic-parent-cancel-outbox
+  - input-revision-preserves-accepted-project-provider-catalog-and-actor
+  - input-revision-links-one-new-editorial-request-without-rerouting
+  - monotonic-receipt-attempt-count-and-twenty-lifetime-ceiling
+  - server-frozen-bounded-automatic-youtube-acquisition
+  - pinned-parser-exact-video-and-https-transport-allowlist
+  - immutable-source-checkpoint-and-no-repeated-acquisition-on-recovery
+  - input-required-source-failure-before-enrichment
+  - api-verifies-extraction-provenance-and-preserves-accepted-empty-input
+  - learning-retains-source-provenance-in-existing-unpublished-result
+remaining:
+  - worker-wake-operational-activation-and-recovery-proof
+  - all-source-and-large-catalog-parity
+  - full-provider-crash-restart-and-concurrency-proof
+  - exact-image-target-and-paired-backup-promotion-preflight
+  - private-unpublished-canary-and-bounded-activation
+impacted_files:
+  - facodi-api/facodi_api/models/pipeline_run.py
+  - facodi-api/facodi_api/security/pipeline_security.xml
+  - facodi-api/facodi_api/tests/test_pipeline_security.py
+  - facodi-api/facodi_api/__manifest__.py
+  - facodi-api/.github/workflows/standalone-tests.yml
+  - facodi-learning/facodi_learning/models/pipeline_adapter.py
+  - facodi-learning/facodi_learning/models/analysis_job.py
+  - facodi-supabase/facodi-processing-plane/supabase
+validation:
+  current_native_api_tests: 55
+  previous_clean_native_api_and_project_tests: 59
+  current_pure_tests: 104
+  repeated_upgrades: 2
+  current_supabase_owner_tests: 22
+  current_supabase_native_database_tests: 17
+  current_supabase_deno_tests: 37
+  previous_native_learning_owner_ci_tests: 236
+  current_native_learning_owner_ci_tests: 238
+  current_native_learning_consumer_tests: 22
+  current_full_native_learning_tests: 429
+  previous_full_native_learning_tests: 428
+  current_deployment_contract_tests: 70
+  current_worker_wake_contract_tests: 3
+  native_learning_projection: passed-disposable-probe-required-in-harness
+  api_candidate: 2a75486bae44fcb0a10a7ab128fd90dd59ce4260
+  learning_candidate: d88b670e1d90205c7bfcb0e7c51cc365b455701d
+  learning_candidate_version: 19.0.2.3.1
+  learning_evidence_draft: https://github.com/marcelo-m7/facodi-learning/pull/203
+  supabase_code_candidate: 43edbba89ab5738c3f9ae3b2611a0891e3f4a358
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37923966206
+  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37924660596
+  previous_learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081
+  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37935438330
+  exact_head_ci: acquisition-owners-green-successor-deployment-gates-pending
+  supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
+  previous_deployment_head: a63802956b3bf2a07df7444c6b1116bd9868683d
+  previous_deployment_runtime_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885441
+  previous_deployment_native_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885426
+  previous_api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
+  supabase_protocol_draft: https://github.com/marcelo-m7/facodi-supabase/pull/13
+  previous_supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
+  required_full_gates:
+    - native-provider-database-races-and-crash-windows
+    - independent-project-native-security-and-concurrency
+    - api-learning-native-and-authenticated-http
+    - pre-cutover-history-and-two-upgrades
+    - desktop-mobile-browser
+    - matched-postgresql-filestore-restore
+    - exact-owner-and-deployment-head-ci
+promotion:
+  trigger: main-automatically-deploys-existing-coolify-resource
+  paired_backup: owner-confirmed-pair-requires-applicability-check-for-new-schema
+blockers:
+  - productive-image-identity-and-private-canary-not-yet-observed
+supabase_preflight:
+  access: verified-via-mcp-owner-restored-cli-and-actions-secrets
+  target: https://bhfywztfyidvrlarebmg.supabase.co
+  security_advisories: 0
+  remote_schema_or_function_mutations: 0
+  durable_protocol: bounded-text-worker-and-native-projection-tested-not-activated
+  actual_source_acquisition: local-read-only-short-video-225-bytes-no-job-or-publication
+  remote_edge_acquisition: not-yet-observed
+rollback:
+  - disable-new-intake-expansion
+  - keep-accepted-executor-and-reconciliation-until-terminal
+  - do-not-replay-canonical-jobs-through-legacy-or-delete-history
+  - use-approved-paired-restore-for-schema-rollback
