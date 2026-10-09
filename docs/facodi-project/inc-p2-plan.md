@@ -63,6 +63,21 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+The owner explicitly approved a separate isolated Coolify worker on 2026-10-09
+to preserve PDF/DOCX coverage beyond Edge's CPU limit. See the
+[execution design](../plans/2026-10-09-isolated-processing-worker-design.md).
+The execution foundation reuses the canonical engine and exact API-owned parser,
+not an Odoo executor or another scheduler. Supabase source
+`41810ef427ac88e194611857b13c61c81cf7b5be` adds a default-off guarded CLI,
+scoped redirect-safe standard SDK, 41 Deno/native-SQL checks and five real
+document-conversion checks. The digest-pinned restricted image passed offline
+disabled startup and PDF/DOCX tests. API converter isolation
+`f3258cc550ab04f712d475f87569a40ce39c8c39` passed 105 pure tests and
+[exact owner CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37929327438).
+The deployment profile is optional, separately networked and bounded, with no
+Odoo/PostgreSQL volumes or credentials. Private immutable binary/large-payload
+transport and full routing/recovery/parity remain unfinished; do not activate.
+
 Automatic acquisition continuation: API
 `2a75486bae44fcb0a10a7ab128fd90dd59ce4260`, Learning
 `8d3f9359f24f839528f95a4b019e99991a1f701d` (patch `19.0.2.2.4`), Supabase

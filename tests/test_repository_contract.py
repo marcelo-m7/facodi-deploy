@@ -23,6 +23,31 @@ FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_
 
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_isolated_worker_is_optional_pinned_and_separate_from_odoo_persistence(self):
+        import json
+        config = json.loads(subprocess.check_output([
+            "docker", "compose", "--env-file", str(ROOT / ".env.ci"),
+            "-f", str(ROOT / "deploy/coolify/docker-compose.yml"),
+            "--profile", "isolated-processing", "config", "--format", "json",
+        ], text=True, cwd=ROOT, env={**os.environ, "FACODI_ISOLATED_WORKER_ENABLED": "false",
+            "SUPABASE_URL": "", "SUPABASE_SECRET_KEY": "", "FACODI_ENRICHMENT_API_KEY": ""}))
+        worker = config["services"]["processing-worker"]
+        self.assertEqual(worker["profiles"], ["isolated-processing"])
+        self.assertRegex(worker["build"]["context"], r"^https://github\.com/marcelo-m7/facodi-supabase\.git#[0-9a-f]{40}:facodi-processing-plane$")
+        self.assertEqual(worker["build"]["dockerfile"], "workers/canonical/Dockerfile")
+        self.assertEqual(worker["environment"]["FACODI_ISOLATED_WORKER_ENABLED"], "false")
+        self.assertEqual(worker["user"], "10001:10001")
+        self.assertTrue(worker["read_only"])
+        self.assertEqual(worker["cap_drop"], ["ALL"])
+        self.assertIn("no-new-privileges:true", worker["security_opt"])
+        self.assertEqual(int(worker["mem_limit"]), 512 * 1024 * 1024)
+        self.assertEqual(worker["pids_limit"], 64)
+        self.assertEqual(set(worker["networks"]), {"processing-egress"})
+        for forbidden in ("volumes", "ports", "expose", "privileged", "depends_on"):
+            self.assertNotIn(forbidden, worker)
+        self.assertFalse(any(key.startswith(("DB_", "ODOO_")) for key in worker["environment"]))
+        self.assertEqual(config["services"]["odoo"]["depends_on"]["migrate"]["condition"], "service_completed_successfully")
+
     def test_canonical_wake_action_requires_main_and_explicit_activation(self):
         workflow = (ROOT / ".github/workflows/canonical-worker.yml").read_text()
         self.assertIn("if: github.ref == 'refs/heads/main' && vars.FACODI_CANONICAL_WORKER_ENABLED == 'true'", workflow)

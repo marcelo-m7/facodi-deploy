@@ -51,7 +51,7 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `2a75486bae44fcb0a10a7ab128fd90dd59ce4260` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `f3258cc550ab04f712d475f87569a40ce39c8c39` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
 | `marcelo-m7/facodi-learning` | `facodi_learning` | `8d3f9359f24f839528f95a4b019e99991a1f701d` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
@@ -148,6 +148,20 @@ For legacy selections, that pair remains atomic: a partial pair fails the migrat
 The Compose runtime also forwards `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` for future public-safe/authenticated processing-plane surfaces. Neither is used as the privileged Odoo-to-Supabase credential. `GEMINI_API_KEY` remains server-only and may be forwarded to the authenticated Edge call as a transitional fallback until that provider secret is configured directly in Supabase.
 
 No Supabase or Gemini secret is committed to this repository.
+
+### Optional Isolated Worker Candidate
+
+The owner-approved `isolated-processing` profile adds one separate processing
+service, pinned to Supabase source `41810ef427ac88e194611857b13c61c81cf7b5be`.
+It is absent from default startup and `FACODI_ISOLATED_WORKER_ENABLED` also
+defaults to false. The service has no public port, Odoo/PostgreSQL credentials,
+persistent volume or dependency on their network. Its read-only nonroot image
+reuses the Supabase engine and the API-owned standalone converter with exact
+runtime/parser/source pins; it does not create another processing authority.
+See [the approved design](docs/plans/2026-10-09-isolated-processing-worker-design.md)
+and [activation gates](docs/operations.md#optional-isolated-processing-worker).
+Private binary/large-payload integration is still pending; source readiness is
+not full P2 acceptance or authorization to activate this profile yet.
 
 ## Validation
 
