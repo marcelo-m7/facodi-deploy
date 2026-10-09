@@ -63,6 +63,38 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+Automatic acquisition continuation: API
+`2a75486bae44fcb0a10a7ab128fd90dd59ce4260`, Learning
+`8d3f9359f24f839528f95a4b019e99991a1f701d` (patch `19.0.2.2.4`), Supabase
+`43edbba89ab5738c3f9ae3b2611a0891e3f4a358`. Local gates passed: 55 native API
+security tests, 104 pure API tests, 429 full native Learning tests, 22 focused
+consumers, 22 Supabase Python checks including 17 native database tests, and 37
+Deno tests plus frozen endpoint typecheck. All five existing composed rollback
+probe markers passed, including one automatic unpublished result/attempt,
+immutable empty accepted input and provenance, with historical human work intact.
+Exact owner CI passed:
+[API](https://github.com/marcelo-m7/facodi-api/actions/runs/37923966206),
+[Learning](https://github.com/marcelo-m7/facodi-learning/actions/runs/37924649238)
+(236 native install-scope tests), and
+[Supabase](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37924660596).
+Successor deployment gates remain required.
+
+Automatic intake freezes a server-owned `youtube-transcript-plus` version
+`2.0.3` acquisition intent. The worker parses bounded watch/player/timed-text
+responses through the pinned library, enforcing accepted-video identity, an
+exact HTTPS endpoint allowlist, no redirects, a shared 30-second deadline and
+2 MiB HTTP/12000-byte text bounds. No secret is sent to YouTube. The immutable
+metadata checkpoint retains text and provenance; recovery reuses it, leaving
+the accepted empty request unchanged and avoiding repeated acquisition/payment.
+Known input failures precede enrichment; a mismatched checkpoint fails closed.
+API verifies exact source/provider/version/text/language before Learning stores
+provenance in its existing immutable result. No automatic publication occurs.
+Real read-only local acquisition returned 225 English text bytes for a short
+public video and safely rejected the larger reference with
+`INPUT_BUDGET_EXHAUSTED`. Those probes submitted no jobs or transcript logs;
+they are not remote Edge or productive private-canary evidence. Binary/large
+input/catalog parity, activation and productive acceptance remain unfinished.
+
 Immutable transcript revision continuation: API
 `e6478285336b48d63b2f7dd2c800132ce3931234`, Learning
 `dce98b3110748048b3c3e735e9abdfecebedec25` (patch `19.0.2.2.3`). Local gates
@@ -71,7 +103,11 @@ tests and 21 focused consumers. The existing composed rollback-only probe passed
 retry/cancel/history and the new immutable input revision. API exact-head
 [CI passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37920947549);
 Learning exact-head [CI passed](https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081)
-with 235 native install-scope tests. Successor deployment CI remains required.
+with 235 native install-scope tests. Both deployment gates passed at
+`a63802956b3bf2a07df7444c6b1116bd9868683d`:
+[runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885441),
+[native integration](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885426).
+These are predecessor gates, not acceptance of automatic-acquisition successors.
 
 Input-required receipts reuse the native lifecycle classification. An explicit
 transcript correction creates exactly one new Supabase execution, root task and

@@ -47,6 +47,12 @@ implemented_slice:
   - input-revision-preserves-accepted-project-provider-catalog-and-actor
   - input-revision-links-one-new-editorial-request-without-rerouting
   - monotonic-receipt-attempt-count-and-twenty-lifetime-ceiling
+  - server-frozen-bounded-automatic-youtube-acquisition
+  - pinned-parser-exact-video-and-https-transport-allowlist
+  - immutable-source-checkpoint-and-no-repeated-acquisition-on-recovery
+  - input-required-source-failure-before-enrichment
+  - api-verifies-extraction-provenance-and-preserves-accepted-empty-input
+  - learning-retains-source-provenance-in-existing-unpublished-result
 remaining:
   - worker-wake-operational-activation-and-recovery-proof
   - all-source-and-large-catalog-parity
@@ -63,35 +69,35 @@ impacted_files:
   - facodi-learning/facodi_learning/models/analysis_job.py
   - facodi-supabase/facodi-processing-plane/supabase
 validation:
-  current_native_api_tests: 53
+  current_native_api_tests: 55
   previous_clean_native_api_and_project_tests: 59
   current_pure_tests: 104
   repeated_upgrades: 2
   current_supabase_owner_tests: 22
   current_supabase_native_database_tests: 17
-  current_supabase_deno_tests: 29
-  previous_native_learning_owner_ci_tests: 234
-  current_native_learning_owner_ci_tests: 235
-  current_native_learning_consumer_tests: 21
-  current_full_native_learning_tests: 428
-  previous_full_native_learning_tests: 426
+  current_supabase_deno_tests: 37
+  previous_native_learning_owner_ci_tests: 235
+  current_native_learning_owner_ci_tests: 236
+  current_native_learning_consumer_tests: 22
+  current_full_native_learning_tests: 429
+  previous_full_native_learning_tests: 428
   current_deployment_contract_tests: 70
   current_worker_wake_contract_tests: 3
   native_learning_projection: passed-disposable-probe-required-in-harness
-  api_candidate: e6478285336b48d63b2f7dd2c800132ce3931234
-  learning_candidate: dce98b3110748048b3c3e735e9abdfecebedec25
-  learning_candidate_version: 19.0.2.2.3
+  api_candidate: 2a75486bae44fcb0a10a7ab128fd90dd59ce4260
+  learning_candidate: 8d3f9359f24f839528f95a4b019e99991a1f701d
+  learning_candidate_version: 19.0.2.2.4
   learning_evidence_draft: https://github.com/marcelo-m7/facodi-learning/pull/203
-  supabase_code_candidate: 47fa88d595c5a3c03bf80526126726e3a5c1cf82
-  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37920947549
-  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37915704908
-  previous_learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37915683501
-  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081
-  exact_head_ci: input-owners-green-successor-deployment-gates-pending
+  supabase_code_candidate: 43edbba89ab5738c3f9ae3b2611a0891e3f4a358
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37923966206
+  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37924660596
+  previous_learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081
+  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37924649238
+  exact_head_ci: acquisition-owners-green-successor-deployment-gates-pending
   supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
-  previous_deployment_head: 86845650e6df07108d893bbaf1ffad035cfb504c
-  previous_deployment_runtime_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37916296618
-  previous_deployment_native_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37916296649
+  previous_deployment_head: a63802956b3bf2a07df7444c6b1116bd9868683d
+  previous_deployment_runtime_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885441
+  previous_deployment_native_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37921885426
   previous_api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37837907971
   supabase_protocol_draft: https://github.com/marcelo-m7/facodi-supabase/pull/13
   previous_supabase_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37838915221
@@ -114,6 +120,8 @@ supabase_preflight:
   security_advisories: 0
   remote_schema_or_function_mutations: 0
   durable_protocol: bounded-text-worker-and-native-projection-tested-not-activated
+  actual_source_acquisition: local-read-only-short-video-225-bytes-no-job-or-publication
+  remote_edge_acquisition: not-yet-observed
 rollback:
   - disable-new-intake-expansion
   - keep-accepted-executor-and-reconciliation-until-terminal

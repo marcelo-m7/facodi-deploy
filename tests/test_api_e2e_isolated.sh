@@ -394,11 +394,54 @@ assert env['facodi.learning.analysis.job'].search_count([]) == jobs_before + 1
 assert env['project.task'].search_count([]) == input_tasks_before + 1
 assert env['project.project'].search_count([]) == projects_before
 assert not video.is_published and not video.website_published and not course.website_published
+params.set_param('facodi_api.canonical_intake_enabled', 'true')
+params.set_param('facodi_learning.pipeline_user_id', str(actor.id))
+automatic_video = env['slide.slide'].with_user(actor).with_context(website_slides_skip_fetch_metadata=True).create({
+  'name': 'Private automatic acquisition evidence', 'channel_id': course.id,
+  'slide_category': 'video', 'source_type': 'external',
+  'video_url': 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+  'is_published': False, 'website_published': False,
+})
+automatic_tasks_before = env['project.task'].search_count([])
+with patch.object(type(parent), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  automatic_job = automatic_video.with_user(actor).action_facodi_request_analysis()
+automatic_run = automatic_job.pipeline_run_id.with_user(actor)
+automatic_request = json.loads(automatic_run.canonical_payload_json)
+assert automatic_request['raw_content'] == ''
+assert automatic_request['acquisition_config'] == {'provider': 'youtube-transcript-plus', 'version': '2.0.3'}
+assert automatic_run.project_id == workspace and not automatic_run.task_id.parent_id
+assert env['project.task'].search_count([]) == automatic_tasks_before + 1
+automatic_catalog = automatic_request['catalog_snapshot']
+automatic_document_id = str(uuid4())
+acquired = {'text_content': 'Acquired educational evidence remains private.', 'language': automatic_run.language,
+  'source_url': automatic_run.source_url, 'extraction_provider': 'youtube-transcript-plus', 'extraction_version': '2.0.3'}
+automatic_receipt = {'job_id': str(uuid4()), 'task_ref': automatic_run.task_id.facodi_ref,
+  'company_id': automatic_run.company_id.id, 'cohort': 'p2', 'revision': 3, 'status': 'needs_review', 'attempt': 1,
+  'result': {'metadata': {'document_data': acquired},
+    'document_data': {'text_content': acquired['text_content'], 'language': acquired['language']},
+    'enriched_data': {'id': automatic_document_id, 'summary': acquired['text_content'], 'concepts': [],
+      'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
+    'mapping_data': {'snapshot_id': automatic_catalog['snapshot_id'], 'snapshot_hash': automatic_catalog['snapshot_hash'],
+      'enriched_document_id': automatic_document_id, 'ranking_algorithm_version': 'deterministic-v2',
+      'candidates': [], 'unmatched_concepts': []}, 'chunks': []}}
+assert automatic_run._apply_canonical_receipt(automatic_receipt)
+automatic_job.with_user(actor).action_process()
+assert automatic_job.state == 'completed' and automatic_job.result_id.transcript == acquired['text_content']
+assert automatic_job.result_id.raw_payload['source_acquisition']['source_url'] == automatic_run.source_url
+assert automatic_job.result_id.raw_payload['source_acquisition']['extraction_version'] == '2.0.3'
+assert automatic_run.raw_content == '' and automatic_run.canonical_payload_json == json.dumps(automatic_request, sort_keys=True)
+assert not automatic_run._apply_canonical_receipt(automatic_receipt)
+assert len(automatic_job.attempt_ids) == 1 and len(automatic_video.facodi_analysis_result_ids) == 1
+assert not automatic_video.is_published and not automatic_video.website_published and not course.website_published
+assert env['project.project'].search_count([]) == projects_before
+assert run.task_id.name == 'Human editorial decision' and historical_result.exists()
+assert json.dumps(historical_result.raw_payload, sort_keys=True) == historical_payload
 env.cr.rollback()
 print('PASS canonical native Learning projection, terminal replay and unpublished human work')
 print('PASS versioned canonical retry, stable job/input/task and immutable failed attempt history')
 print('PASS versioned canonical cancellation, immutable editorial history and human task preservation')
 print('PASS immutable canonical input revision, one new editorial request and preserved accepted routing')
+print('PASS canonical automatic acquisition, immutable provenance/input and one unpublished editorial result')
 CANONICAL
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
