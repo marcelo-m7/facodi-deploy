@@ -282,7 +282,7 @@ catalog = json.loads(run.canonical_payload_json)['catalog_snapshot']
 enriched_id = str(uuid4())
 receipt = {
     'job_id': str(uuid4()), 'task_ref': run.task_id.facodi_ref, 'company_id': run.company_id.id,
-    'cohort': 'p2', 'revision': 5, 'status': 'needs_review', 'attempt': 1,
+    'cohort': 'p2', 'revision': 5, 'status': 'needs_review', 'attempt': 2,
     'result': {'document_data': {'text_content': run.raw_content, 'language': run.language},
                'enriched_data': {'id': enriched_id, 'summary': run.raw_content, 'keywords': [], 'concepts': [],
                                  'provider_name': 'baseline-deterministic', 'model_name': 'regex-frequency-v2-evidence'},
@@ -292,6 +292,30 @@ receipt = {
                                 'unmatched_concepts': [], 'schema_version': '2.0.0'},
                'chunks': []},
 }
+failed = dict(receipt, revision=2, status='failed', attempt=1, result={'error_code': 'PROVIDER_FAILED'})
+assert run._apply_canonical_receipt(failed)
+assert job.state == 'failed' and len(job.attempt_ids) == 1
+failed_attempt = job.attempt_ids
+accepted_input = run.canonical_payload_json
+retry_revision = run.revision
+with patch.object(type(run), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  job.with_user(actor).action_retry()
+  assert run.action_retry(expected_revision=retry_revision)
+retry_intent = json.loads(run.canonical_command_json)
+assert job.state == 'pending' and run.attempt_count == 1 and len(job.attempt_ids) == 1
+
+def retry_ack(record, payload):
+  assert record.id == run.id and payload['action'] == 'retry'
+  assert payload['job_id'] == receipt['job_id'] and payload['command_id'] == retry_intent['command_id']
+  assert payload['expected_revision'] == 0
+  return {'command_id': retry_intent['command_id'], 'command_revision': 1,
+      'receipt': dict(failed, revision=3, status='queued', result={})}
+
+with patch.object(type(run), '_call_canonical_boundary', retry_ack):
+  assert run._dispatch_canonical_receipts()
+assert not run.canonical_command_json and run.canonical_command_revision == 1
+assert run.action_retry(expected_revision=retry_revision) and not run.canonical_command_json
+assert run.canonical_job_id == receipt['job_id'] and run.canonical_payload_json == accepted_input
 assert run._apply_canonical_receipt(receipt)
 assert not run._apply_canonical_receipt(receipt)
 assert json.loads(run.metadata_json)['mapping_data'] == receipt['result']['mapping_data']
@@ -299,7 +323,8 @@ job.with_user(actor).action_process()
 assert job.state == 'completed' and job.result_id.summary
 assert job.result_id.raw_payload['mapping_data'] == receipt['result']['mapping_data']
 assert job.pipeline_receipt_revision == run.revision
-assert len(job.attempt_ids) == 1 and len(slide.facodi_analysis_result_ids) == 1
+assert len(job.attempt_ids) == 2 and len(slide.facodi_analysis_result_ids) == 1
+assert failed_attempt.state == 'failed' and failed_attempt.number == 1
 assert not slide.is_published and not slide.website_published and not course.website_published
 assert run.task_id.name == 'Human editorial decision'
 assert run.task_id.description == '<p>Preserve authored work</p>'
@@ -317,23 +342,24 @@ assert not run._apply_canonical_receipt(receipt)
 def cancellation_ack(record, payload):
   assert record.id == run.id and payload['action'] == 'cancel'
   assert payload['job_id'] == receipt['job_id'] and payload['command_id'] == intent['command_id']
-  assert payload['expected_revision'] == 0
-  return {'command_id': intent['command_id'], 'command_revision': 1,
+  assert payload['expected_revision'] == 1
+  return {'command_id': intent['command_id'], 'command_revision': 2,
       'receipt': dict(receipt, revision=6, status='cancelled',
               result={'error_code': 'CANCELLED_BY_OPERATOR'})}
 
 with patch.object(type(run), '_call_canonical_boundary', cancellation_ack):
   assert run._dispatch_canonical_receipts()
   assert not run._dispatch_canonical_receipts()
-assert not run.canonical_command_json and run.canonical_command_revision == 1
+assert not run.canonical_command_json and run.canonical_command_revision == 2
 assert historical_result.exists() and json.dumps(historical_result.raw_payload, sort_keys=True) == historical_payload
-assert len(job.attempt_ids) == 1 and len(slide.facodi_analysis_result_ids) == 1
+assert len(job.attempt_ids) == 2 and len(slide.facodi_analysis_result_ids) == 1
 assert run.task_id.name == 'Human editorial decision'
 assert run.task_id.description == '<p>Preserve authored work</p>'
 assert run.task_id.facodi_external_ref == receipt['job_id']
 assert not slide.is_published and not course.website_published
 env.cr.rollback()
 print('PASS canonical native Learning projection, terminal replay and unpublished human work')
+print('PASS versioned canonical retry, stable job/input/task and immutable failed attempt history')
 print('PASS versioned canonical cancellation, immutable editorial history and human task preservation')
 CANONICAL
 else

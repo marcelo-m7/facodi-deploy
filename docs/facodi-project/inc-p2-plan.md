@@ -63,6 +63,33 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+Versioned retry continuation (2026-10-09): API
+`15a8566c7a2d6a91c10d79756579b4c758ef742b`, Learning
+`fb7868441ffb7188e988064c1812350a1f5292a7`, Supabase
+`47fa88d595c5a3c03bf80526126726e3a5c1cf82`. Local native API 50, pure API 104,
+Learning consumers 20, native database 17, Supabase runtime contracts 5 and Deno
+29 tests passed. Three additive migrations installed cleanly in a new disposable
+database with zero schema/security issues. Exact owner CI passed:
+[API](https://github.com/marcelo-m7/facodi-api/actions/runs/37915527446),
+[Supabase](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37915704908),
+[Learning](https://github.com/marcelo-m7/facodi-learning/actions/runs/37915683501).
+Learning CI ran 234 native tests in its install scope; the preceding local full
+426-test scope is separate evidence, not a current successor count.
+
+Retry accepts one immutable versioned local intent for a failed job, without
+precommit network. It cannot replace a pending command, revive cancelled work or
+reset exhausted attempts. Supabase atomically requeues one message while retaining
+the external job, accepted input/provider, committed checkpoints and prior failed
+receipt. Each explicit retry allows at most two further claims, bounded by twenty
+lifetime attempts; no twenty-first claim or automatic paid-budget reset occurs.
+Saved analysis is recovered without another provider call. Native SQL tests cover
+twenty concurrent replays, rollback, scope/version/identity denial, stale messages
+and old workers. The actual secret wrapper/client exercises checkpoint recovery
+against native SQL. The composed Odoo probe passed failure -> retry -> unpublished
+result -> cancellation with stable job/input/task and immutable failed-attempt
+and result history. Exact successor deployment CI remains required. Versioned
+input, all-source/catalog parity and productive activation are still unfinished.
+
 Versioned cancellation continuation: API
 `7205bc8b4e5ad25fb08958b20ef6045e565a5a35`, Learning
 `32056a3745ccc137f7e7b6f19fca1d6b0a85dc2f` (patch `19.0.2.2.2`), Supabase
@@ -76,7 +103,11 @@ history preservation, HTTP role/boundary tests, reviewed native publication,
 restart and the unpublished canonical cancellation probe. Learning CI initially
 used an older API pin without Project fields; its successor pins the accepted API
 and packages the native Project sibling. The repaired CI image passed a clean
-19-test consumer install locally. Exact successor CI is pending.
+19-test consumer install locally. Final Learning CI passed at the repaired head,
+and both deployment gates passed at `cc3d167ff7c939d18b985723d1ffd15970c50018`:
+[runtime](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37913272520),
+[native integration](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37913272519).
+These are preceding cancellation-head gates, not retry-head deployment acceptance.
 
 Canonical cancel accepts one immutable versioned local intent without precommit
 network. It immediately blocks publication and preserves human task fields.
@@ -89,7 +120,7 @@ Already active external I/O is not interrupted, but cannot checkpoint or finish.
 Learning records a late acknowledged real attempt exactly once; acceptance alone
 does not invent an attempt. The composed probe retains immutable historical
 results after withdrawal. Legacy commands and accepted source data are unchanged.
-Versioned retry/input and full source/activation parity are still required;
+At that cancellation head, versioned retry/input and full source/activation parity remained required;
 this is not complete P2 or production acceptance.
 
 Catalog continuation candidates: API `9e80f0088ff008db5dc6e166b90cd3a234012cec`,
