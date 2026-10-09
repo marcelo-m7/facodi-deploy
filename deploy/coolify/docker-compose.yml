@@ -94,7 +94,7 @@ services:
   processing-worker:
     profiles: [isolated-processing]
     build:
-      context: https://github.com/marcelo-m7/facodi-supabase.git#41810ef427ac88e194611857b13c61c81cf7b5be:facodi-processing-plane
+      context: https://github.com/marcelo-m7/facodi-supabase.git#1bd60001702370da1dba3f74e4334551130d231e:facodi-processing-plane
       dockerfile: workers/canonical/Dockerfile
     restart: unless-stopped
     init: true

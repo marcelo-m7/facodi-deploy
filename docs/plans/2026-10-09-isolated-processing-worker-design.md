@@ -64,9 +64,13 @@ started disabled without network and parsed actual PDF/DOCX in the restricted
 container. These are local/source facts, not full source parity, remote Edge
 acceptance or productive activation.
 
-Supabase worker source `41810ef427ac88e194611857b13c61c81cf7b5be`
-passed [exact-head CI](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37930425066),
+Supabase worker source `1bd60001702370da1dba3f74e4334551130d231e`
+passed [exact-head CI](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37932752806),
 including the mandatory isolated-image, runtime and native database jobs.
+It adds immutable Edge/isolated claim routing with legacy Edge defaults,
+twenty concurrent mixed-runtime claims, checkpoint recovery and stale-token
+fencing. Its 42 Deno and 26 Python checks passed; the latter include 21 native
+database tests. Clean installation, schema lint and security advisors passed.
 The composed deployment passed 71 local contracts and its optional-profile
 configuration/actual restricted-container healthcheck. Exact deployment runtime,
 browser, native integration and paired-restore gates are required at its final

@@ -169,8 +169,16 @@ The approved heavy-parser runtime is the separate `processing-worker` service
 in the `isolated-processing` profile. This profile is not part of default
 startup. Enabling the profile alone does not activate claims:
 `FACODI_ISOLATED_WORKER_ENABLED` defaults to false. Do not activate this candidate
-until private source/catalog/result transport, accepted-runtime routing and the
+until private source/catalog/result transport and the
 full integration/parity gates are complete.
+
+The pinned candidate requires additive migration
+`20261009124457_facodi_canonical_runtime.sql` in addition to the accepted queue,
+command and retry migrations. Requests without `execution_runtime` remain
+Edge-owned. Only explicitly accepted `isolated` requests can be claimed by the
+external CLI; claims never consume another runtime's visible messages. Apply
+through the Supabase owner's guarded migration workflow, never by rewriting
+accepted request payloads or activating the worker against a partial schema.
 
 Preserve the existing Coolify resource, three-service Odoo migration lifecycle
 and persistent volumes. The worker has a separate egress network, no host port

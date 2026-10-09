@@ -152,7 +152,7 @@ No Supabase or Gemini secret is committed to this repository.
 ### Optional Isolated Worker Candidate
 
 The owner-approved `isolated-processing` profile adds one separate processing
-service, pinned to Supabase source `41810ef427ac88e194611857b13c61c81cf7b5be`.
+service, pinned to Supabase source `1bd60001702370da1dba3f74e4334551130d231e`.
 It is absent from default startup and `FACODI_ISOLATED_WORKER_ENABLED` also
 defaults to false. The service has no public port, Odoo/PostgreSQL credentials,
 persistent volume or dependency on their network. Its read-only nonroot image

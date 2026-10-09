@@ -68,15 +68,21 @@ to preserve PDF/DOCX coverage beyond Edge's CPU limit. See the
 [execution design](../plans/2026-10-09-isolated-processing-worker-design.md).
 The execution foundation reuses the canonical engine and exact API-owned parser,
 not an Odoo executor or another scheduler. Supabase source
-`41810ef427ac88e194611857b13c61c81cf7b5be` adds a default-off guarded CLI,
-scoped redirect-safe standard SDK, 41 Deno/native-SQL checks and five real
+`1bd60001702370da1dba3f74e4334551130d231e` adds a default-off guarded CLI,
+scoped redirect-safe standard SDK, 42 Deno/native-SQL checks and five real
 document-conversion checks. The digest-pinned restricted image passed offline
 disabled startup and PDF/DOCX tests. API converter isolation
 `f3258cc550ab04f712d475f87569a40ce39c8c39` passed 105 pure tests and
 [exact owner CI](https://github.com/marcelo-m7/facodi-api/actions/runs/37929327438).
 The deployment profile is optional, separately networked and bounded, with no
-Odoo/PostgreSQL volumes or credentials. Private immutable binary/large-payload
-transport and full routing/recovery/parity remain unfinished; do not activate.
+Odoo/PostgreSQL volumes or credentials. Runtime routing passed 21 native database
+tests, including twenty concurrent mixed-runtime claims, isolated checkpoint
+recovery and old-token fencing. Legacy requests remain Edge-owned; the isolated
+CLI uses only its service-role-only scoped claim. Fresh four-migration install,
+SQL lint and security advisors passed locally, and
+[exact owner CI](https://github.com/marcelo-m7/facodi-supabase/actions/runs/37932752806)
+passed all three mandatory jobs. Private immutable binary/large-payload transport
+and full integration/recovery/parity remain unfinished; do not activate.
 
 Automatic acquisition continuation: API
 `2a75486bae44fcb0a10a7ab128fd90dd59ce4260`, Learning
