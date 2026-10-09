@@ -68,13 +68,13 @@ validation:
   current_worker_wake_contract_tests: 3
   native_learning_projection: passed-disposable-probe-required-in-harness
   api_candidate: 7205bc8b4e5ad25fb08958b20ef6045e565a5a35
-  learning_candidate: 821812d4cf16f51ca2e3c6cc868eeb23554dac64
+  learning_candidate: 32056a3745ccc137f7e7b6f19fca1d6b0a85dc2f
   learning_candidate_version: 19.0.2.2.2
   learning_evidence_draft: https://github.com/marcelo-m7/facodi-learning/pull/203
   supabase_code_candidate: c42ccdc36fe2afca3ac8cef53a9871086fc17e29
   api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37859197112
   supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37859232568
-  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37859227561
+  previous_learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37859227561
   exact_head_ci: cancellation-successor-owner-and-deployment-gates-pending
   supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
   previous_deployment_head: 94bae1301870758fcd66b7398dd71f81b8810caf

@@ -65,12 +65,18 @@ Project, task or remote job.
 
 Versioned cancellation continuation: API
 `7205bc8b4e5ad25fb08958b20ef6045e565a5a35`, Learning
-`821812d4cf16f51ca2e3c6cc868eeb23554dac64` (patch `19.0.2.2.2`), Supabase
+`32056a3745ccc137f7e7b6f19fca1d6b0a85dc2f` (patch `19.0.2.2.2`), Supabase
 `c42ccdc36fe2afca3ac8cef53a9871086fc17e29`. Local gates passed: 47 native
 API security tests, 104 pure API tests, 426 native Learning tests, 18 Supabase
 Python checks including 13 native database tests, and 27 Deno tests plus frozen
 typecheck. Both migrations installed cleanly in a new disposable database;
-schema lint and security advisors found no issues. Exact successor CI is pending.
+schema lint and security advisors found no issues. The clean-pin native harness
+passed independent Project tests/races, API 47, consumers 19, two upgrades,
+history preservation, HTTP role/boundary tests, reviewed native publication,
+restart and the unpublished canonical cancellation probe. Learning CI initially
+used an older API pin without Project fields; its successor pins the accepted API
+and packages the native Project sibling. The repaired CI image passed a clean
+19-test consumer install locally. Exact successor CI is pending.
 
 Canonical cancel accepts one immutable versioned local intent without precommit
 network. It immediately blocks publication and preserves human task fields.
