@@ -63,6 +63,29 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+Versioned cancellation continuation: API
+`7205bc8b4e5ad25fb08958b20ef6045e565a5a35`, Learning
+`821812d4cf16f51ca2e3c6cc868eeb23554dac64` (patch `19.0.2.2.2`), Supabase
+`c42ccdc36fe2afca3ac8cef53a9871086fc17e29`. Local gates passed: 47 native
+API security tests, 104 pure API tests, 426 native Learning tests, 18 Supabase
+Python checks including 13 native database tests, and 27 Deno tests plus frozen
+typecheck. Both migrations installed cleanly in a new disposable database;
+schema lint and security advisors found no issues. Exact successor CI is pending.
+
+Canonical cancel accepts one immutable versioned local intent without precommit
+network. It immediately blocks publication and preserves human task fields.
+The committed dispatcher recovers a lost job binding and retries the same scoped
+command UUID until its exact acknowledgement. Supabase preserves the prior
+receipt in an append-only service-only audit, archives the message and fences
+the worker atomically. Real tests cover concurrent finish/cancel and twenty
+command replays, rollback, identity/version conflicts and residual messages.
+Already active external I/O is not interrupted, but cannot checkpoint or finish.
+Learning records a late acknowledged real attempt exactly once; acceptance alone
+does not invent an attempt. The composed probe retains immutable historical
+results after withdrawal. Legacy commands and accepted source data are unchanged.
+Versioned retry/input and full source/activation parity are still required;
+this is not complete P2 or production acceptance.
+
 Catalog continuation candidates: API `9e80f0088ff008db5dc6e166b90cd3a234012cec`,
 Learning `60d223fda80544af7e833f394a91e4f2a29e24bd` (patch `19.0.2.2.1`), and
 Supabase `5102e431fa8d672ec5fcbd5c72a39f759ac4124e`. Local API tests: 44 native,

@@ -241,6 +241,7 @@ then
   "${compose[@]}" run --rm -T odoo odoo shell "${odoo_args[@]}" --database=facodi_learning_e2e <<'CANONICAL'
 import json
 from uuid import uuid4
+from unittest.mock import patch
 from odoo import Command
 
 params = env['ir.config_parameter'].sudo()
@@ -303,8 +304,37 @@ assert not slide.is_published and not slide.website_published and not course.web
 assert run.task_id.name == 'Human editorial decision'
 assert run.task_id.description == '<p>Preserve authored work</p>'
 assert run.task_id.facodi_external_ref == receipt['job_id']
+historical_result = job.result_id
+historical_payload = json.dumps(historical_result.raw_payload, sort_keys=True)
+cancel_revision = run.revision
+with patch.object(type(run), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  assert job.with_user(actor).action_cancel(expected_revision=cancel_revision)
+  assert job.with_user(actor).action_cancel(expected_revision=cancel_revision)
+intent = json.loads(run.canonical_command_json)
+assert job.state == 'cancelled' and run.status == 'cancelled'
+assert not run._apply_canonical_receipt(receipt)
+
+def cancellation_ack(record, payload):
+  assert record.id == run.id and payload['action'] == 'cancel'
+  assert payload['job_id'] == receipt['job_id'] and payload['command_id'] == intent['command_id']
+  assert payload['expected_revision'] == 0
+  return {'command_id': intent['command_id'], 'command_revision': 1,
+      'receipt': dict(receipt, revision=6, status='cancelled',
+              result={'error_code': 'CANCELLED_BY_OPERATOR'})}
+
+with patch.object(type(run), '_call_canonical_boundary', cancellation_ack):
+  assert run._dispatch_canonical_receipts()
+  assert not run._dispatch_canonical_receipts()
+assert not run.canonical_command_json and run.canonical_command_revision == 1
+assert historical_result.exists() and json.dumps(historical_result.raw_payload, sort_keys=True) == historical_payload
+assert len(job.attempt_ids) == 1 and len(slide.facodi_analysis_result_ids) == 1
+assert run.task_id.name == 'Human editorial decision'
+assert run.task_id.description == '<p>Preserve authored work</p>'
+assert run.task_id.facodi_external_ref == receipt['job_id']
+assert not slide.is_published and not course.website_published
 env.cr.rollback()
 print('PASS canonical native Learning projection, terminal replay and unpublished human work')
+print('PASS versioned canonical cancellation, immutable editorial history and human task preservation')
 CANONICAL
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"

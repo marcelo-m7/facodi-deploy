@@ -36,10 +36,13 @@ implemented_slice:
   - immutable-mapping-and-enriched-document-checkpoint-identity
   - native-learning-result-preserves-unreviewed-mapping-evidence
   - ascii-wire-budget-and-historical-receipt-encoding-compatibility
+  - versioned-canonical-cancel-outbox-without-precommit-network
+  - atomic-service-only-cancel-audit-and-stale-worker-fencing
+  - cancellation-ack-preserves-editorial-history-and-real-attempt-count
 remaining:
   - worker-wake-operational-activation-and-recovery-proof
   - all-source-and-large-catalog-parity
-  - canonical-versioned-retry-cancel-and-input
+  - canonical-versioned-retry-and-input
   - full-provider-crash-restart-and-concurrency-proof
   - exact-image-target-and-paired-backup-promotion-preflight
   - private-unpublished-canary-and-bounded-activation
@@ -53,26 +56,26 @@ impacted_files:
   - facodi-learning/facodi_learning/models/analysis_job.py
   - facodi-supabase/facodi-processing-plane/supabase
 validation:
-  current_native_api_tests: 44
+  current_native_api_tests: 47
   previous_clean_native_api_and_project_tests: 59
-  current_pure_tests: 112
+  current_pure_tests: 104
   repeated_upgrades: 2
-  current_supabase_owner_tests: 13
-  current_supabase_native_database_tests: 8
-  current_supabase_deno_tests: 26
-  current_native_learning_tests: 425
+  current_supabase_owner_tests: 18
+  current_supabase_native_database_tests: 13
+  current_supabase_deno_tests: 27
+  current_native_learning_tests: 426
   current_deployment_contract_tests: 65
   current_worker_wake_contract_tests: 3
   native_learning_projection: passed-disposable-probe-required-in-harness
-  api_candidate: 9e80f0088ff008db5dc6e166b90cd3a234012cec
-  learning_candidate: 60d223fda80544af7e833f394a91e4f2a29e24bd
-  learning_candidate_version: 19.0.2.2.1
+  api_candidate: 7205bc8b4e5ad25fb08958b20ef6045e565a5a35
+  learning_candidate: 821812d4cf16f51ca2e3c6cc868eeb23554dac64
+  learning_candidate_version: 19.0.2.2.2
   learning_evidence_draft: https://github.com/marcelo-m7/facodi-learning/pull/203
-  supabase_code_candidate: 5102e431fa8d672ec5fcbd5c72a39f759ac4124e
-  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37855347705
-  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37855352064
-  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37855389087
-  exact_head_ci: catalog-successor-owner-and-deployment-gates-pending
+  supabase_code_candidate: c42ccdc36fe2afca3ac8cef53a9871086fc17e29
+  api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37859197112
+  supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37859232568
+  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37859227561
+  exact_head_ci: cancellation-successor-owner-and-deployment-gates-pending
   supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
   previous_deployment_head: 94bae1301870758fcd66b7398dd71f81b8810caf
   previous_deployment_runtime_ci: https://github.com/marcelo-m7/facodi-deploy/actions/runs/37848130600
