@@ -63,6 +63,27 @@ Project, task or remote job.
 
 ### Current Slice Evidence
 
+Immutable transcript revision continuation: API
+`e6478285336b48d63b2f7dd2c800132ce3931234`, Learning
+`dce98b3110748048b3c3e735e9abdfecebedec25` (patch `19.0.2.2.3`). Local gates
+passed: 53 native API security tests, 104 pure API tests, 428 full native Learning
+tests and 21 focused consumers. The existing composed rollback-only probe passed
+retry/cancel/history and the new immutable input revision. API exact-head
+[CI passed](https://github.com/marcelo-m7/facodi-api/actions/runs/37920947549);
+Learning exact-head [CI passed](https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081)
+with 235 native install-scope tests. Successor deployment CI remains required.
+
+Input-required receipts reuse the native lifecycle classification. An explicit
+transcript correction creates exactly one new Supabase execution, root task and
+editorial request in the accepted permanent workspace. Provider, catalog,
+accepted actor and content remain fixed despite changed global intake/provider
+settings. The previous input/job/task/attempt history remain immutable; parent
+supersession and one audited cancellation outbox commit atomically with the child.
+Exact command replay returns the same child and caller rollback removes every
+partial effect. No network occurs before commit or publication during projection.
+Receipt attempts cannot regress or exceed twenty. Automatic transcript
+acquisition, binary/large-input/catalog parity and activation remain unfinished.
+
 Versioned retry continuation (2026-10-09): API
 `15a8566c7a2d6a91c10d79756579b4c758ef742b`, Learning
 `fb7868441ffb7188e988064c1812350a1f5292a7`, Supabase
@@ -87,8 +108,11 @@ twenty concurrent replays, rollback, scope/version/identity denial, stale messag
 and old workers. The actual secret wrapper/client exercises checkpoint recovery
 against native SQL. The composed Odoo probe passed failure -> retry -> unpublished
 result -> cancellation with stable job/input/task and immutable failed-attempt
-and result history. Exact successor deployment CI remains required. Versioned
-input, all-source/catalog parity and productive activation are still unfinished.
+and result history. Both exact retry deployment gates passed at
+`86845650e6df07108d893bbaf1ffad035cfb504c`:
+[native](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37916296649),
+[runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37916296618).
+These precede the immutable-input successor above, not its deployment acceptance.
 
 Versioned cancellation continuation: API
 `7205bc8b4e5ad25fb08958b20ef6045e565a5a35`, Learning

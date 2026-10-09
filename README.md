@@ -51,12 +51,12 @@ A `facodi-deploy` commit pins the exact source revisions baked into its Odoo ima
 
 | Source | Runtime modules | Pinned revision |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `15a8566c7a2d6a91c10d79756579b4c758ef742b` |
+| `marcelo-m7/facodi-api` | `facodi_api` (shared processing, default disabled), `facodi_project` (independent native identity) | `e6478285336b48d63b2f7dd2c800132ce3931234` |
 | `marcelo-m7/facodi-ai` | `facodi_ai`, `facodi_ai_learning` | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | `facodi_learning` | `fb7868441ffb7188e988064c1812350a1f5292a7` |
+| `marcelo-m7/facodi-learning` | `facodi_learning` | `dce98b3110748048b3c3e735e9abdfecebedec25` |
 | `marcelo-m7/facodi-theme` | `theme_facodi` | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
 
-The candidate composition uses `facodi_api 19.0.3.4.0`, `facodi_learning 19.0.2.2.2` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version, authorized private curriculum import and the disabled bounded canonical analysis candidate. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
+The candidate composition uses `facodi_api 19.0.3.4.0`, `facodi_learning 19.0.2.2.3` and unchanged `theme_facodi 19.0.10.89.0`. It adds signed fail-closed webhooks, loaded health version, authorized private curriculum import and the disabled bounded canonical analysis candidate. The [acceptance report](docs/facodi-api/acceptance-2026-10-07.md) distinguishes actual evidence from planned architecture. These pins do not identify the production image or authorize promotion before component approval. Contracts compare checkout with staged gitlinks; CI checks the submitted index.
 
 ### Historical Release Context
 

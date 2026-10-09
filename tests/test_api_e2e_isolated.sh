@@ -357,10 +357,48 @@ assert run.task_id.name == 'Human editorial decision'
 assert run.task_id.description == '<p>Preserve authored work</p>'
 assert run.task_id.facodi_external_ref == receipt['job_id']
 assert not slide.is_published and not course.website_published
+video = env['slide.slide'].with_user(actor).with_context(website_slides_skip_fetch_metadata=True).create({
+    'name': 'Private canonical input revision', 'channel_id': course.id,
+    'slide_category': 'video', 'source_type': 'external',
+    'video_url': 'https://www.youtube.com/watch?v=4GVbqYFmGBw',
+    'facodi_transcript': 'Original explicitly supplied transcript.',
+    'is_published': False, 'website_published': False,
+})
+input_job = video.with_user(actor).action_facodi_request_analysis()
+parent = input_job.pipeline_run_id.with_user(actor)
+input_failure = {'job_id': str(uuid4()), 'task_ref': parent.task_id.facodi_ref,
+    'company_id': parent.company_id.id, 'cohort': 'p2', 'revision': 2,
+    'status': 'failed', 'attempt': 1, 'result': {'error_code': 'YOUTUBE_LANGUAGE_UNAVAILABLE'}}
+assert parent._apply_canonical_receipt(input_failure) and input_job.state == 'waiting_input'
+parent_input = parent.canonical_payload_json
+input_revision = parent.revision
+jobs_before = env['facodi.learning.analysis.job'].search_count([])
+input_tasks_before = env['project.task'].search_count([])
+params.set_param('facodi_api.canonical_intake_enabled', 'false')
+params.set_param('facodi_learning.pipeline_user_id', '')
+with patch.object(type(parent), '_call_canonical_boundary', side_effect=AssertionError('No precommit network')):
+  child = parent.action_supply_transcript('Explicit revised editorial transcript.', 'canonical-input-child', input_revision)
+  assert parent.action_supply_transcript('Explicit revised editorial transcript.', 'canonical-input-child', input_revision) == child
+assert parent.status == 'cancelled' and input_job.state == 'cancelled'
+assert parent.canonical_payload_json == parent_input and parent.canonical_command_json
+assert len(input_job.attempt_ids) == 1 and not input_job.result_id
+assert child.input_parent_id == parent and child.execution_plane == 'supabase'
+assert child.project_id == workspace and child.owner_id == parent.owner_id
+assert child.provider_config_json == parent.provider_config_json
+assert child.catalog_snapshot_json == parent.catalog_snapshot_json
+assert child.task_id != parent.task_id and not child.task_id.parent_id
+assert child.learning_job_id.pipeline_run_id == child and child.learning_job_id.slide_id == video
+assert child.learning_job_id.state == 'pending' and not child.learning_job_id.attempt_ids
+assert not child.learning_job_id.result_id and not child.canonical_job_id
+assert env['facodi.learning.analysis.job'].search_count([]) == jobs_before + 1
+assert env['project.task'].search_count([]) == input_tasks_before + 1
+assert env['project.project'].search_count([]) == projects_before
+assert not video.is_published and not video.website_published and not course.website_published
 env.cr.rollback()
 print('PASS canonical native Learning projection, terminal replay and unpublished human work')
 print('PASS versioned canonical retry, stable job/input/task and immutable failed attempt history')
 print('PASS versioned canonical cancellation, immutable editorial history and human task preservation')
+print('PASS immutable canonical input revision, one new editorial request and preserved accepted routing')
 CANONICAL
 else
   echo "NOT_EXECUTED Learning API consumers: pinned Learning release has no API dependency"
