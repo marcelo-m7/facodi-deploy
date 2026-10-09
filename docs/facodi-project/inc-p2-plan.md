@@ -84,6 +84,15 @@ SQL lint and security advisors passed locally, and
 passed all three mandatory jobs. Private immutable binary/large-payload transport
 and full integration/recovery/parity remain unfinished; do not activate.
 
+Release consolidation: API PR 27, Supabase PR 13 and Learning PR 203 are merged
+in their source owners. Learning `d88b670e1d90205c7bfcb0e7c51cc365b455701d`
+(`19.0.2.3.1`) preserves upstream native Explore discovery and passed
+[exact combined owner CI](https://github.com/marcelo-m7/facodi-learning/actions/runs/37935438330)
+with 238 native install-scope tests, zero failures and zero errors. Deployment
+consumes that tested revision; fresh composed gates and productive image,
+paired-backup applicability and private-canary evidence remain required. No
+private-artifact work or processing activation is included in this release.
+
 Automatic acquisition continuation: API
 `2a75486bae44fcb0a10a7ab128fd90dd59ce4260`, Learning
 `8d3f9359f24f839528f95a4b019e99991a1f701d` (patch `19.0.2.2.4`), Supabase

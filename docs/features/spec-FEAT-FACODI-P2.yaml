@@ -76,8 +76,8 @@ validation:
   current_supabase_owner_tests: 22
   current_supabase_native_database_tests: 17
   current_supabase_deno_tests: 37
-  previous_native_learning_owner_ci_tests: 235
-  current_native_learning_owner_ci_tests: 236
+  previous_native_learning_owner_ci_tests: 236
+  current_native_learning_owner_ci_tests: 238
   current_native_learning_consumer_tests: 22
   current_full_native_learning_tests: 429
   previous_full_native_learning_tests: 428
@@ -85,14 +85,14 @@ validation:
   current_worker_wake_contract_tests: 3
   native_learning_projection: passed-disposable-probe-required-in-harness
   api_candidate: 2a75486bae44fcb0a10a7ab128fd90dd59ce4260
-  learning_candidate: 8d3f9359f24f839528f95a4b019e99991a1f701d
-  learning_candidate_version: 19.0.2.2.4
+  learning_candidate: d88b670e1d90205c7bfcb0e7c51cc365b455701d
+  learning_candidate_version: 19.0.2.3.1
   learning_evidence_draft: https://github.com/marcelo-m7/facodi-learning/pull/203
   supabase_code_candidate: 43edbba89ab5738c3f9ae3b2611a0891e3f4a358
   api_owner_ci: https://github.com/marcelo-m7/facodi-api/actions/runs/37923966206
   supabase_code_owner_ci: https://github.com/marcelo-m7/facodi-supabase/actions/runs/37924660596
   previous_learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37921478081
-  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37924649238
+  learning_owner_ci: https://github.com/marcelo-m7/facodi-learning/actions/runs/37935438330
   exact_head_ci: acquisition-owners-green-successor-deployment-gates-pending
   supabase_documentation_candidate: 7dea8fd010cdfc502f40abfc305aef22d80dcf2c
   previous_deployment_head: a63802956b3bf2a07df7444c6b1116bd9868683d
