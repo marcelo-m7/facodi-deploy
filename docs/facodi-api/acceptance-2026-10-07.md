@@ -1,5 +1,47 @@
 # Aceite e próximos passos — FACODI API, 2026-10-07
 
+## Promocao da fundacao P2 — 2026-10-09
+
+- API #27, Learning #203 e Supabase #13 foram mesclados. O deployment
+	[#273](https://github.com/marcelo-m7/facodi-deploy/pull/273) promoveu a candidata
+	`e95b4c7da32ec5b419d76b29e414bf1d06fe99e7` para `main`, com merge
+	`7dd32b6ba3fd5d52c9720203604a254aeb9587a6` em `2026-10-09T13:50:39Z`.
+- O webhook iniciou o deploy Coolify `9ttiu8nqnegybuu2dxfzhwlf`, concluido com
+	`Success` em 2m02s no recurso existente `z6tngvknoed3ojgnda1khupt`, dominio
+	`https://facodi.com`, Compose `/deploy/coolify/docker-compose.yml`.
+	Nao foram alterados configuracao, secrets ou volumes pelo agente.
+- Os logs identificam a imagem Odoo
+	`sha256:b9053b784d0954237a6e4cdc983ca51f34e9d13b5462cc44a1be59148220e1e8`
+	com tag do merge acima. A sequencia observada foi `db Healthy`,
+	`migrate Started/Exited` e `odoo Started`; o log da migracao confirmou
+	`migration completed successfully`. Odoo e PostgreSQL aparecem saudaveis.
+- CI pos-merge passou no SHA produtivo:
+	[runtime/browser/restore](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37939768428)
+	e [API nativo](https://github.com/marcelo-m7/facodi-deploy/actions/runs/37939768408).
+- Releitura pelo helper aprovado, guardada a `https://facodi.com` / `facodi`,
+	confirmou API `19.0.3.4.0`, Learning `19.0.2.3.1`, Project `19.0.1.0.0`
+	e AI Learning `19.0.1.2.0` instalados. `pipeline_enabled=false`; os gates
+	de intake e dispatch canonicos continuam ausentes, portanto desligados.
+	O worker opcional nao aparece entre os containers desse rollout.
+- Browser confirmou HTTP 200 em `/web/login`, `/`, `/pt/`, `/es/`, `/fr/`,
+	`/courses`, `/forum`, `/explore`, `/explore/areas`, `/explore/content` e
+	`/explore/videos`, sem erros JavaScript ou falhas de assets observadas.
+	Login interno por Playwright abriu `/odoo` e o webclient nativo.
+- Smoke movel em 390x844 passou em Explore, cursos, forum e dois cursos
+	existentes, sem overflow horizontal. A imagem existente
+	`/web/image/slide.slide/1053/image_512` respondeu HTTP 200, `image/jpeg`,
+	26440 bytes. A leitura encontrou 28 cursos e 560 slides; existencia e
+	contagens nao constituem uma comparacao integral do historico.
+- O backup manual pareado permanece confirmado pelo responsavel, conforme
+	registrado abaixo; seus artefatos nao foram inspecionados independentemente.
+	A interface Coolify nao mostrou backups de storage agendados nesse recurso.
+
+Esta promocao entrega codigo com gates desligados, nao o cutover completo P2.
+Nao houve criacao de jobs, chamada paga ou publicacao. Transporte privado de
+artefatos incompleto ficou fora da release; sua integracao, paridade e canary
+privado seguem pendentes, assim como P3–P6. Fonte Supabase mesclada nao comprova
+deploy de migrations/functions nem ativacao do worker em producao.
+
 ## Estado pos-merge e autorizacao de producao
 
 - O responsavel confirmou o backup de producao concluido e autorizou promover
