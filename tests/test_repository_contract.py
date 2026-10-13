@@ -769,10 +769,13 @@ class ApiSourcePreflightTest(unittest.TestCase):
             ["git", "-C", str(self.repository), *arguments], text=True,
         ).strip()
 
-    def check_source(self, source=None):
+    def check_source(self, source=None, allow_dirty=False):
+        environment = {"PATH": os.environ["PATH"], "FACODI_API_SOURCE": str(source or self.addon)}
+        if allow_dirty:
+            environment["FACODI_ALLOW_DIRTY_SOURCE"] = "1"
         return subprocess.run(
             ["bash", str(ROOT / "tests/test_api_e2e_isolated.sh"), "--check-source"],
-            env={"PATH": os.environ["PATH"], "FACODI_API_SOURCE": str(source or self.addon)},
+            env=environment,
             text=True, capture_output=True,
         )
 
@@ -786,6 +789,12 @@ class ApiSourcePreflightTest(unittest.TestCase):
         result = self.check_source()
         self.assertEqual(result.returncode, 2)
         self.assertIn("Refusing modified API source", result.stderr)
+
+    def test_modified_checkout_requires_explicit_local_test_override(self):
+        (self.addon / "__manifest__.py").write_text("{'name': 'Working tree'}\n")
+        result = self.check_source(allow_dirty=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("not release acceptance", result.stderr)
 
     def test_untracked_addon_is_rejected(self):
         self.git("rm", "--cached", "facodi_api/__manifest__.py")

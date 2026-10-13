@@ -3,6 +3,11 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 api_source="${FACODI_API_SOURCE:-}"
+allow_dirty_source="${FACODI_ALLOW_DIRTY_SOURCE:-0}"
+if [[ "$allow_dirty_source" != "0" && "$allow_dirty_source" != "1" ]]; then
+  echo "FACODI_ALLOW_DIRTY_SOURCE must be 0 or 1" >&2
+  exit 2
+fi
 if [[ -z "$api_source" || ! -f "$api_source/__manifest__.py" ]]; then
   echo "Set FACODI_API_SOURCE to the isolated facodi_api addon directory" >&2
   exit 2
@@ -19,8 +24,11 @@ if [[ "$api_source" != "$api_repository/facodi_api" ]] ||
 fi
 printf 'API source commit: %s\n' "$(git -C "$api_repository" rev-parse HEAD)"
 if [[ -n "$(git -C "$api_repository" status --porcelain -- facodi_api)" ]]; then
-  echo "Refusing modified API source: use a clean commit for release acceptance" >&2
-  exit 2
+  if [[ "$allow_dirty_source" != "1" ]]; then
+    echo "Refusing modified API source: use a clean commit for release acceptance" >&2
+    exit 2
+  fi
+  echo "WARNING: testing modified API source; this run is not release acceptance" >&2
 fi
 if [[ "${1:-}" == --check-source ]]; then
   exit 0

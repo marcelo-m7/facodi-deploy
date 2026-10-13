@@ -1,8 +1,54 @@
 # INC-P2: Canonical Execution Cutover
 
-Status: execution authorized, bounded text slice under validation; full P2 cutover and
-production rollout are not complete. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
+Status: Odoo/API/Learning release promotion is complete; P1 is closed. INC-P2
+acceptance and activation remain open. Prerequisite: reviewed INC-P1 commits and exact-head CI. P1 owner is
 API PR26, `3891e749c05008344cca26ad099ead26ef344c6a`.
+
+### Current Production State (2026-10-09)
+
+- The Odoo deployment after API PR27, Learning PR203, Supabase PR13 and
+  deployment PR273 succeeded. This proves the Odoo release only; it does not
+  prove the Supabase runtime was migrated or deployed.
+- Read-only Supabase inspection found only the three legacy migrations
+  (`20260924211528`, `20260925125440`, `20260925130126`), four legacy Edge
+  Functions, and no Storage buckets. The canonical migrations/function and
+  private artifact bucket are absent remotely. Security advisories were empty;
+  one informational unused-index finding on a legacy table is preserved.
+- Odoo canonical intake and the worker remain default-off. No remote Supabase
+  migration, function deployment, artifact upload, paid job or publication was
+  performed in this continuation.
+- The isolated Supabase owner source now has a default-off, secret-authenticated
+  binary upload route and a private bucket migration. The route bounds source to
+  2 MiB and catalogs to 4 MiB; references are scoped and content-addressed.
+- The migration was executed in a rollback-only transaction against local
+  Supabase PostgreSQL and verified as private with a 4 MiB cap. No remote
+  migration or Storage operation was performed.
+- The owner Deno suite now passes 53 tests, with zero failures and one ignored,
+  including native PostgreSQL
+  endpoint execution and artifact-route checks proving rejected credentials do
+  not consume the body and oversized streams stop before Storage. The binary
+  route uses header-only `createSupabaseContext` authentication because the
+  `withSupabase` wrapper buffers request bodies; it preserves the pinned SDK's
+  CORS and auth-error headers. Frozen type-check and the Python harness (26/26)
+  pass. Storage SDK behavior still uses a fake client; the local Storage API is
+  not running, so real Storage/RLS acceptance remains pending.
+- The 2026-10-09 isolated Odoo E2E passed the native API gate (56 tests, zero
+  failures/errors), Project tests (24), all 19 Project creation races, Learning
+  consumers (22), HTTP boundary checks, clean install, repeated upgrades and
+  legacy-history preservation. Its artifact test checks scoped source/catalog
+  URLs, bytes and returned identities against a mocked upload response. The run
+  used `FACODI_ALLOW_DIRTY_SOURCE=1`; it is development evidence, not clean-pin
+  release acceptance. Disposable containers, volumes and network were removed.
+- Odoo now submits accepted source/catalog references and uploads their bytes;
+  the Supabase claim gate and worker hydration are covered by local database and
+  Deno tests. Real Storage API/RLS acceptance remains pending. P2 remains
+  incomplete and is not a release candidate.
+
+The Deno document converter accepts binary files up to 2 MiB and extracted text
+up to 256 KiB. Current canonical JSON intake remains limited to 12 KiB text and
+60 KiB request/receipt budgets. Raising only one of these limits is not source
+parity; binary input, large catalogs and result transport need one end-to-end
+contract.
 
 ## Execution Plan: 2026-10-08
 
@@ -419,6 +465,68 @@ FACODI_REQUIRE_EMPTY_DATABASE=1 FACODI_BROWSER_ACCEPTANCE=1 \
 Add crash/callback/cohort checks to existing owner/harness surfaces, not waived
 alternative gates. Keep complete private snapshots ignored; commit sanitized
 counts, exact SHAs, CI URLs and residual blockers.
+
+## P2-P6 Completion Roadmap
+
+Keep each increment in its owning repository and promote one tested contract at
+a time. A merge into deployment `main` triggers Coolify; do not update that pin
+until the exact owner heads, integration gates, matched restore point and target
+identity are accepted. P1 is closed and is not reopened by later phases.
+
+| Increment | Owner boundary | Exit criteria before the next phase |
+| --- | --- | --- |
+| P2: durable processing | API accepts and binds immutable input; Supabase owns private artifacts, jobs and recovery; Learning projects domain evidence; deployment owns worker topology and pins | All accepted sources and bounded catalogs/results cross the same authenticated contract; no-overwrite upload and response-loss replay verify hash/length; company/task/kind denial; worker restart, lease fencing and concurrency tests; two upgrades, history parity, desktop/mobile, paired restore, exact-head CI; private unpublished canary and bounded reversible activation |
+| P3: guarded decisions/publication | API/Learning policy boundary and native Odoo publisher | Versioned evidence/policy snapshot, deterministic reasons and auditable decision receipt; rights, provenance, visibility, quality and duplication gates; manual locks always win; failures become human exceptions; idempotent publication tests remain unpublished on any failed gate |
+| P4: reduce duplicate workflow | Learning domain and API consumers | Consumer/parity inventory covers native records, review, history, portal, activities, reports and integrations; replacement behavior is proven before disabling duplicate technical workflow; no historical deletion or adoption |
+| P5: Project Portal | API/Project and Website integration | Native Project/Task access exposes only authorized human work; cross-company, cross-Website, share-token and unauthorized-task denials pass; no job payload, provider response, artifact reference or secret is exposed |
+| P6: retire AI Learning | Learning and deployment | Static and runtime consumer inventory proves no unique consumer; domain/history parity and data retention are verified; install/upgrade/uninstall succeeds on a disposable copy; production removal has its own paired backup and rollback gate |
+
+### Ordered Work
+
+1. **P2.1 artifact contract:** finish the owner-side storage adapter and
+  secret-authenticated,
+  bounded upload path. Keep the bucket private, keys content-addressed and
+  scoped to company/task/kind, and uploads non-overwriting. Verify complete
+  byte length and SHA-256 on replay and download. The present document cap is
+  2 MiB, so standard upload is sufficient; use resumable/TUS upload only if an
+  explicitly accepted limit later exceeds 6 MiB. Do not accept arbitrary URLs
+  or place binary/base64 content in the queue row.
+2. **P2.2 source and result parity:** connect Odoo `ir.attachment`, full catalog
+  snapshots and large result transport without changing accepted identity.
+  Persist references only after the caller transaction commits; make upload,
+  enqueue, receipt recovery and result retrieval idempotent. Re-extracting an
+  immutable source after a crash must not invoke a paid provider twice.
+3. **P2.3 operations and acceptance:** run fresh/upgrade migrations locally,
+  RLS/storage policy tests, native database races, crash/restart/replay and
+  worker shutdown tests. Complete API/Learning/HTTP integration, historical
+  parity, desktop/mobile and paired PostgreSQL+filestore restore. Recheck
+  Supabase logs, advisories, target and permissions. Only then run a new private
+  unpublished canary; activation remains bounded, observable and reversible.
+4. **P3:** implement decisions as a separate policy version and receipt. A
+  missing/unknown policy, provenance/license gap, visibility conflict, weak
+  quality evidence, duplicate conflict or manual lock must route to human
+  review. Do not infer numeric publication thresholds from model confidence
+  or ranking scores. Automatic publication stays disabled until the business
+  owner approves explicit policy scope and thresholds.
+5. **P4:** compare the replacement workflow against every inventoried Learning
+  consumer and historical state. Turn off only the duplicate path after parity
+  tests pass; retain all old records and receipts read-only.
+6. **P5:** extend standard Project Portal views only after a role-by-role access
+  matrix and A/B fixtures exist. Denial tests are required before portal
+  enablement; API payloads and technical worker state remain server-only.
+7. **P6:** remove only `facodi_ai_learning` after its unique consumers and data
+  are accounted for. Treat generic `facodi_ai` as a separate decision. Validate
+  clean uninstall and retained history before a separate production change.
+
+### Open Decisions
+
+- P3 requires an explicit business owner and measurable policy for which content
+  may be auto-published, including provenance/licensing acceptance and quality
+  thresholds. Until approved, the safe behavior is recommendation plus human
+  review, not publication.
+- Any proposal to raise the current 2 MiB source, 256 KiB extracted-text,
+  12 KiB inline-text, 60 KiB receipt or 4 MiB catalog limits must include storage,
+  parser, output, timeout and provider-cost budgets as one reviewed change.
 
 ## Promotion Stops
 

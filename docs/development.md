@@ -85,6 +85,11 @@ installs Learning in a separate disposable database and runs
 nonzero test count and a zero-failure/error summary, independently of Odoo's
 process exit status.
 
+For local iteration only, `FACODI_ALLOW_DIRTY_SOURCE=1` permits the isolated
+harness to run against modified `facodi_api` files. The harness prints a warning;
+such a run is development evidence, never clean-source release acceptance. The
+default remains to reject modified API source.
+
 Both addon sources are read-only mounts. Databases, volumes, network and loopback
 ports belong to the uniquely named test project; cleanup checks ownership labels.
 This validates the selected source composition only. It does not change deployment
