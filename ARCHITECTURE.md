@@ -8,14 +8,14 @@
 
 Business and presentation changes remain in their owning addon repositories:
 
-| Owner | Responsibility | Verified gitlink |
+| Owner | Responsibility | Current `main` gitlink (2026-10-25) |
 | --- | --- | --- |
-| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `b830811cb2d4bd408e1811d5d5de3ab9d181b82c` |
+| `marcelo-m7/facodi-api` | Shared content processing with opt-in Learning adapter | `d07c1b1ae29c4f6bf9c712f929d5a7a1a7176616` |
 | `marcelo-m7/facodi-ai` | AI runtime | `c9cf01739180b12a758b3f61082a38179e1e475b` |
-| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `1a4bb096dbc96f800732d50f1892dfa69f3f74ed` |
-| `marcelo-m7/facodi-theme` | FACODI Website presentation | `2cc983d6f5f99601983d57cc19ef7923aa60c7dc` |
+| `marcelo-m7/facodi-learning` | Curriculum and learning domain | `dee9b7b0054a8c6b5bfe681e9757138e02375d66` |
+| `marcelo-m7/facodi-theme` | FACODI Website presentation | `f5aa0db52891a10ac4096fe76e5875e21db28e08` |
 
-The gitlinks are the authoritative pins. The values above identify the locally validated candidate, not the production image. Before commit, the exact-pin contract checks staged gitlinks; CI checks the same index supplied by its commit. Learning's opt-in adapter delegates processing internally to the shared API facade, while historical providers and human review remain intact. Production default/gate activation requires a separate operational gate.
+The gitlinks are the authoritative **repository** pins, enforced against this inventory by the repository contract. They do **not** independently prove which Docker image, git revision or migration execution the current Coolify resource is running. Confirm those from Coolify build/deployment evidence and the Odoo installed-module inventory before release acceptance. Learning's opt-in adapter delegates processing internally to the shared API facade, while historical providers and human review remain intact. Production default/gate activation requires a separate operational gate.
 
 No external Odoo design-theme vendor is part of the runtime source composition. `theme_facodi` depends only on standard Odoo Community Website modules.
 

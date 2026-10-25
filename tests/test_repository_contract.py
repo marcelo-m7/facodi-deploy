@@ -23,6 +23,24 @@ FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_
 
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_architecture_inventory_matches_exact_staged_gitlinks(self):
+        """A release operator must not be shown a stale pin as the current one."""
+        architecture = (ROOT / "ARCHITECTURE.md").read_text(encoding="utf-8")
+        documented = dict(re.findall(
+            r"^\| `marcelo-m7/(facodi-(?:api|ai|learning|theme))` \|[^\n|]*\| `([0-9a-f]{40})` \|$",
+            architecture, re.MULTILINE,
+        ))
+        for owner in ("facodi-api", "facodi-ai", "facodi-learning", "facodi-theme"):
+            with self.subTest(owner=owner):
+                self.assertIn(owner, documented, f"missing {owner} pin inventory")
+                stage = subprocess.check_output(
+                    ["git", "-C", str(ROOT), "ls-files", "--stage", "--", f"addons/{owner}"],
+                    text=True,
+                ).strip()
+                mode, sha, index = stage.split("\t", 1)[0].split()
+                self.assertEqual((mode, index), ("160000", "0"))
+                self.assertEqual(documented[owner], sha, f"stale ARCHITECTURE.md: {owner}")
+
     def test_isolated_worker_is_optional_pinned_and_separate_from_odoo_persistence(self):
         import json
         config = json.loads(subprocess.check_output([
