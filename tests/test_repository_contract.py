@@ -1,5 +1,6 @@
 from pathlib import Path
 import ast
+from collections import Counter
 import configparser
 import os
 import re
@@ -21,8 +22,42 @@ EXPECTED_SUBMODULE_PATHS = {
 
 FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
 
+PIN_OWNERS = ("facodi-api", "facodi-ai", "facodi-learning", "facodi-theme")
+
+
+def parse_release_pin_inventory(document):
+    """Reject duplicate source rows instead of silently accepting the last SHA."""
+    entries = re.findall(
+        r"^\| `marcelo-m7/(facodi-(?:api|ai|learning|theme))` \|[^\n|]*\| `([0-9a-f]{40})` \|$",
+        document, re.MULTILINE,
+    )
+    duplicates = [owner for owner, count in Counter(owner for owner, _ in entries).items() if count != 1]
+    if duplicates:
+        raise ValueError(f"duplicate source inventory entries: {', '.join(sorted(duplicates))}")
+    return dict(entries)
+
 
 class RepositoryContractTest(unittest.TestCase):
+    def test_release_pin_inventory_rejects_duplicate_rows(self):
+        row = "| `marcelo-m7/facodi-api` | processing | `" + ("a" * 40) + "` |"
+        with self.assertRaisesRegex(ValueError, "duplicate source inventory entries: facodi-api"):
+            parse_release_pin_inventory(row + "\n" + row)
+
+    def test_architecture_inventory_matches_exact_staged_gitlinks(self):
+        """Every current pin table must agree with the staged gitlinks."""
+        for document_name in ("ARCHITECTURE.md", "README.md"):
+            documented = parse_release_pin_inventory((ROOT / document_name).read_text(encoding="utf-8"))
+            for owner in PIN_OWNERS:
+                with self.subTest(document=document_name, owner=owner):
+                    self.assertIn(owner, documented, f"missing {owner} pin inventory")
+                    stage = subprocess.check_output(
+                        ["git", "-C", str(ROOT), "ls-files", "--stage", "--", f"addons/{owner}"],
+                        text=True,
+                    ).strip()
+                    mode, sha, index = stage.split("\t", 1)[0].split()
+                    self.assertEqual((mode, index), ("160000", "0"))
+                    self.assertEqual(documented[owner], sha, f"stale {document_name}: {owner}")
+
     def test_isolated_worker_is_optional_pinned_and_separate_from_odoo_persistence(self):
         import json
         config = json.loads(subprocess.check_output([
