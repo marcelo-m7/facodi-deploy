@@ -2,6 +2,8 @@
 
 # FACODI Deploy Architecture
 
+> **Isolated experiment:** `knowledge-space/` contains a standalone React/Supabase ontology prototype on a feature branch. It is not wired to the Odoo image, the migration gate or the Coolify compose lifecycle. See `knowledge-space/README.md`; Odoo remains authoritative for courses and editorial curriculum mappings.
+
 ## Ownership
 
 `facodi-deploy` is the integration and deployment repository for the FACODI Odoo 19 Community instance at `facodi.com`. It owns the Docker image, Coolify Compose lifecycle, migration gate, source pins, and integration tests.
