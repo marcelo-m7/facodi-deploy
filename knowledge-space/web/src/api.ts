@@ -1,5 +1,5 @@
 import type {Entity,Relation} from './types';
-const API = import.meta.env.VITE_KS_API_URL || 'https://bhfywztfyidvrlarebmg.supabase.co/functions/v1/knowledge-space-read';
+export const API = import.meta.env.VITE_KS_API_URL || 'https://bhfywztfyidvrlarebmg.supabase.co/functions/v1/knowledge-space-read';
 async function get<T>(path:string):Promise<T>{
   const response=await fetch(`${API}${path}`);
   if(!response.ok) throw new Error(`API indisponível (${response.status})`);

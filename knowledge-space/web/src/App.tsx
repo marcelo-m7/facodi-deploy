@@ -1,8 +1,9 @@
 import {useEffect,useMemo,useState} from 'react';
 import {ArrowUpRight,Atom,BookOpen,ChevronDown,Compass,Layers3,Network,RefreshCw,Search,SlidersHorizontal} from 'lucide-react';
 import type {Entity,Relation} from './types';
-import {fetchEntities,fetchRelations} from './api';
+import {API,fetchEntities,fetchRelations} from './api';
 import {DOMAINS,searchEntities} from './lib/knowledge.mjs';
+import {semanticSearch} from './lib/semantic.mjs';
 import KnowledgeWheel from './components/KnowledgeWheel';
 import KnowledgeGraph from './components/KnowledgeGraph';
 import ConceptDetail from './components/ConceptDetail';
@@ -11,6 +12,8 @@ export default function App(){
   const [entities,setEntities]=useState<Entity[]>([]),[relations,setRelations]=useState<Relation[]>([]);
   const [selected,setSelected]=useState<string|null>(null),[view,setView]=useState<'wheel'|'graph'>('wheel');
   const [search,setSearch]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null);
+  const [semanticResults,setSemanticResults]=useState<{id:string;label:string;similarity:number}[]|null>(null);
+  const [semanticLoading,setSemanticLoading]=useState(false),[semanticError,setSemanticError]=useState<string|null>(null);
   const [version,setVersion]=useState(0);
   useEffect(()=>{let active=true;setLoading(true);setError(null);
     fetchEntities().then(async records=>{const edges=await fetchRelations(records.map(r=>r.id));if(!active)return;
@@ -20,6 +23,11 @@ export default function App(){
   },[version]);
   const visible=useMemo(()=>searchEntities(entities,search),[entities,search]);
   const current=entities.find(e=>e.id===selected)||null;
+  const runSemantic=async()=>{setSemanticLoading(true);setSemanticError(null);setSemanticResults(null);
+    try{setSemanticResults(await semanticSearch(search,API));}
+    catch(e){setSemanticError(e instanceof Error?e.message:'Pesquisa semântica indisponível');}
+    finally{setSemanticLoading(false);}
+  };
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-symbol"><Atom size={23} strokeWidth={1.7}/></div><div><strong>FACODI</strong><span>KNOWLEDGE SPACE</span></div></div>
@@ -32,7 +40,7 @@ export default function App(){
       <div className="sidebar-bottom"><div className="pilot-card"><span className="tiny-pulse"/><strong>Ambiente experimental</strong><p>Uma nova forma de conectar conceitos, competências e aprendizagens.</p></div><div className="sidebar-foot">FACODI LAB · V0.1</div></div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="breadcrumb"><BookOpen size={16}/><span>Knowledge Space</span><span className="slash">/</span><strong>Visão geral</strong></div><div className="top-actions"><span className="status-dot"/> <span>Supabase conectado</span><a href="https://facodi.com" target="_blank" rel="noreferrer">facodi.com <ArrowUpRight size={14}/></a></div></header>
+      <header className="topbar"><div className="breadcrumb"><BookOpen size={16}/><span>Knowledge Space</span><span className="slash">/</span><strong>Visão geral</strong></div><div className="top-actions"><span className="status-dot"/> <span>{error?'Supabase indisponível':loading?'A estabelecer ligação':'Supabase conectado'}</span><a href="https://facodi.com" target="_blank" rel="noreferrer">facodi.com <ArrowUpRight size={14}/></a></div></header>
       <div className="content-padding">
         <div className="hero-top"><div><div className="eyebrow teal">UM UNIVERSO DE CONEXÕES</div><h1>Explora o <em>conhecimento.</em></h1><p>Um espaço vivo de conceitos, competências e relações. Descobre como diferentes áreas se cruzam e constroem novas possibilidades de aprendizagem.</p></div><div className="hero-badge"><Layers3 size={17}/><span>ONTOLOGIA EXPERIMENTAL<br/><b>MATEMÁTICA / PRÉ-CÁLCULO</b></span></div></div>
         <div className="stats"><div><span>CONCEITOS E COMPETÊNCIAS</span><strong>{entities.length.toString().padStart(2,'0')}</strong></div><div><span>CONEXÕES MAPEADAS</span><strong>{relations.length.toString().padStart(2,'0')}</strong></div><div><span>ÁREAS DO CONHECIMENTO</span><strong>04</strong></div><div className="stat-live"><span>ESTADO DA ONTOLOGIA</span><strong><i/> Piloto ativo</strong></div></div>
@@ -44,7 +52,10 @@ export default function App(){
           </section>
           <section className="detail-panel"><div className="panel-top"><div><span className="mini-icon"><Atom size={15}/></span><span>DETALHES DO ELEMENTO</span></div><span className="badge-quiet">ONTOLOGIA</span></div><ConceptDetail entity={current} entities={entities} relations={relations} onSelect={setSelected}/></section>
         </div>
-        <div className="catalog"><div className="catalog-heading"><div><span className="section-kicker">ÍNDICE DE CONCEITOS</span><h2>Biblioteca de conhecimento</h2></div><div className="search-box"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar conceitos..." aria-label="Pesquisar conceitos"/></div></div>
+        <div className="catalog"><div className="catalog-heading"><div><span className="section-kicker">ÍNDICE DE CONCEITOS</span><h2>Biblioteca de conhecimento</h2></div><div className="search-box"><Search size={17}/><input value={search} onChange={e=>{setSearch(e.target.value);setSemanticResults(null);setSemanticError(null);}} placeholder="Pesquisar conceitos..." aria-label="Pesquisar conceitos"/></div></div>
+          <div className="semantic-tools"><button disabled={!search.trim()||semanticLoading} onClick={runSemantic}><Atom size={15}/>{semanticLoading?'A analisar significado...':'Pesquisar por significado'}</button><span>Pesquisa experimental com embeddings <strong>gte-small</strong> e pgvector.</span></div>
+          {semanticError&&<div className="semantic-feedback" role="alert">{semanticError}</div>}
+          {semanticResults&&<div className="semantic-results"><div className="section-label">RESULTADOS SEMÂNTICOS</div>{semanticResults.length?semanticResults.map(result=><button key={result.id} onClick={()=>setSelected(result.id)}><strong>{result.label}</strong><span>{Math.round(result.similarity*100)}% de similaridade</span></button>):<p>O índice semântico ainda não contém embeddings para esta consulta. A pesquisa textual continua disponível abaixo.</p>}</div>}
           <div className="catalog-list">{visible.map(e=><button className={`catalog-row ${selected===e.id?'is-active':''}`} key={e.id} onClick={()=>setSelected(e.id)}><span className="catalog-dot" style={{background:DOMAINS.reduce((best,d)=>(e.domain_weights[d.key]||0)>(e.domain_weights[best.key]||0)?d:best,DOMAINS[0]).color}}/><strong>{e.label}</strong><span>{e.kind==='concept'?'Conceito':e.kind==='competency'?'Competência':'Objetivo'}</span><ArrowUpRight size={16}/></button>)}{!loading&&!visible.length&&<div className="no-results">Nenhum conceito corresponde à pesquisa.</div>}</div>
         </div>
         <footer>FACODI KNOWLEDGE SPACE <span>·</span> Modelo conceptual demonstrativo — não representa equivalências académicas oficiais. <span>© 2026 FACODI</span></footer>
