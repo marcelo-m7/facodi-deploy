@@ -31,7 +31,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum,facodi_mcp_oauth
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
@@ -42,6 +42,8 @@ services:
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY: ${MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY:-}
+      MONYNHA_OAUTH_ALLOWED_CLIENT_IDS: ${MONYNHA_OAUTH_ALLOWED_CLIENT_IDS:-[]}
       PORT: "8069"
     volumes:
       - odoo-data:/var/lib/odoo
@@ -64,7 +66,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum,facodi_mcp_oauth
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
@@ -78,6 +80,8 @@ services:
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY: ${MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY:-}
+      MONYNHA_OAUTH_ALLOWED_CLIENT_IDS: ${MONYNHA_OAUTH_ALLOWED_CLIENT_IDS:-[]}
       PORT: "8069"
     volumes:
       - odoo-data:/var/lib/odoo
@@ -90,6 +94,73 @@ services:
       timeout: 10s
       retries: 12
       start_period: 60s
+
+  # Optional, independently owned Monynha MCP; never activates with FACODI's
+  # ordinary Odoo deployment. Enable only after secrets, DNS and OAuth tests.
+  monynha-db:
+    profiles: [monynha-mcp]
+    image: postgres:17
+    restart: unless-stopped
+    networks: [monynha-private]
+    environment:
+      POSTGRES_DB: monynha_mcp
+      POSTGRES_USER: monynha
+      POSTGRES_PASSWORD: ${MONYNHA_MCP_DB_PASSWORD:-}
+    volumes:
+      - monynha-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U monynha -d monynha_mcp"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  monynha-mcp:
+    profiles: [monynha-mcp]
+    build:
+      context: https://github.com/marcelo-m7/odoo-remote-mcp.git#a6c042bffa7d2275c26fc2d09e68d553616498a0
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    depends_on:
+      monynha-db:
+        condition: service_healthy
+    networks: [monynha-private, monynha-egress]
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        alembic upgrade head
+        exec monynha-odoo-mcp
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      MONYNHA_MCP_MODE: http
+      MONYNHA_MCP_HTTP_HOST: 0.0.0.0
+      MONYNHA_MCP_HTTP_PORT: "8000"
+      MONYNHA_MCP_DATABASE_URL: ${MONYNHA_MCP_DATABASE_URL:-}
+      MONYNHA_MCP_PUBLIC_URL: ${MONYNHA_MCP_PUBLIC_URL:-}
+      MONYNHA_MCP_OIDC_ISSUER: https://wvkjainfwsyiyfcmbtid.supabase.co/auth/v1
+      MONYNHA_MCP_OIDC_JWKS_URL: https://wvkjainfwsyiyfcmbtid.supabase.co/auth/v1/.well-known/jwks.json
+      MONYNHA_MCP_OIDC_AUDIENCE: ${MONYNHA_MCP_PUBLIC_URL:-}
+      MONYNHA_MCP_OAUTH_PROVIDER: supabase
+      MONYNHA_MCP_OAUTH_ALLOWED_CLIENT_IDS: ${MONYNHA_MCP_OAUTH_ALLOWED_CLIENT_IDS:-[]}
+      MONYNHA_MCP_WRITES_ENABLED: "false"
+      MONYNHA_MCP_ALLOWED_ORIGINS: ${MONYNHA_MCP_ALLOWED_ORIGINS:-[]}
+      MONYNHA_ODOO_KEY_DEFAULT: ${MONYNHA_ODOO_KEY_DEFAULT:-}
+    expose:
+      - "8000"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=32m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 45s
+      retries: 3
 
   processing-worker:
     profiles: [isolated-processing]
@@ -123,7 +194,11 @@ services:
 
 networks:
   processing-egress:
+  monynha-private:
+    internal: true
+  monynha-egress:
 
 volumes:
   postgres-data:
   odoo-data:
+  monynha-postgres-data:

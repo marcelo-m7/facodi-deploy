@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,8 +27,14 @@ class AuditRegressionTest(unittest.TestCase):
 
     def test_removed_backend_modules_are_not_requested(self):
         text = COMPOSE.read_text()
-        self.assertNotIn("monodoo", text)
-        self.assertNotIn("monynha", text)
+        module_lists = re.findall(r"^\s*FACODI_MODULES:\s*([^\n]+)", text, re.MULTILINE)
+        self.assertEqual(len(module_lists), 2)
+        for module_list in module_lists:
+            modules = module_list.split(",")
+            self.assertIn("monodoo_core", modules)
+            self.assertIn("monodoo_home", modules)
+            for retired in ("monodoo_backend", "monodoo_theme", "monynha"):
+                self.assertNotIn(retired, modules)
 
 
 if __name__ == "__main__":
