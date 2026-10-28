@@ -1,12 +1,24 @@
-# Monynha Odoo MCP in FACODI's Coolify Compose
+# Monynha Odoo MCP deployed from FACODI's Git repository
 
-## Deployment candidate, not yet activated
+## Two independent Coolify applications, not yet activated
 
-The `monynha-mcp` Compose profile is **off by default**. It intentionally
-leaves `db`, `migrate`, `odoo`, `postgres-data`, and `odoo-data` intact. Pushing
-to `facodi-deploy/main` triggers an Odoo Coolify redeploy: therefore keep this
-integration in a draft PR until paired Odoo DB/filestore backups and owner CI
-are reviewed. The public consent route itself requires the new independent
+Use **two Git-based Docker Compose applications** sourced from the same
+`facodi-deploy` repository:
+
+| Coolify application | Compose location | Purpose |
+| --- | --- | --- |
+| Existing FACODI Odoo | `deploy/coolify/docker-compose.yml` | Installs `facodi_mcp_oauth` without starting MCP containers in the ERP stack |
+| Independent Monynha MCP | `deploy/coolify/monynha-mcp.compose.yml` | Separate PostgreSQL 17 and HTTP MCP service |
+
+Create the Monynha resource through **New → Application → Git repository →
+Docker Compose**. Configure Base Directory to the repository root and Docker
+Compose Location to `deploy/coolify/monynha-mcp.compose.yml`. Deploy only the
+reviewed branch. This is a separate resource, not a profile of the existing
+FACODI app.
+
+Pushing to `facodi-deploy/main` triggers an existing Odoo redeploy: keep
+this integration in draft until paired Odoo DB/filestore backups and owner
+CI are reviewed. The public consent route requires the independent
 `facodi_mcp_oauth` addon from the pinned `facodi-api` source.
 
 ### Consent UI on facodi.com
@@ -23,19 +35,19 @@ Path remains `/oauth/consent`. These are shared auth settings, not owned by
 FACODI's existing Supabase processing-plane project. An Odoo login does not
 automatically log the user in to Open2.
 
-### Isolated MCP profile
+### Isolated MCP Coolify application
 
-After approving the MCP HTTPS resource URL and DNS, use Coolify's managed
-Docker Compose resource to activate profile `monynha-mcp`. Configure domain
+After approving the MCP HTTPS resource URL and DNS, use the **new** Coolify
+Compose resource. Configure domain
 routing for the `monynha-mcp` service at internal port `8000`, at the **root**
 path, so `/.well-known/oauth-protected-resource/mcp`, `/mcp`, `/healthz`, and
 `/readyz` all reach the same service. No host ports are published.
 
 | Variable | Required action |
 | --- | --- |
-| `MONYNHA_MCP_DB_PASSWORD` | New high-entropy private password for isolated `monynha-db` PostgreSQL 17 |
-| `MONYNHA_MCP_DATABASE_URL` | Full private SQLAlchemy `postgresql+psycopg://...@monynha-db:5432/monynha_mcp` with URL-encoded password |
-| `MONYNHA_MCP_PUBLIC_URL` | Full `https://<approved-host>/mcp` URL; also automatically used as JWT audience |
+| `MONYNHA_MCP_DB_PASSWORD` | **Required** high-entropy private password for isolated `monynha-db` PostgreSQL 17 |
+| `MONYNHA_MCP_DATABASE_URL` | **Required** private SQLAlchemy `postgresql+psycopg://...@monynha-db:5432/monynha_mcp` with URL-encoded password |
+| `MONYNHA_MCP_PUBLIC_URL` | **Required** full `https://<approved-host>/mcp` URL; also automatically used as JWT audience |
 | `MONYNHA_MCP_OAUTH_ALLOWED_CLIENT_IDS` | JSON array of reviewed Open2 OAuth clients; startup refuses empty |
 | `MONYNHA_ODOO_KEY_DEFAULT` | Optional authorized Odoo API key only when a private connection references it |
 
@@ -51,7 +63,7 @@ rejected by Monynha: an approved, scope-limited Custom Access Token Hook
 must issue a single signed `aud` equal to `MONYNHA_MCP_PUBLIC_URL` **only** for
 approved OAuth clients, without changing Tube O2/FACODI normal sessions or
 refresh tokens. Verify real PKCE authorization and refresh before activating
-this profile; never weaken the MCP `aud` check.
+this application; never weaken the MCP `aud` check.
 
 ### Acceptance and rollback
 
@@ -65,7 +77,7 @@ this profile; never weaken the MCP `aud` check.
    read-only Odoo calls, while writes send **zero** Odoo requests.
 4. Test backup and restore of `monynha-postgres-data`, and perform paired
    FACODI DB/filestore backup before any Odoo module installation.
-5. Roll back by disabling the `monynha-mcp` profile, revoking registered
+5. Roll back by stopping the separate Monynha Coolify application, revoking registered
    Monynha OAuth clients, and reverting the pinned addon integration. Preserve
    the Odoo/Postgres persistent volumes and do not rotate shared Supabase JWT
    signing keys as a Monynha rollback.
