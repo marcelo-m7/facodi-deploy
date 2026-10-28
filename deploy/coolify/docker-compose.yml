@@ -31,7 +31,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum,facodi_mcp_oauth
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
@@ -42,6 +42,8 @@ services:
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY: ${MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY:-}
+      MONYNHA_OAUTH_ALLOWED_CLIENT_IDS: ${MONYNHA_OAUTH_ALLOWED_CLIENT_IDS:-[]}
       PORT: "8069"
     volumes:
       - odoo-data:/var/lib/odoo
@@ -64,7 +66,7 @@ services:
       ODOO_DB: facodi
       ODOO_ADMIN_PASSWD: $SERVICE_PASSWORD_64_ODOO_ADMIN
       FACODI_PIPELINE_STORAGE: /var/lib/odoo/facodi-pipeline
-      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum
+      FACODI_MODULES: facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum,facodi_mcp_oauth
       FACODI_SUPABASE_WEBHOOK_SECRET: ${FACODI_SUPABASE_WEBHOOK_SECRET:-}
       FACODI_STRIPE_WEBHOOK_SECRET: ${FACODI_STRIPE_WEBHOOK_SECRET:-}
       FACODI_WEBSITE_DOMAIN: ${FACODI_WEBSITE_DOMAIN:-facodi.com}
@@ -78,6 +80,8 @@ services:
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:-}
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY: ${MONYNHA_OAUTH_SUPABASE_PUBLISHABLE_KEY:-}
+      MONYNHA_OAUTH_ALLOWED_CLIENT_IDS: ${MONYNHA_OAUTH_ALLOWED_CLIENT_IDS:-[]}
       PORT: "8069"
     volumes:
       - odoo-data:/var/lib/odoo

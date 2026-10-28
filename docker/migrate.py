@@ -18,6 +18,7 @@ UPDATE_MODULES = (
     "muk_web_theme",
     "monodoo_core",
     "monodoo_home",
+    "facodi_mcp_oauth",
 )
 
 RETIRED_MODULES = (

@@ -3,6 +3,7 @@ import ast
 import configparser
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -19,12 +20,14 @@ EXPECTED_SUBMODULE_PATHS = {
     "addons/monodoo",
 }
 
-FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum"
+FACODI_MODULES = "facodi_api,facodi_project,facodi_learning,theme_facodi,facodi_ai,facodi_ai_learning,muk_web_theme,monodoo_core,monodoo_home,website_forum,website_slides_forum,facodi_mcp_oauth"
 
 
 class RepositoryContractTest(unittest.TestCase):
     def test_isolated_worker_is_optional_pinned_and_separate_from_odoo_persistence(self):
         import json
+        if shutil.which("docker") is None:
+            self.skipTest("Docker Compose CLI is unavailable in this environment")
         config = json.loads(subprocess.check_output([
             "docker", "compose", "--env-file", str(ROOT / ".env.ci"),
             "-f", str(ROOT / "deploy/coolify/docker-compose.yml"),
@@ -554,9 +557,13 @@ class RepositoryContractTest(unittest.TestCase):
     def test_removed_addon_sources_are_not_present_in_runtime_contract(self):
         compose = (ROOT / "deploy/coolify/docker-compose.yml").read_text()
         entrypoint = (ROOT / "docker/entrypoint.sh").read_text()
-        for module in ("onlyoffice_odoo", "monynha", "monodoo_theme"):
+        for module in ("onlyoffice_odoo", "monodoo_theme"):
             self.assertNotIn(module, compose)
             self.assertNotIn(module, entrypoint)
+        # The retired Odoo addon 'monynha' remains absent from the module list;
+        # 'monynha-mcp' is a separate, opt-in HTTP service, not an Odoo addon.
+        self.assertNotIn("monynha", FACODI_MODULES.split(","))
+        self.assertNotIn("monynha", entrypoint)
         self.assertFalse((ROOT / "addons/onlyoffice_odoo").exists())
 
     def test_generated_local_state_is_ignored(self):
